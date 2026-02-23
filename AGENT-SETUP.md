@@ -8,14 +8,46 @@
 
 This is the Agent Runtime Kit — a universal collection of skills, rules, subagents, and commands for AI coding assistants.
 
-You are going to install the relevant parts into your configuration directory. The process has four steps:
+You are going to install the relevant parts into your configuration directory. The process:
 
+0. **Obtain the files** — Clone or fetch from GitHub (if invoked via URL)
 1. **Detect your identity** — Are you Claude Code or Cursor?
 2. **Detect the project language** — What stack does this project use?
-3. **Transform and install** — Copy and adapt files for your platform
-4. **Verify** — Confirm everything is in place
+3. **Check for conflicts** — Scan what already exists before touching anything
+4. **Transform and install** — Copy and adapt files, resolving conflicts
+5. **Verify** — Confirm everything is in place
 
-Do not skip any step. Do not ask the user for input unless Step 2 cannot be determined automatically.
+Do not skip any step. The only times to ask the user for input: language can't be detected (Step 2), or a conflict needs a decision (Step 3).
+
+---
+
+## Step 0: Obtain the Kit Files
+
+**If the user pasted a GitHub URL** (e.g., `https://github.com/shir-bruchim/agent-runtime-kit`):
+
+Clone into a temporary directory and work from there:
+
+```bash
+git clone https://github.com/shir-bruchim/agent-runtime-kit /tmp/agent-runtime-kit
+KIT_DIR="/tmp/agent-runtime-kit"
+```
+
+Use `$KIT_DIR` as your source path for all subsequent steps.
+
+**If you are already inside the cloned repo directory:**
+
+```bash
+KIT_DIR="$(pwd)"
+```
+
+**If you cannot run git** (Cursor without terminal access): fetch each file from the raw GitHub URL:
+
+```
+Base: https://raw.githubusercontent.com/shir-bruchim/agent-runtime-kit/main/
+Example: https://raw.githubusercontent.com/shir-bruchim/agent-runtime-kit/main/skills/debugging/SKILL.md
+```
+
+Fetch each needed file and write it to its destination path.
 
 ---
 
@@ -45,7 +77,7 @@ IF you are in a Cursor workspace (.cursor/ directory exists or VS Code workspace
 IF neither → proceed as Claude Code (most conservative, most capable)
 ```
 
-Record which platform you are. You will use this in Step 3.
+Record which platform you are. You will use this in Step 4 (install).
 
 ---
 
@@ -78,11 +110,104 @@ ls CMakeLists.txt Makefile *.cpp 2>/dev/null
 **If none match**: ask the user:
 > "I couldn't detect the project language automatically. What is the primary language for this project? (python / nodejs / typescript / go / java / cpp / other)"
 
-Record the language. You will use this in Step 3.
+Record the language. You will use this in Step 4 (install).
 
 ---
 
-## Step 3: Transform and Install Files
+## Step 3: Check for Conflicts
+
+Before installing anything, scan the destination directories and compare with kit files. This prevents silently overwriting work the user already has.
+
+### 3a — Scan existing destinations
+
+Check all target locations for already-existing files:
+
+```bash
+# Claude Code
+ls ~/.claude/skills/ 2>/dev/null
+ls ~/.claude/agents/ 2>/dev/null
+ls ~/.claude/commands/ 2>/dev/null
+ls .claude/rules/ 2>/dev/null
+
+# Cursor
+ls .cursor/rules/ 2>/dev/null
+ls .cursor/agents/ 2>/dev/null
+```
+
+### 3b — For each file you plan to install
+
+Run this logic for every file before writing it:
+
+```
+Does destination file exist?
+├── No  → INSTALL (proceed normally)
+└── Yes →
+    Are the files identical?
+    ├── Yes → SKIP — log "✓ Already up to date: [path]"
+    └── No  →
+        Show the user a summary of what differs, then ask:
+        > "[filename] already exists and has local changes. What would you like to do?
+        >  1. Replace with kit version  (overwrites your local file)
+        >  2. Keep existing  (skip this file)
+        >  3. Merge  (I'll show you both and combine them)
+        >  4. Show full diff first"
+        Wait for answer before proceeding.
+```
+
+**Do not batch these questions.** Ask about each conflict as you encounter it. If the user says "replace all" or "keep all", apply that choice to the remaining files without asking again.
+
+### 3c — Detect functionally equivalent files with different names
+
+Before installing each skill, subagent, or command from the kit, also scan for files that do the same job under a different name.
+
+**How to detect a functional duplicate:**
+1. Read the kit file's `description:` field from its YAML frontmatter
+2. Read the `description:` field of every existing file in the same destination directory
+3. If two descriptions are semantically similar (same purpose, same domain), flag it
+
+**Example:**
+- Kit has: `reviewer.md` — `description: Expert code reviewer. Use after code changes...`
+- User has: `code-review.md` — `description: Reviews code for quality and security...`
+- These do the same thing → flag it
+
+When a functional duplicate is found, ask:
+
+> "You already have '[existing-name].md' which seems to do the same thing as '[kit-name].md' from the kit.
+>
+> Your file: [description line]
+> Kit file: [description line]
+>
+> What would you like to do?
+> 1. Keep both files (different names, both available)
+> 2. Replace your file with the kit version  (rename + overwrite)
+> 3. Merge the kit content into your existing file
+> 4. Keep only your file, skip the kit version
+> 5. Delete your file and install the kit version"
+
+Wait for the user's answer before proceeding.
+
+### 3d — Build an install plan
+
+After scanning everything, before writing a single file, present a summary:
+
+```
+Install plan:
+  ✓ 12 files — new (will install)
+  ~ 3 files  — already up to date (will skip)
+  ⚠ 2 files  — conflict (awaiting your decision):
+      - ~/.claude/agents/reviewer.md  (differs from kit version)
+      - ~/.claude/commands/commit.md  (differs from kit version)
+  ? 1 file   — possible duplicate:
+      - ~/.claude/agents/code-review.md may duplicate reviewer.md
+
+Resolve conflicts above, then I'll proceed with the install.
+```
+
+Only start writing files after all conflicts are resolved.
+
+---
+
+## Step 4: Transform and Install Files
 
 The kit root contains all source files. Install them to the correct locations.
 
@@ -417,7 +542,7 @@ Methodical debugging using scientific method...
 
 ---
 
-## Step 4: Verify
+## Step 5: Verify
 
 After installation, confirm everything is in place.
 
@@ -459,7 +584,7 @@ Expected output: 10+ .mdc files.
 
 ---
 
-## Step 5: Report to User
+## Step 6: Report to User
 
 After completing installation, tell the user:
 

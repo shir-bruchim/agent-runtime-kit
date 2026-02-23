@@ -18,16 +18,15 @@ A curated collection of skills, rules, subagents, commands, and language convent
 
 ## Quick Start
 
-```bash
-git clone https://github.com/your-username/agent-runtime-kit.git
-cd agent-runtime-kit
+Paste this URL into your AI agent's chat:
+
+```
+https://github.com/shir-bruchim/agent-runtime-kit
 ```
 
-Then tell your AI agent:
+That's it. The agent reads the README, fetches `AGENT-SETUP.md`, detects what platform it's running on (Claude Code or Cursor), detects your project language, checks for any existing files that would conflict, and installs everything in the right places.
 
-> "Read AGENT-SETUP.md and install this kit for yourself."
-
-That's it. The agent detects what it is (Claude Code or Cursor), what language your project uses, and installs the right files in the right places.
+No cloning. No manual steps.
 
 ---
 
