@@ -1,0 +1,67 @@
+{
+  "_comment": "Recommended MCP server configurations. Replace ${PROJECT_DIR} with your project root path. Replace credential placeholders with actual values.",
+  "mcpServers": {
+    "github": {
+      "_description": "GitHub integration — issues, PRs, repos, code search",
+      "_install": "npm install -g @modelcontextprotocol/server-github",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "filesystem": {
+      "_description": "Enhanced filesystem access beyond default tools",
+      "_install": "npm install -g @modelcontextprotocol/server-filesystem",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_DIR}"]
+    },
+    "postgres": {
+      "_description": "PostgreSQL database access — read-only by default",
+      "_install": "npm install -g @modelcontextprotocol/server-postgres",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
+    },
+    "atlassian": {
+      "_description": "Jira and Confluence integration",
+      "type": "sse",
+      "url": "https://mcp.atlassian.com/v1/sse"
+    },
+    "brave-search": {
+      "_description": "Web search via Brave Search API",
+      "_install": "npm install -g @modelcontextprotocol/server-brave-search",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      }
+    },
+    "memory": {
+      "_description": "Persistent memory across conversations",
+      "_install": "npm install -g @modelcontextprotocol/server-memory",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "mermaid": {
+      "_description": "Mermaid diagram generation to images",
+      "_install": "npm install -g @claude-mcp/mermaid",
+      "type": "stdio",
+      "command": "claude-mermaid",
+      "args": [],
+      "env": {}
+    }
+  },
+  "claude_code_config": {
+    "_comment": "For Claude Code: add mcpServers to ~/.claude.json or .claude/settings.json",
+    "_example": "{ \"mcpServers\": { ... } }"
+  },
+  "cursor_config": {
+    "_comment": "For Cursor: add mcpServers to .cursor/mcp.json (project) or ~/.cursor/mcp_config.json (global)",
+    "_example": "{ \"mcpServers\": { ... } }"
+  }
+}
