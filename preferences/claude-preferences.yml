@@ -1,0 +1,175 @@
+# Claude-Specific Preferences
+# Extends base-preferences.yml with Claude-optimized settings
+
+# Inherit from base
+extends: "base-preferences.yml"
+
+# Claude-Specific Overrides
+general:
+  prefer_web_search: true             # Claude has excellent web search
+  use_artifacts: true                 # Enable artifact creation
+  maintain_context: true              # Conversation memory
+
+output:
+  default_format: "markdown"          # Claude excels at markdown
+  can_create_documents: true          # DOCX, PDF, PPTX
+  max_response_length: "long"         # No strict limits
+
+files:
+  auto_analyze: true                  # Auto-analyze uploads
+  default_output_location: "/mnt/user-data/outputs"
+  upload_location: "/mnt/user-data/uploads"
+  skills_location: "/mnt/skills/public"
+
+# Claude-Specific Features
+features:
+  skills: true
+  commands: true
+  hooks: true                         # Full hook support
+  templates: true
+  web_search: true                    # ✓ Available
+  image_search: true                  # ✓ Available
+  workspace_integration: false        # ✗ Not applicable
+  document_creation: true             # ✓ Available
+  artifacts: true                     # ✓ Available
+  conversation_hooks: true            # ✓ Available
+
+# Claude Tools Available
+tools:
+  available:
+    - "web_search"
+    - "image_search"
+    - "web_fetch"
+    - "bash_tool"
+    - "create_file"
+    - "view"
+    - "str_replace"
+    - "present_files"
+  
+  preferred:
+    file_operations: "create_file"
+    research: "web_search"
+    code_execution: "bash_tool"
+
+# Claude-Specific Paths
+paths:
+  home: "/home/claude"
+  skills: "~/.claude/skills"
+  uploads: "/mnt/user-data/uploads"
+  outputs: "/mnt/user-data/outputs"
+  public_skills: "/mnt/skills/public"
+
+# Document Creation Preferences
+documents:
+  default_format: "docx"
+  include_toc: true
+  professional_styling: true
+  auto_format: true
+  
+  formats:
+    reports: "docx"
+    presentations: "pptx"
+    data_sheets: "xlsx"
+    final_output: "pdf"
+
+# Web Search Preferences
+web_search:
+  auto_search_when: 
+    - "current_events"
+    - "recent_data"
+    - "unknown_facts"
+    - "verification_needed"
+  
+  search_depth: "thorough"            # quick, standard, thorough
+  max_searches_per_query: 5
+  cite_sources: true
+  verify_facts: true
+
+# Conversation Preferences
+conversation:
+  remember_context: true
+  reference_previous: true
+  maintain_style: true
+  adapt_to_user: true
+
+# Hook Configuration
+hooks:
+  enabled: true
+  
+  default_hooks:
+    on_file_upload: true
+    on_conversation_start: true
+    on_error: true
+  
+  priority_levels:
+    critical: 15-20
+    high: 10-14
+    medium: 5-9
+    low: 1-4
+
+# Artifact Preferences
+artifacts:
+  enabled: true
+  
+  types:
+    - "markdown"
+    - "html"
+    - "react"
+    - "svg"
+    - "mermaid"
+  
+  default_artifact: "markdown"
+  auto_artifact_threshold: 100        # Lines of code
+
+# Performance Optimization
+performance:
+  use_skills_before_responding: true  # Read SKILL.md files first
+  cache_web_searches: true
+  parallel_operations: true
+  
+# Quality Standards (Claude-specific)
+quality:
+  read_skills_first: true             # ALWAYS read SKILL.md before tasks
+  cite_web_sources: true
+  include_examples: true
+  professional_output: true
+
+# Claude-Specific Workflows
+workflows:
+  document_creation:
+    - "read_skill"
+    - "gather_content"
+    - "create_structure"
+    - "populate_content"
+    - "format_professionally"
+    - "save_to_outputs"
+    - "present_to_user"
+  
+  code_review:
+    - "read_skill"
+    - "analyze_code"
+    - "check_security"
+    - "check_performance"
+    - "generate_report"
+    - "provide_recommendations"
+  
+  research:
+    - "identify_topic"
+    - "web_search_multiple"
+    - "synthesize_findings"
+    - "cite_sources"
+    - "create_report"
+
+# User Experience
+ux:
+  show_progress: true
+  explain_actions: true
+  offer_next_steps: true
+  provide_alternatives: true
+
+# Metadata
+metadata:
+  platform: "claude"
+  version: "1.0.0"
+  optimized_for: "claude-4.5"
+  created: "2026-02-02"
