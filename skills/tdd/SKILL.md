@@ -96,6 +96,73 @@ def test_login_succeeds_with_correct_credentials(client, test_user):
 ```
 </test_design>
 
+<language_examples>
+
+### Python TDD Example: Password Validation
+```python
+# Step 1: RED — Write failing test first
+def test_password_must_be_at_least_8_chars():
+    with pytest.raises(ValueError, match="at least 8"):
+        validate_password("short")
+
+# Run: pytest -x  → FAILS (function doesn't exist yet)
+
+# Step 2: GREEN — Minimum code to pass
+def validate_password(password: str) -> str:
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters")
+    return password
+
+# Run: pytest -x  → PASSES
+
+# Step 3: RED again — next requirement
+def test_password_must_contain_uppercase():
+    with pytest.raises(ValueError, match="uppercase"):
+        validate_password("lowercase1")
+
+# Step 4: GREEN — extend the function
+def validate_password(password: str) -> str:
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters")
+    if not any(c.isupper() for c in password):
+        raise ValueError("Password must contain an uppercase letter")
+    return password
+```
+
+### Node.js TDD Example: Cart Total
+```javascript
+// Step 1: RED — write the test
+test('calculates total for empty cart', () => {
+  expect(calculateTotal([])).toBe(0);
+});
+// Run: npm test  → FAILS (function not defined)
+
+// Step 2: GREEN
+function calculateTotal(items) {
+  return 0;
+}
+// Run: npm test  → PASSES (but too simple)
+
+// Step 3: RED — force real implementation
+test('calculates total with items', () => {
+  const items = [{ price: 10 }, { price: 25 }];
+  expect(calculateTotal(items)).toBe(35);
+});
+// Run: npm test  → FAILS
+
+// Step 4: GREEN
+function calculateTotal(items) {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+// Run: npm test  → ALL PASS
+
+// Step 5: REFACTOR — improve without changing behavior
+const calculateTotal = (items) =>
+  items.reduce((total, { price }) => total + price, 0);
+// Run: npm test  → STILL PASSES
+```
+</language_examples>
+
 <success_criteria>
 - Tests written BEFORE implementation
 - Each test fails first (validates the test)

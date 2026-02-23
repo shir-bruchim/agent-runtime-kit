@@ -105,6 +105,78 @@ func TestCalculateTotal(t *testing.T) {
 | TDD workflow | `skills/tdd/SKILL.md` |
 </routing>
 
+<language_examples>
+
+### Python (pytest)
+```python
+# tests/test_user_service.py
+import pytest
+from app.services.user import UserService
+from app.models import User
+
+@pytest.fixture
+def user_service(db_session):
+    return UserService(db_session)
+
+def test_create_user_returns_user_with_id(user_service):
+    user = user_service.create(name="Alice", email="alice@example.com")
+    assert user.id is not None
+    assert user.name == "Alice"
+
+def test_create_user_fails_with_duplicate_email(user_service, existing_user):
+    with pytest.raises(ValueError, match="already exists"):
+        user_service.create(name="Bob", email=existing_user.email)
+
+@pytest.mark.parametrize("email,valid", [
+    ("alice@example.com", True),
+    ("not-an-email", False),
+    ("", False),
+])
+def test_email_validation(email, valid):
+    assert UserService.is_valid_email(email) == valid
+```
+
+### Node.js (Jest)
+```javascript
+// tests/userService.test.js
+const { UserService } = require('../src/services/userService');
+const { createTestDb } = require('./helpers');
+
+describe('UserService', () => {
+  let service;
+  let db;
+
+  beforeEach(async () => {
+    db = await createTestDb();
+    service = new UserService(db);
+  });
+
+  afterEach(async () => db.close());
+
+  it('creates a user and returns it with an id', async () => {
+    const user = await service.create({ name: 'Alice', email: 'alice@example.com' });
+    expect(user.id).toBeDefined();
+    expect(user.name).toBe('Alice');
+  });
+
+  it('throws when email already exists', async () => {
+    await service.create({ name: 'Alice', email: 'alice@example.com' });
+    await expect(
+      service.create({ name: 'Bob', email: 'alice@example.com' })
+    ).rejects.toThrow('already exists');
+  });
+
+  it.each([
+    ['alice@example.com', true],
+    ['not-an-email', false],
+    ['', false],
+  ])('validates email %s as %s', (email, expected) => {
+    expect(UserService.isValidEmail(email)).toBe(expected);
+  });
+});
+```
+</language_examples>
+
 <success_criteria>
 - Tests run in isolation (no order dependency)
 - Tests cover happy path, error paths, and edge cases

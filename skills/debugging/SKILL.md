@@ -88,6 +88,66 @@ Only after confirming root cause:
 ```
 </output_format>
 
+<language_examples>
+
+### Python — Adding Debug Points
+```python
+# Temporary debug prints (remove after fixing)
+import json
+print(f"DEBUG input: {json.dumps(data, indent=2, default=str)}")
+print(f"DEBUG result type: {type(result).__name__}, value: {result!r}")
+
+# Using pdb for interactive debugging
+import pdb; pdb.set_trace()  # drops into debugger at this line
+
+# pytest debugging — run with -s flag to see prints
+# pytest -s -x tests/test_problematic.py::test_specific_case
+```
+
+### Python — Minimal Reproduction
+```python
+# Isolate the bug — strip everything non-essential
+def test_reproduce_bug():
+    """Minimal reproduction of the issue."""
+    # Arrange: minimum state needed
+    data = {"key": "value"}
+
+    # Act: the problematic operation
+    result = process(data)
+
+    # Assert: what should happen vs what does happen
+    assert result == expected_value, f"Got {result!r}, expected {expected_value!r}"
+```
+
+### Node.js — Debug Points
+```javascript
+// console.debug with structured data
+console.debug('DEBUG processOrder:', { orderId, items: items.length, total });
+
+// Using Node.js debugger
+debugger; // pause here when running with --inspect
+
+// Run specific test with verbose output
+// npx jest --testNamePattern "specific test" --verbose --no-coverage
+```
+
+### Node.js — Async Debugging
+```javascript
+// Common async bug: unhandled rejection
+async function debugAsyncIssue() {
+  try {
+    const result = await problematicOperation();
+    console.debug('result:', result);
+  } catch (err) {
+    // Log the FULL error including stack
+    console.error('FULL ERROR:', err);
+    console.error('Stack:', err.stack);
+    throw err; // re-throw after logging
+  }
+}
+```
+</language_examples>
+
 <success_criteria>
 - [ ] Root cause identified with evidence (not just "it works now")
 - [ ] Fix verified against original reproduction steps

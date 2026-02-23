@@ -95,10 +95,7 @@ The kit root contains all source files. Install them to the correct locations.
 **Install skills** (user-level):
 ```bash
 mkdir -p ~/.claude/skills
-cp -r skills/create-ai-skills ~/.claude/skills/
-cp -r skills/create-automation-hooks ~/.claude/skills/
-cp -r skills/create-commands ~/.claude/skills/
-cp -r skills/create-subagents ~/.claude/skills/
+cp -r skills/extend-agent ~/.claude/skills/
 cp -r skills/planning ~/.claude/skills/
 cp -r skills/debugging ~/.claude/skills/
 cp -r skills/git ~/.claude/skills/
@@ -262,8 +259,7 @@ The transform rules are:
 | `skills/api-design/SKILL.md` | `.cursor/rules/api-design.mdc` | false |
 | `skills/spec-interview/SKILL.md` | `.cursor/rules/spec-interview.mdc` | false |
 | `skills/planning/SKILL.md` | `.cursor/rules/planning.mdc` | false |
-| `skills/create-ai-skills/SKILL.md` | `.cursor/rules/create-ai-skills.mdc` | false |
-| `skills/create-commands/SKILL.md` | `.cursor/rules/create-commands.mdc` | false |
+| `skills/extend-agent/SKILL.md` | `.cursor/rules/extend-agent.mdc` | false |
 
 **Transform and install rules** (always-on conventions):
 
@@ -328,7 +324,96 @@ alwaysApply: true
 </objective>
 ```
 
-**Note on subagents and commands**: Cursor does not have a native equivalent for Claude Code subagents or slash commands. Skip these. The skills and rules cover the same knowledge as inline context.
+### Install subagents (both platforms)
+
+Cursor subagents use the **same file format and path** as Claude Code. Install them to `.cursor/agents/` or `.claude/agents/` (Cursor reads both):
+
+```bash
+mkdir -p .cursor/agents
+cp subagents/architect.md .cursor/agents/
+cp subagents/reviewer.md .cursor/agents/
+cp subagents/planner.md .cursor/agents/
+cp subagents/tester.md .cursor/agents/
+cp subagents/security.md .cursor/agents/
+cp subagents/db-expert.md .cursor/agents/
+cp subagents/doc-writer.md .cursor/agents/
+cp subagents/refactorer.md .cursor/agents/
+cp subagents/git-ops.md .cursor/agents/
+```
+
+**Invoke Cursor subagents with `/name`** (e.g., `/reviewer check this PR`).
+
+**Frontmatter differences:** The `tools:` field in subagent files is Claude Code-specific and ignored by Cursor. To make a Cursor-specific read-only subagent, add `readonly: true` to the frontmatter.
+
+### Commands for Cursor
+
+Cursor does not have `/slash` commands. Copy command files as on-demand rules instead:
+
+```bash
+mkdir -p .cursor/rules
+for f in commands/*.md; do
+  name=$(basename $f .md)
+  # Add Cursor frontmatter and save as .mdc
+  echo "---\ndescription: $(head -3 $f | grep description | cut -d: -f2-)\nalwaysApply: false\n---\n" > ".cursor/rules/${name}.mdc"
+  tail -n +6 "$f" >> ".cursor/rules/${name}.mdc"
+done
+```
+
+---
+
+## Cursor: Plan Mode
+
+Cursor has a built-in **Plan Mode** (accessible via the mode selector in Cursor's chat). It:
+
+- Asks clarifying questions before implementing
+- Researches your codebase to understand context
+- Generates an implementation plan for you to review
+- Waits for your approval before building
+
+**This is complementary to, not a replacement for, the `.planning/` file hierarchy.** Use Cursor's Plan Mode for initial discovery; use `.planning/` files for persistent, shareable project planning that survives across sessions and agents.
+
+**Recommendation:**
+1. Use Cursor's Plan Mode to explore options and get a plan
+2. Save the agreed plan to `.planning/phases/XX-phase-PLAN.md`
+3. Reference that file in future sessions for continuity
+
+---
+
+## Skill → .mdc Transformation Example
+
+### Source (Claude Code): `skills/debugging/SKILL.md`
+```yaml
+---
+name: debugging
+description: Deep analysis debugging mode. Use when standard troubleshooting fails or issues require systematic root cause analysis.
+---
+
+<objective>
+Methodical debugging using scientific method...
+</objective>
+```
+
+### Result (Cursor): `.cursor/rules/debugging.mdc`
+```yaml
+---
+description: Deep analysis debugging mode. Use when standard troubleshooting fails or issues require systematic root cause analysis.
+globs: []
+alwaysApply: false
+---
+
+<objective>
+Methodical debugging using scientific method...
+</objective>
+```
+
+**What changed:**
+- Removed `name:` field (Cursor doesn't use it)
+- Added `globs: []` (empty = on-demand, not file-triggered)
+- Added `alwaysApply: false` (activate when asked, not always)
+- File extension: `.md` → `.mdc`
+- File location: `skills/<name>/SKILL.md` → `.cursor/rules/<name>.mdc`
+
+**For always-on rules** (base-conventions, security rules): set `alwaysApply: true` and optionally add `globs`.
 
 ---
 
@@ -357,9 +442,9 @@ cat .claude/hooks.json
 ```
 
 Expected output:
-- `~/.claude/skills/` should contain 12 directories (create-ai-skills, create-automation-hooks, create-commands, create-subagents, planning, debugging, git, security, testing, tdd, api-design, spec-interview)
+- `~/.claude/skills/` should contain 9 directories (extend-agent, planning, debugging, git, security, testing, tdd, api-design, spec-interview)
 - `~/.claude/agents/` should contain 9 .md files
-- `~/.claude/commands/` should contain 7 .md files
+- `~/.claude/commands/` should contain 10 .md files (7 original + test, debug, refactor)
 - `.claude/rules/` should contain 5+ .md files (base rules + language conventions)
 - `.claude/hooks/` should contain 2 .sh files and `hooks.json`
 

@@ -39,10 +39,7 @@ agent-runtime-kit/
 ├── README.md               # This file
 │
 ├── skills/                 # Reusable skill modules (SKILL.md format)
-│   ├── create-ai-skills/   # Meta: create new skills
-│   ├── create-automation-hooks/  # Meta: create hooks
-│   ├── create-commands/    # Meta: create slash commands
-│   ├── create-subagents/   # Meta: create subagents
+│   ├── extend-agent/       # Meta: create skills, commands, hooks, subagents
 │   ├── planning/           # Project planning hierarchy
 │   ├── debugging/          # Systematic debugging
 │   ├── git/                # Git workflows
@@ -69,6 +66,9 @@ agent-runtime-kit/
 │   ├── pr.md               # /pr
 │   ├── ship.md             # /ship (commit + push + PR)
 │   ├── review.md           # /review
+│   ├── test.md             # /test (auto-detect and run tests)
+│   ├── debug.md            # /debug [issue]
+│   ├── refactor.md         # /refactor [target]
 │   ├── spec-interview.md   # /spec-interview
 │   └── generate-prd.md     # /generate-prd
 │
@@ -89,10 +89,16 @@ agent-runtime-kit/
 │   └── java/               # conventions
 │
 ├── mcp/
-│   └── recommended-servers.json  # MCP server recommendations
+│   ├── recommended-servers.json  # MCP server list
+│   └── SETUP.md                  # Setup guide per platform
 │
-└── templates/
-    └── full-setup-example.md     # Complete setup walkthrough
+├── templates/
+│   └── full-setup-example.md     # Complete setup walkthrough
+│
+└── docs/
+    ├── CUSTOMIZATION.md          # How to extend the kit
+    ├── BEST-PRACTICES.md         # Design principles
+    └── TROUBLESHOOTING.md        # Common issues and fixes
 ```
 
 ---
@@ -149,35 +155,36 @@ Read `AGENT-SETUP.md`. It contains step-by-step instructions for:
 
 | Skill | What It Does | Key Files |
 |-------|-------------|-----------|
+| `extend-agent/` | Create skills, commands, hooks, or subagents | SKILL.md + references + workflows |
 | `planning/` | Hierarchical project planning | SKILL.md + 6 templates + 8 workflows |
-| `create-ai-skills/` | Create new skills from scratch | SKILL.md + references + templates |
 | `debugging/` | Systematic bug investigation | SKILL.md |
 | `git/` | Commit, push, PR workflows | SKILL.md + 3 workflow files |
-| `security/` | Security review + blocking hooks | SKILL.md + 2 hook scripts |
-| `testing/` | Test strategy and writing | SKILL.md |
-| `tdd/` | Red-green-refactor cycle | SKILL.md |
-| `api-design/` | REST/GraphQL/gRPC design | SKILL.md |
+| `security/` | Security review + blocking hooks | SKILL.md + 4 hook scripts |
+| `testing/` | Test strategy and writing (Python + Node.js examples) | SKILL.md |
+| `tdd/` | Red-green-refactor cycle (Python + Node.js examples) | SKILL.md |
+| `api-design/` | REST API design (FastAPI + Express examples) | SKILL.md |
 | `spec-interview/` | Requirements gathering | SKILL.md + spec template |
 
-### Meta-Skills (Self-Extending)
+### Meta-Skill: `extend-agent/`
 
-These skills teach the agent to create more skills:
+One unified skill that creates any extension type:
 
-| Skill | Creates |
-|-------|---------|
-| `create-ai-skills/` | New SKILL.md files (Claude) or .mdc rules (Cursor) |
-| `create-automation-hooks/` | New hooks.json entries |
-| `create-commands/` | New slash command .md files |
-| `create-subagents/` | New subagent .md files |
+| Creates | Format | Platform |
+|---------|--------|---------|
+| Skills | `SKILL.md` | Claude Code |
+| Rules | `.mdc` | Cursor |
+| Commands | `commands/*.md` | Claude Code |
+| Hooks | `hooks.json` entries | Claude Code |
+| Subagents | `agents/*.md` | Claude Code + Cursor |
 
 ---
 
 ## Subagents Reference
 
-Subagents are specialized Claude Code agents that run in isolated contexts:
+Subagents work in **both Claude Code and Cursor**. Both platforms read from `.claude/agents/` (or `.cursor/agents/` for Cursor).
 
-| Subagent | Model | Tools | Use For |
-|----------|-------|-------|---------|
+| Subagent | Model | Tools (Claude Code) | Use For |
+|----------|-------|---------------------|---------|
 | `architect` | opus | Read, Grep, Glob | Architecture decisions |
 | `reviewer` | sonnet | Read, Grep, Glob, Bash | Code review |
 | `planner` | opus | Read, Grep, Glob | Task planning |
@@ -187,6 +194,9 @@ Subagents are specialized Claude Code agents that run in isolated contexts:
 | `db-expert` | sonnet | Read, Write, Edit, Bash | Database design |
 | `doc-writer` | sonnet | Read, Write, Edit | Documentation |
 | `refactorer` | sonnet | Read, Write, Edit, Grep, Glob | Refactoring |
+
+**Claude Code**: invoked automatically by description or by user request.
+**Cursor**: invoke explicitly with `/subagent-name` (e.g., `/reviewer check this PR`).
 
 ---
 
@@ -199,6 +209,9 @@ Subagents are specialized Claude Code agents that run in isolated contexts:
 | `/pr` | Create pull request with template |
 | `/ship` | Full workflow: commit + push + PR |
 | `/review` | Code review of recent changes |
+| `/test` | Auto-detect and run the project's test suite |
+| `/debug [issue]` | Systematic root-cause analysis for an issue |
+| `/refactor [target]` | Improve code quality without changing behavior |
 | `/spec-interview` | Interactive requirements gathering |
 | `/generate-prd` | Generate product requirements document |
 

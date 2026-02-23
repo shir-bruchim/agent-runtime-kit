@@ -105,6 +105,81 @@ When reviewing an API design:
 - [ ] Versioning strategy defined
 </review_checklist>
 
+<language_examples>
+
+### Python — FastAPI
+```python
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, EmailStr, Field
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+class CreateUserRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    email: EmailStr
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
+async def create_user(data: CreateUserRequest, db: Session = Depends(get_db)):
+    if await db.get_by_email(data.email):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
+    user = await db.create_user(data)
+    return UserResponse.model_validate(user)
+
+@router.get("/{user_id}", response_model=UserResponse)
+async def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = await db.get_user(user_id)
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+    return UserResponse.model_validate(user)
+```
+
+### Node.js — Express
+```javascript
+const router = express.Router();
+
+// POST /users
+router.post('/', validateBody(createUserSchema), async (req, res, next) => {
+  try {
+    const existing = await User.findByEmail(req.body.email);
+    if (existing) {
+      return res.status(409).json({
+        error: { code: 'CONFLICT', message: 'Email already registered' }
+      });
+    }
+    const user = await User.create(req.body);
+    res.status(201).location(`/users/${user.id}`).json(toUserResponse(user));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /users/:id
+router.get('/:id', async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'User not found' }
+      });
+    }
+    res.json(toUserResponse(user));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Consistent error shape helper
+function toErrorResponse(code, message, details = []) {
+  return { error: { code, message, details } };
+}
+```
+</language_examples>
+
 <success_criteria>
 API design reviewed or created with consistent resource naming, correct HTTP semantics, uniform error handling, and proper input validation at all boundaries.
 </success_criteria>
