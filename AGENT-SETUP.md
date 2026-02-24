@@ -51,6 +51,57 @@ Fetch each needed file and write it to its destination path.
 
 ---
 
+### Script Fast Path (use this whenever the repo is cloned)
+
+Once `$KIT_DIR` is set, use the built-in scripts instead of running Steps 1–4 manually.
+The scripts handle everything: conflict detection, language detection, atomicity, and resume.
+
+**Step A — Generate a comparison plan (fast, cached by commit SHA):**
+
+```bash
+"${KIT_DIR}/scripts/check-kit-updates.sh" \
+  --project-dir "$(pwd)" \
+  > /tmp/kit-plan.json
+
+cat /tmp/kit-plan.json
+```
+
+Read the JSON output:
+
+| `status` value | What it means | Action |
+|----------------|---------------|--------|
+| `UP_TO_DATE` | Commit SHA matches last install — nothing changed | **Stop here. Nothing to do.** |
+| `FIRST_INSTALL` | No previous install recorded | Proceed to Step B |
+| `NEEDS_UPDATE` | Kit has new/changed files | Review the `"files"` array, proceed to Step B |
+
+If `"needs_update": false` → **skip Steps 1–5 entirely**.
+
+**Step B — Install from the plan (atomic, resumable):**
+
+```bash
+# Install all NEW and CHANGED files:
+"${KIT_DIR}/scripts/install-kit.sh" \
+  --plan /tmp/kit-plan.json \
+  --project-dir "$(pwd)"
+
+# If the process was interrupted, resume exactly where it stopped:
+"${KIT_DIR}/scripts/install-kit.sh" \
+  --plan /tmp/kit-plan.json \
+  --project-dir "$(pwd)" \
+  --resume
+
+# Preview without writing anything:
+"${KIT_DIR}/scripts/install-kit.sh" \
+  --plan /tmp/kit-plan.json \
+  --dry-run
+```
+
+**For CHANGED files** the install script replaces them by default. If you want to keep or merge a specific file instead of replacing it, edit `/tmp/kit-plan.json` and change its `"action"` to `"SKIP"` or `"MERGE"` before running install.
+
+After install succeeds → **jump to Step 5 (Verify)**.
+
+---
+
 ## Step 1: Detect Your Identity
 
 Determine which AI platform you are running on.
