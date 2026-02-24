@@ -13,6 +13,19 @@ VERIFY, DON'T ASSUME. Every hypothesis must be tested. Every fix must be validat
 Code you designed or wrote is guilty until proven innocent. Your intent doesn't matter — only the code's actual behavior.
 </core_principle>
 
+<context_scan>
+Run at invocation to detect project type:
+```bash
+[ -f "package.json" ] && cat package.json | grep '"typescript"' > /dev/null && echo "DETECTED: TypeScript" || ([ -f "package.json" ] && echo "DETECTED: Node.js")
+[ -f "Cargo.toml" ] && echo "DETECTED: Rust"
+([ -f "pyproject.toml" ] || [ -f "setup.py" ] || [ -f "requirements.txt" ] || find . -maxdepth 2 -name "*.py" | head -1 | grep -q .) && echo "DETECTED: Python"
+[ -f "go.mod" ] && echo "DETECTED: Go"
+[ -f "pom.xml" ] || [ -f "build.gradle" ] && echo "DETECTED: Java"
+(find . -maxdepth 2 -name "*.cpp" -o -name "*.cc" -o -name "CMakeLists.txt" | head -1 | grep -q .) && echo "DETECTED: C++"
+```
+If domain expertise skills exist (`~/.claude/skills/expertise/`), offer to load them before investigation.
+</context_scan>
+
 <evidence_gathering>
 Before proposing any solution:
 
@@ -149,10 +162,15 @@ async function debugAsyncIssue() {
 </language_examples>
 
 <success_criteria>
+Before starting:
+- [ ] Context scan run to detect project type
+
+During investigation:
 - [ ] Root cause identified with evidence (not just "it works now")
 - [ ] Fix verified against original reproduction steps
 - [ ] Adjacent functionality checked for regressions
 - [ ] Can explain the solution to another developer
+- [ ] One variable changed at a time (no simultaneous changes)
 - [ ] Would pass code review scrutiny
 </success_criteria>
 

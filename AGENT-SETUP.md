@@ -100,6 +100,10 @@ If `"needs_update": false` → **skip Steps 1–5 entirely**.
 
 After install succeeds → **jump to Step 5 (Verify)**.
 
+> **Token efficiency note:** Do NOT read `scripts/check-kit-updates.sh` or `scripts/install-kit.sh`
+> into your context. They are shell scripts for execution only — not instructions for you.
+> Run them with Bash and act on their JSON output.
+
 ---
 
 ## Step 1: Detect Your Identity
@@ -308,8 +312,16 @@ cp commands/spec-interview.md ~/.claude/commands/
 cp commands/generate-prd.md ~/.claude/commands/
 ```
 
-**Install base rules** (project-level):
+**Install base rules:**
+
+> **Prefer the main agent config file over rule files.** For Claude Code, add conventions to the
+> project's `CLAUDE.md` (or create one). For Cursor, add to `.cursorrules`. Only create separate
+> `.claude/rules/` files for project-specific overrides that shouldn't apply globally.
+> Universal rules (security, testing, base conventions) are already in your global `~/.claude/`
+> from the user-level install — no need to duplicate them per project.
+
 ```bash
+# Only if conventions not already in CLAUDE.md / .cursorrules:
 mkdir -p .claude/rules
 cp rules/base-conventions.md .claude/rules/
 cp rules/git-workflow.md .claude/rules/
@@ -356,45 +368,36 @@ cp languages/cpp/conventions.md .claude/rules/cpp-conventions.md
 cp languages/cpp/testing.md .claude/rules/cpp-testing.md
 ```
 
-**Install security hooks** (project-level):
+**Install security hooks globally** (runs in every project, not just this one):
+```bash
+mkdir -p ~/.claude/hooks
+cp skills/security/hooks/protect-files.sh ~/.claude/hooks/
+cp skills/security/hooks/block-dangerous-bash.sh ~/.claude/hooks/
+chmod +x ~/.claude/hooks/*.sh
+```
+
+Then add to `~/.claude/settings.json` under `"hooks"` (merge if section already exists):
+```json
+"PreToolUse": [
+  {
+    "matcher": "Bash",
+    "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-bash.sh", "timeout": 10000}]
+  },
+  {
+    "matcher": "Write|Edit",
+    "hooks": [{"type": "command", "command": "~/.claude/hooks/protect-files.sh", "timeout": 10000}]
+  }
+]
+```
+
+> **Project-level hooks** (optional — if you also want hooks scoped to this project only):
 ```bash
 mkdir -p .claude/hooks
 cp skills/security/hooks/protect-files.sh .claude/hooks/
 cp skills/security/hooks/block-dangerous-bash.sh .claude/hooks/
 chmod +x .claude/hooks/*.sh
 ```
-
-**Create hooks.json** (project-level) if it doesn't already exist:
-```bash
-cat > .claude/hooks.json << 'EOF'
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-dangerous-bash.sh",
-            "timeout": 10000
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/protect-files.sh",
-            "timeout": 10000
-          }
-        ]
-      }
-    ]
-  }
-}
-EOF
-```
+Then create `.claude/hooks.json` using `$CLAUDE_PROJECT_DIR/.claude/hooks/<script>.sh` as the command paths.
 
 ---
 
@@ -609,20 +612,16 @@ ls ~/.claude/agents/
 # Check commands
 ls ~/.claude/commands/
 
-# Check project rules
-ls .claude/rules/
-
-# Check hooks
-ls .claude/hooks/
-cat .claude/hooks.json
+# Check global hooks
+ls ~/.claude/hooks/
 ```
 
 Expected output:
-- `~/.claude/skills/` should contain 9 directories (extend-agent, planning, debugging, git, security, testing, tdd, api-design, spec-interview)
+- `~/.claude/skills/` should contain 10 directories (extend-agent, planning, debugging, git, security, testing, tdd, api-design, spec-interview, implement-jira-ticket)
 - `~/.claude/agents/` should contain 9 .md files
-- `~/.claude/commands/` should contain 10 .md files (7 original + test, debug, refactor)
-- `.claude/rules/` should contain 5+ .md files (base rules + language conventions)
-- `.claude/hooks/` should contain 2 .sh files and `hooks.json`
+- `~/.claude/commands/` should contain 11 .md files
+- `~/.claude/hooks/` should contain `block-dangerous-bash.sh` and `protect-files.sh`
+- `~/.claude/settings.json` should have `PreToolUse` hooks configured
 
 ### Cursor verification:
 
@@ -727,10 +726,7 @@ cp languages/<lang>/conventions.md .claude/rules/<lang>-conventions.md
 
 ### Skills
 ```
-skills/create-ai-skills/     Meta: create new skills
-skills/create-automation-hooks/  Meta: create hooks
-skills/create-commands/      Meta: create slash commands
-skills/create-subagents/     Meta: create subagents
+skills/extend-agent/         Meta: create skills, commands, hooks, and subagents
 skills/planning/             Hierarchical planning system
 skills/debugging/            Systematic debugging
 skills/git/                  Git workflows

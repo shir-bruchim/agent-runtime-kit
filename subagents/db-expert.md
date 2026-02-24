@@ -50,6 +50,53 @@ async with async_session() as session:
 ```
 </query_patterns>
 
+<pydantic_bridge>
+Keep SQLAlchemy models and Pydantic schemas separate but mappable:
+```python
+from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+
+class UserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    email: str
+    created_at: datetime
+
+# ORM → schema (never pass ORM objects out of the DB layer)
+user_dto = UserRead.model_validate(user_orm)
+```
+Never put business logic in schemas. Schemas are API contracts; models are persistence.
+</pydantic_bridge>
+
+<repository_pattern>
+Abstract DB access for testability:
+```python
+class UserRepository:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get_by_id(self, user_id: int) -> User | None:
+        result = await self.session.execute(select(User).where(User.id == user_id))
+        return result.scalar_one_or_none()
+
+    async def create(self, email: str, hashed_password: str) -> User:
+        user = User(email=email, hashed_password=hashed_password)
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
+```
+</repository_pattern>
+
+<task_routing>
+| Task | Action |
+|------|--------|
+| New project DB setup | Async session factory → Base → first model → `alembic init` |
+| Define models + schemas | Follow `core_patterns` + `pydantic_bridge` above |
+| Create migration | `alembic revision --autogenerate -m "desc"` then `alembic upgrade head` |
+| Complex queries / N+1 | Use `selectinload()` for relationships; check `review_checklist` |
+</task_routing>
+
 <review_checklist>
 When reviewing database code:
 - [ ] N+1 query problems (missing eager loading)

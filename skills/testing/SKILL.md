@@ -36,6 +36,17 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 
 </essential_principles>
 
+<pytest_principles>
+
+**When writing pytest (Python):**
+- No fake tests — every assertion must test real behavior (invariants, boundaries, error semantics)
+- Mock ONLY at system boundaries: DB, external HTTP, filesystem, clock. Never mock internal logic
+- Use existing fixtures from `conftest.py` before creating new ones
+- When fixing failing tests: fix test inputs/data to match real behavior — do not add more mocks
+- Delete flaky tests outright — do not weaken assertions to make them pass
+
+</pytest_principles>
+
 <quick_reference>
 ## By Language
 
@@ -57,7 +68,11 @@ def test_email_validation(email, valid):
     assert is_valid_email(email) == valid
 
 # Common commands
-pytest -v -x --lf --cov=src
+pytest -v                                         # Verbose
+pytest -x                                         # Stop on first failure
+pytest --lf                                       # Re-run last failed
+pytest -k "pattern"                               # Filter by test name
+pytest --cov=src --cov-report=html --cov-fail-under=80
 ```
 
 **TypeScript/JavaScript (Jest/Vitest):**
@@ -184,3 +199,14 @@ describe('UserService', () => {
 - Coverage meets project standard (usually 80%)
 - Tests pass reliably without flakiness
 </success_criteria>
+
+<fixing_tests>
+
+**When invoked to fix failing tests (not write new ones):**
+1. NO production code changes — fix tests only (unless explicitly told otherwise)
+2. Debug first: print what the function actually returns before asserting
+3. Fix test inputs/data to match real behavior — do not add more mocks
+4. Use existing conftest fixtures — do not create duplicates
+5. Remove any `@pytest.mark.skip` once the test is passing
+
+</fixing_tests>

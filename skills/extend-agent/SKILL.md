@@ -61,7 +61,7 @@ What would you like to create?
 <routing>
 | Choice | Instructions |
 |--------|-------------|
-| 1, "skill", "rule", "mdc" | Read `workflows/create-skill.md` |
+| 1, "skill", "rule", "mdc" | Read `workflows/create-simple-skill.md` |
 | 2, "command", "slash" | See `<create_command>` below |
 | 3, "hook", "automation" | See `<create_hook>` below |
 | 4, "subagent", "agent" | Read `workflows/create-subagent.md` |
@@ -136,7 +136,11 @@ Hooks are event-driven automation in `.claude/hooks.json`.
 | `PostToolUse` | After tool runs | No |
 | `UserPromptSubmit` | User submits prompt | Yes |
 | `Stop` | Agent tries to stop | Yes |
+| `SubagentStop` | Subagent tries to stop | Yes |
 | `SessionStart` | Session begins | No |
+| `SessionEnd` | Session ends | No |
+| `PreCompact` | Before context compaction | Yes |
+| `Notification` | Claude needs input | No |
 
 **Command hook template:**
 ```json
@@ -163,6 +167,20 @@ Hooks are event-driven automation in `.claude/hooks.json`.
 {"decision": "block", "reason": "Why this was blocked"}
 ```
 
+**Prompt hook template** (LLM evaluates instead of a script):
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash",
+      "hooks": [{"type": "prompt", "prompt": "Is this command safe: $ARGUMENTS\nReturn JSON: {\"decision\": \"approve\" or \"block\", \"reason\": \"...\"}"}]
+    }]
+  }
+}
+```
+Use `prompt` type when decision requires reasoning; `command` type for deterministic checks.
+Test hooks with: `claude --debug`
+
 **Matchers:**
 ```
 "Bash"           → Exact tool name
@@ -185,6 +203,21 @@ See `skills/security/hooks/` for working hook script examples.
 
 </create_hook>
 
+<create_skill_and_subagent_notes>
+
+**Skill complexity rule:**
+- Simple (4-10 lines of instructions) → single `SKILL.md` file
+- Complex (multi-step workflows, multiple domains) → router pattern with `workflows/`, `references/`, `templates/` subdirs
+
+**Subagent execution model — critical constraints:**
+- Subagents **cannot** use `AskUserQuestion` or wait for user input
+- Run isolated — user sees only final output, not intermediate steps
+- Invoked automatically (Claude matches `description` field) or explicitly via the Task tool
+- Project subagents (`.claude/agents/`) override user subagents (`~/.claude/agents/`) on name conflict
+- For multi-stage orchestration (research → plan → execute pipeline): use the planning skill + Task tool, not a single subagent
+
+</create_skill_and_subagent_notes>
+
 <reference_index>
 - `references/skill-structure.md` — Complete skill patterns and XML tags
 - `references/cursor-format.md` — Cursor .mdc format in depth
@@ -194,8 +227,7 @@ See `skills/security/hooks/` for working hook script examples.
 <workflows_index>
 | Workflow | Purpose |
 |----------|---------|
-| `workflows/create-simple-skill.md` | Build a single-file skill from scratch |
-| `workflows/create-router-skill.md` | Build a complex skill with subdirectories |
+| `workflows/create-simple-skill.md` | Build a single-file skill or a complex router skill with subdirectories |
 | `workflows/convert-to-cursor.md` | Transform a SKILL.md to Cursor .mdc format |
 | `workflows/create-subagent.md` | Build a specialist agent for Claude Code or Cursor |
 </workflows_index>
