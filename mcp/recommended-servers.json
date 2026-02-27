@@ -1,67 +1,109 @@
 {
-  "_comment": "Recommended MCP server configurations. Replace ${PROJECT_DIR} with your project root path. Replace credential placeholders with actual values.",
+  "_comment": "Recommended MCP server configurations. MCP is OPT-IN — nothing is installed by default. Replace credential placeholders with actual values.",
+  "_opt_in_notice": "To use MCP: copy the server block(s) you want into your platform's config file (see below). Never commit credentials.",
+
+  "config_paths": {
+    "claude_code_global":  "~/.claude.json  (or ~/.claude/settings.json) — user-level, all projects",
+    "claude_code_project": ".claude/settings.json — project-level",
+    "cursor_global":       "~/.cursor/mcp.json — user-level, all projects",
+    "cursor_project":      ".cursor/mcp.json — project-level"
+  },
+
   "mcpServers": {
+
     "github": {
-      "_description": "GitHub integration — issues, PRs, repos, code search",
-      "_install": "npm install -g @modelcontextprotocol/server-github",
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      }
-    },
-    "filesystem": {
-      "_description": "Enhanced filesystem access beyond default tools",
-      "_install": "npm install -g @modelcontextprotocol/server-filesystem",
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_DIR}"]
-    },
-    "postgres": {
-      "_description": "PostgreSQL database access — read-only by default",
-      "_install": "npm install -g @modelcontextprotocol/server-postgres",
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
-    },
-    "atlassian": {
-      "_description": "Jira and Confluence integration",
+      "_description": "GitHub integration — PRs, issues, repos, code search. Preferred: remote hosted endpoint (no local install needed).",
+      "_status": "supported — use remote/docker, NOT the deprecated @modelcontextprotocol/server-github npm package",
+      "_option_a_remote": "Remote hosted (Claude Code only — requires claude.ai login):",
       "type": "sse",
-      "url": "https://mcp.atlassian.com/v1/sse"
+      "url": "https://api.githubcopilot.com/mcp/",
+      "_env_a": { "GITHUB_TOKEN": "${GITHUB_TOKEN}" },
+      "_option_b_docker": "Docker (Claude Code + Cursor, offline-capable):",
+      "_docker_config": {
+        "type": "stdio",
+        "command": "docker",
+        "args": ["run", "-i", "--rm",
+          "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
+          "ghcr.io/github/github-mcp-server"],
+        "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}" }
+      },
+      "_scopes": "Required token scopes: repo, read:org, read:user",
+      "_docs": "https://github.com/github/github-mcp-server"
     },
-    "brave-search": {
-      "_description": "Web search via Brave Search API",
-      "_install": "npm install -g @modelcontextprotocol/server-brave-search",
+
+    "atlassian": {
+      "_description": "Jira and Confluence — issue management, page editing. Uses Atlassian's official remote MCP server (no local install).",
+      "_status": "supported — remote SSE endpoint",
+      "type": "sse",
+      "url": "https://mcp.atlassian.com/v1/sse",
+      "_auth": "Authenticate via browser at https://mcp.atlassian.com when prompted",
+      "_docs": "https://developer.atlassian.com/cloud/jira/platform/mcp/"
+    },
+
+    "postgres": {
+      "_description": "PostgreSQL — read-only database introspection and queries. Use a read-only DB user.",
+      "_status": "supported",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"],
+      "_env": { "DATABASE_URL": "postgresql://readonly_user:pass@localhost:5432/dbname" }
+    },
+
+    "websearch": {
+      "_description": "Web search via Tavily (preferred) — docs lookup, current events, research.",
+      "_status": "supported — requires Tavily API key (free tier available at https://tavily.com)",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "tavily-mcp@0.1.4"],
       "env": {
-        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
-      }
+        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
+      },
+      "_alt": "Alternative: Brave Search MCP — npx @modelcontextprotocol/server-brave-search + BRAVE_API_KEY"
     },
-    "memory": {
-      "_description": "Persistent memory across conversations",
-      "_install": "npm install -g @modelcontextprotocol/server-memory",
+
+    "mermaid": {
+      "_description": "Mermaid diagram rendering to images.",
+      "_status": "supported",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
-    },
-    "mermaid": {
-      "_description": "Mermaid diagram generation to images",
-      "_install": "npm install -g @claude-mcp/mermaid",
-      "type": "stdio",
-      "command": "claude-mermaid",
-      "args": [],
+      "args": ["-y", "@peng-shawn/mermaid-mcp-server"],
       "env": {}
+    },
+
+    "sentry": {
+      "_description": "Sentry — error tracking, issue details, stack traces.",
+      "_status": "supported — requires Sentry auth token",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sentry"],
+      "env": {
+        "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}",
+        "SENTRY_ORG_SLUG": "${SENTRY_ORG}",
+        "SENTRY_PROJECT_SLUG": "${SENTRY_PROJECT}"
+      },
+      "_docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/sentry"
+    },
+
+    "groundcover": {
+      "_description": "groundcover — cloud-native observability (APM, logs, metrics). Uses groundcover's MCP server.",
+      "_status": "supported — requires groundcover API key",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@groundcover/mcp-server"],
+      "env": {
+        "GROUNDCOVER_API_KEY": "${GROUNDCOVER_API_KEY}"
+      },
+      "_docs": "https://docs.groundcover.com/docs/mcp",
+      "_note": "Contact groundcover for API key access if not already provisioned"
+    },
+
+    "filesystem": {
+      "_description": "Enhanced filesystem access beyond default tools. Only add if your workflow needs paths outside the project.",
+      "_status": "optional — only install if you have a specific need",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_DIR}"],
+      "_security": "Only list paths you explicitly want the agent to access"
     }
-  },
-  "claude_code_config": {
-    "_comment": "For Claude Code: add mcpServers to ~/.claude.json or .claude/settings.json",
-    "_example": "{ \"mcpServers\": { ... } }"
-  },
-  "cursor_config": {
-    "_comment": "For Cursor: add mcpServers to .cursor/mcp.json (project) or ~/.cursor/mcp_config.json (global)",
-    "_example": "{ \"mcpServers\": { ... } }"
   }
 }

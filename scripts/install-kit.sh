@@ -8,7 +8,7 @@
 #
 # Usage:
 #   # Pipe from check script (most common):
-#   scripts/check-kit-updates.sh | scripts/install-kit.sh
+#   scripts/check-kit-updates.sh --profile core | scripts/install-kit.sh
 #
 #   # From a saved plan file:
 #   scripts/install-kit.sh --plan /tmp/kit-plan.json
@@ -29,8 +29,19 @@
 #   NEW      — install (destination doesn't exist)
 #   CHANGED  — replace (destination exists but differs)
 #   IDENTICAL — skip (already up to date)
-#   SKIP     — skip (agent marked it to keep)
-#   MERGE    — skip (agent will handle manually)
+#   SKIP     — skip (user marked it to keep as-is)
+#   MERGE    — skip (user will merge manually)
+#
+# File types handled:
+#   skill_dir       — copy directory to ~/.claude/skills/
+#   agent_file      — copy .md to ~/.claude/agents/
+#   command_file    — copy .md to ~/.claude/commands/
+#   rule_file       — copy .md to .claude/rules/ (project-level)
+#   lang_file       — copy language convention .md to .claude/rules/
+#   hook_file       — copy .sh to hooks dir, make executable
+#   cursor_mdc      — generate .mdc from source .md via generate-cursor-mdc.sh
+#   agents_md       — copy AGENTS.md template to project root
+#   gemini_md       — copy GEMINI.md template to project root
 #
 # Exit codes:
 #   0 = all done
@@ -46,6 +57,7 @@ PLAN_FILE=""
 RESUME=false
 DRY_RUN=false
 STATE_FILE="${HOME}/.claude/.agent-kit-state.json"
+GENERATE_MDC="${SCRIPT_DIR}/generate-cursor-mdc.sh"
 
 # ── Parse args ────────────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -55,7 +67,7 @@ while [[ $# -gt 0 ]]; do
     --resume)      RESUME=true;  shift ;;
     --dry-run)     DRY_RUN=true; shift ;;
     -h|--help)
-      sed -n '3,40p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      sed -n '3,50p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
       exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
@@ -78,6 +90,9 @@ if ! python3 -c "import json; json.load(open('${TMPPLAN}'))" 2>/dev/null; then
 fi
 
 KIT_COMMIT=$(python3 -c "import json; print(json.load(open('${TMPPLAN}')).get('kit_commit','unknown'))" 2>/dev/null || echo "unknown")
+PROFILE=$(python3 -c "import json; print(json.load(open('${TMPPLAN}')).get('profile','core'))" 2>/dev/null || echo "core")
+PLATFORM=$(python3 -c "import json; print(json.load(open('${TMPPLAN}')).get('platform','claude'))" 2>/dev/null || echo "claude")
+DETECTED_LANG=$(python3 -c "import json; print(json.load(open('${TMPPLAN}')).get('detected_lang',''))" 2>/dev/null || echo "")
 
 # ── State helpers ─────────────────────────────────────────────────────────────
 state_get() {
@@ -94,7 +109,6 @@ PYEOF
 }
 
 state_update() {
-  # Merge a dict of key=value pairs into the state file
   local updates="$1"    # Python dict literal string
   mkdir -p "$(dirname "${STATE_FILE}")"
   python3 - <<PYEOF 2>/dev/null || true
@@ -153,9 +167,12 @@ if [[ "${RESUME}" == "false" && "${DRY_RUN}" == "false" ]]; then
   state_update "{'install_status':'in_progress','install_kit_commit':'${KIT_COMMIT}','install_project_dir':'${PROJECT_DIR}','install_completed_files':[],'install_started_at':'$(date -u +%Y-%m-%dT%H:%M:%SZ)'}"
 fi
 
-echo "Installing Agent Runtime Kit (commit: ${KIT_COMMIT:0:8}...)"
-[[ "${RESUME}"   == "true" ]] && echo "(resuming interrupted install)"
-[[ "${DRY_RUN}"  == "true" ]] && echo "(dry-run — no files will be written)"
+echo "Installing Agent Runtime Kit"
+echo "  commit:   ${KIT_COMMIT:0:8}..."
+echo "  profile:  ${PROFILE}"
+echo "  platform: ${PLATFORM}"
+[[ "${RESUME}"   == "true" ]] && echo "  (resuming interrupted install)"
+[[ "${DRY_RUN}"  == "true" ]] && echo "  (dry-run — no files will be written)"
 echo ""
 
 # ── Install helper ────────────────────────────────────────────────────────────
@@ -185,10 +202,82 @@ do_install() {
 
   local src_full="${KIT_DIR}/${src_rel}"
 
-  # Create parent directory
+  # Handle cursor_mdc: generate .mdc from source .md
+  if [[ "${ftype}" == "cursor_mdc" ]]; then
+    local dest_dir dest_name
+    dest_dir="$(dirname "${dest}")"
+    dest_name="$(basename "${dest}" .mdc)"
+
+    mkdir -p "${dest_dir}"
+
+    # Determine if this is a CORE rule (alwaysApply: true)
+    local always_apply="false"
+    case "${dest_name}" in base-conventions|security|testing)
+      always_apply="true" ;;
+    esac
+
+    # Determine globs based on dest_name
+    local globs=""
+    case "${dest_name}" in
+      python-conventions) globs="**/*.py" ;;
+      python-testing)     globs="**/test_*.py,**/*_test.py" ;;
+      python-database)    globs="**/models/*.py,**/db/*.py" ;;
+      typescript-conventions) globs="**/*.ts,**/*.tsx" ;;
+      typescript-testing) globs="**/*.test.ts,**/*.spec.ts" ;;
+      nodejs-conventions) globs="**/*.js,**/*.mjs" ;;
+      nodejs-testing)     globs="**/*.test.js,**/*.spec.js" ;;
+      go-conventions)     globs="**/*.go" ;;
+      go-testing)         globs="**/*_test.go" ;;
+      java-conventions)   globs="**/*.java" ;;
+      cpp-conventions)    globs="**/*.cpp,**/*.hpp,**/*.h" ;;
+      cpp-testing)        globs="**/*_test.cpp,**/test_*.cpp" ;;
+    esac
+
+    # Extract description and strip frontmatter via generate-cursor-mdc helper
+    # Use generate-cursor-mdc.sh single-file mode if available; otherwise inline python -c
+    local description
+    description=$(python3 -c "
+import sys, re
+content = open(sys.argv[1]).read()
+m = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+if m:
+    for line in m.group(1).splitlines():
+        if line.strip().startswith('description:'):
+            print(line.split(':',1)[1].strip()); sys.exit(0)
+m2 = re.search(r'^# (.+)$', content, re.MULTILINE)
+if m2: print(m2.group(1))
+" "${src_full}" 2>/dev/null || echo "")
+    [[ -z "${description}" ]] && description="${dest_name}"
+
+    # Generate .mdc: frontmatter + body (frontmatter stripped)
+    {
+      echo "---"
+      echo "description: ${description}"
+      if [[ -n "${globs}" ]]; then
+        echo "globs: [\"${globs}\"]"
+      else
+        echo "globs: []"
+      fi
+      echo "alwaysApply: ${always_apply}"
+      echo "---"
+      echo ""
+      python3 -c "
+import sys, re
+content = open(sys.argv[1]).read()
+stripped = re.sub(r'^---\s*\n.*?\n---\s*\n', '', content, count=1, flags=re.DOTALL)
+print(stripped, end='')
+" "${src_full}" 2>/dev/null || cat "${src_full}"
+    } > "${dest}"
+
+    mark_done "${dest}"
+    echo "  ✓  ${action} (mdc): ${dest}"
+    (( installed++ )) || true
+    return 0
+  fi
+
+  # Standard file/dir copy
   mkdir -p "$(dirname "${dest}")"
 
-  # Copy (directory or file)
   if [[ -d "${src_full}" ]]; then
     rm -rf "${dest}"
     cp -r "${src_full}" "${dest}"
@@ -205,9 +294,9 @@ do_install() {
 }
 
 # ── Process every file in the plan ───────────────────────────────────────────
-# Extract all file entries to a temp list (one JSON object per line)
 TMPENTRIES="$(mktemp)"
 trap 'rm -f "${TMPPLAN}" "${TMPENTRIES}"' EXIT
+
 python3 - <<PYEOF > "${TMPENTRIES}" 2>/dev/null
 import json
 data = json.load(open('${TMPPLAN}'))
@@ -228,11 +317,12 @@ while IFS=$'\t' read -r action source dest ftype; do
   }
 done < "${TMPENTRIES}"
 
-# ── Create hooks.json if missing ─────────────────────────────────────────────
-HOOKS_JSON="${PROJECT_DIR}/.claude/hooks.json"
-if [[ ! -f "${HOOKS_JSON}" && "${DRY_RUN}" == "false" ]]; then
-  mkdir -p "${PROJECT_DIR}/.claude"
-  cat > "${HOOKS_JSON}" <<'HOOKEOF'
+# ── Create project hooks.json if missing (Claude installs only) ───────────────
+if [[ "${PLATFORM}" == "claude" || "${PLATFORM}" == "both" ]]; then
+  HOOKS_JSON="${PROJECT_DIR}/.claude/hooks.json"
+  if [[ ! -f "${HOOKS_JSON}" && "${DRY_RUN}" == "false" ]]; then
+    mkdir -p "${PROJECT_DIR}/.claude"
+    cat > "${HOOKS_JSON}" <<'HOOKEOF'
 {
   "hooks": {
     "PreToolUse": [
@@ -260,15 +350,16 @@ if [[ ! -f "${HOOKS_JSON}" && "${DRY_RUN}" == "false" ]]; then
   }
 }
 HOOKEOF
-  mark_done "${HOOKS_JSON}"
-  echo "  ✓  created: ${HOOKS_JSON}"
+    mark_done "${HOOKS_JSON}"
+    echo "  ✓  created: ${HOOKS_JSON}"
+  fi
 fi
 
 # ── Finalise ──────────────────────────────────────────────────────────────────
 echo ""
 if (( failed == 0 )); then
   if [[ "${DRY_RUN}" == "false" ]]; then
-    state_update "{'install_status':'complete','last_installed_commit':'${KIT_COMMIT}','last_checked_commit':'${KIT_COMMIT}'}"
+    state_update "{'install_status':'complete','last_installed_commit':'${KIT_COMMIT}','last_checked_commit':'${KIT_COMMIT}','install_profile':'${PROFILE}','install_platform':'${PLATFORM}'}"
   fi
   echo "✅ Done: ${installed} installed, ${skipped} skipped"
   exit 0

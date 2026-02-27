@@ -1,196 +1,193 @@
 # MCP Server Setup
 
-MCP (Model Context Protocol) servers extend your AI agent with external tool access.
+> **MCP is OPT-IN.** Nothing is installed by default. Add only what you need.
 
-## Installation Locations
-
-**Claude Code** — add to `~/.claude.json` or project `.claude/settings.json`:
-```json
-{
-  "mcpServers": {
-    "server-name": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-name"],
-      "env": { "KEY": "value" }
-    }
-  }
-}
-```
-
-**Cursor** — add to `~/.cursor/mcp.json` or project `.cursor/mcp.json`:
-```json
-{
-  "mcpServers": {
-    "server-name": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-name"],
-      "env": { "KEY": "value" }
-    }
-  }
-}
-```
+MCP (Model Context Protocol) servers extend your AI agent with external tool access — GitHub, databases, search, observability, and more.
 
 ---
 
-## GitHub MCP Server
+## Config Locations
+
+| Platform | Scope | Path |
+|----------|-------|------|
+| Claude Code | Global (all projects) | `~/.claude.json` or `~/.claude/settings.json` |
+| Claude Code | Project-only | `.claude/settings.json` |
+| Cursor | Global (all projects) | `~/.cursor/mcp.json` |
+| Cursor | Project-only | `.cursor/mcp.json` |
+
+Add your chosen servers under `"mcpServers"`:
+
+```json
+{
+  "mcpServers": {
+    "server-name": { ... }
+  }
+}
+```
+
+After editing, restart Claude Code / Cursor to reload. Check with `claude mcp list` (Claude Code).
+
+---
+
+## Recommended Servers
+
+### GitHub
 
 Enables: PR management, issue tracking, code search, repository operations.
 
+**Option A — Remote hosted** (Claude Code, no local install):
 ```json
-{
-  "mcpServers": {
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_yourtoken"
-      }
-    }
+"github": {
+  "type": "sse",
+  "url": "https://api.githubcopilot.com/mcp/"
+}
+```
+Authenticate via `claude mcp add --transport sse github https://api.githubcopilot.com/mcp/`.
+
+**Option B — Docker** (Claude Code + Cursor, works offline):
+```json
+"github": {
+  "type": "stdio",
+  "command": "docker",
+  "args": ["run", "-i", "--rm",
+    "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
+    "ghcr.io/github/github-mcp-server"],
+  "env": {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_yourtoken"
   }
 }
 ```
 
-**Get a token**: GitHub → Settings → Developer settings → Personal access tokens → Generate new token
-**Required scopes**: `repo`, `read:org`, `read:user`
+> **Do NOT use** `@modelcontextprotocol/server-github` (npm). It was deprecated in April 2025.
+
+**Token scopes needed**: `repo`, `read:org`, `read:user`
+**Docs**: https://github.com/github/github-mcp-server
 
 ---
 
-## Filesystem MCP Server
+### Atlassian (Jira + Confluence)
 
-Enables: File operations in directories outside the project.
+Enables: Jira issue management, Confluence page creation and editing.
+
+Uses Atlassian's official **remote MCP server** — no local install required:
 
 ```json
-{
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/yourname/Documents",
-        "/Users/yourname/Desktop"
-      ]
-    }
-  }
+"atlassian": {
+  "type": "sse",
+  "url": "https://mcp.atlassian.com/v1/sse"
 }
 ```
 
-**Security**: Only list paths you explicitly want the agent to access.
+Authenticate in-browser when prompted. Works with both Claude Code and Cursor.
+
+**Docs**: https://developer.atlassian.com/cloud/jira/platform/mcp/
 
 ---
 
-## PostgreSQL MCP Server
+### PostgreSQL
 
 Enables: Database introspection, query execution, schema exploration.
 
 ```json
-{
-  "mcpServers": {
-    "postgres": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres"],
-      "env": {
-        "POSTGRES_CONNECTION_STRING": "postgresql://user:pass@localhost:5432/dbname"
-      }
-    }
-  }
+"postgres": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-postgres",
+           "postgresql://readonly_user:pass@localhost:5432/dbname"]
 }
 ```
 
-**Security**: Use a read-only database user for safety.
+> Always use a **read-only** database user.
 
 ---
 
-## Brave Search MCP Server
+### Web Search (Tavily — recommended)
 
-Enables: Web search from within the agent (useful for docs lookup, current events).
+Enables: Web search for docs, current events, research within the agent.
 
 ```json
-{
-  "mcpServers": {
-    "brave-search": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-      "env": {
-        "BRAVE_API_KEY": "BSA_yourapikey"
-      }
-    }
-  }
+"websearch": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "tavily-mcp@0.1.4"],
+  "env": { "TAVILY_API_KEY": "tvly-yourapikey" }
 }
 ```
 
-**Get a key**: https://api.search.brave.com/ → Create API Key (free tier available)
+Get a key: https://tavily.com (free tier available)
+
+**Alternative**: Brave Search — `npx @modelcontextprotocol/server-brave-search` + `BRAVE_API_KEY`
 
 ---
 
-## Memory MCP Server
+### Mermaid
 
-Enables: Persistent knowledge graph — agent can store and retrieve facts across sessions.
+Enables: Diagram rendering (flowchart, sequence, ERD) to images.
 
 ```json
-{
-  "mcpServers": {
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
-    }
-  }
+"mermaid": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@peng-shawn/mermaid-mcp-server"]
 }
 ```
-
-Good for: storing project context, user preferences, recurring patterns across conversations.
 
 ---
 
-## Atlassian MCP Server
+### Sentry
 
-Enables: Jira issue management, Confluence page creation and editing.
+Enables: Error tracking — fetch issues, stack traces, release info.
 
 ```json
-{
-  "mcpServers": {
-    "atlassian": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-atlassian"],
-      "env": {
-        "ATLASSIAN_URL": "https://yourcompany.atlassian.net",
-        "ATLASSIAN_EMAIL": "you@company.com",
-        "ATLASSIAN_API_TOKEN": "your-api-token"
-      }
-    }
+"sentry": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-sentry"],
+  "env": {
+    "SENTRY_AUTH_TOKEN": "sntrys_yourtoken",
+    "SENTRY_ORG_SLUG": "your-org",
+    "SENTRY_PROJECT_SLUG": "your-project"
   }
 }
 ```
 
-**Get a token**: https://id.atlassian.com/manage-profile/security/api-tokens
+**Docs**: https://github.com/modelcontextprotocol/servers/tree/main/src/sentry
 
 ---
 
-## Combined Setup
+### groundcover (Observability)
 
-Copy the servers you want into a single config:
+Enables: APM, logs, metrics from groundcover's cloud-native observability platform.
 
-**Claude Code** (`~/.claude.json`):
 ```json
-{
-  "mcpServers": {
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_yourtoken" }
-    },
-    "brave-search": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-      "env": { "BRAVE_API_KEY": "BSA_yourkey" }
-    },
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
-    }
+"groundcover": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@groundcover/mcp-server"],
+  "env": {
+    "GROUNDCOVER_API_KEY": "your-api-key"
   }
 }
 ```
+
+**Docs**: https://docs.groundcover.com/docs/mcp
+
+---
+
+### Filesystem (optional)
+
+Only add this if you need file access outside your project directory.
+
+```json
+"filesystem": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem",
+           "/Users/yourname/Documents"]
+}
+```
+
+> Security: list only paths you explicitly want the agent to access.
 
 ---
 
@@ -198,18 +195,18 @@ Copy the servers you want into a single config:
 
 **Server not connecting:**
 ```bash
-# Test if the package works standalone
-npx -y @modelcontextprotocol/server-github --help
+# Test the package standalone
+npx -y @modelcontextprotocol/server-postgres postgresql://... --help
 
 # Check Claude Code sees it
 claude mcp list
 ```
 
 **Permission errors:**
-- Check environment variables are set correctly
+- Check environment variables are set
 - Verify API tokens have required scopes
-- For filesystem: ensure paths listed in args actually exist
+- For filesystem: ensure listed paths exist
 
 **Cursor MCP not loading:**
 - Restart Cursor after editing `mcp.json`
-- Check JSON syntax with: `jq . .cursor/mcp.json`
+- Validate JSON: `jq . .cursor/mcp.json` or `jq . ~/.cursor/mcp.json`

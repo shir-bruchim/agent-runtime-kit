@@ -1,6 +1,6 @@
-# 🤖 Agent Runtime Kit
+# Agent Runtime Kit
 
-> A universal, production-ready configuration kit for AI agents. Works with Claude Code, Cursor, and any AI that can read files.
+> A universal, production-ready configuration kit for AI agents. Works with Claude Code, Cursor, GitHub Copilot, and Gemini CLI.
 
 ---
 
@@ -9,9 +9,9 @@
 A curated collection of skills, rules, subagents, commands, and language conventions that you clone once and use everywhere.
 
 **Philosophy:**
-- **Universal** — one file, works for both Claude Code and Cursor
+- **Universal** — works for Claude Code, Cursor, Copilot, and Gemini
 - **Self-configuring** — the agent reads `AGENT-SETUP.md` and installs itself
-- **Production-ready** — battle-tested patterns from real projects
+- **CORE by default** — small, high-signal. Opt into FULL for the full toolkit
 - **Self-extending** — meta-skills let you create new skills from within
 
 ---
@@ -24,9 +24,38 @@ Paste this URL into your AI agent's chat:
 https://github.com/shir-bruchim/agent-runtime-kit
 ```
 
-That's it. The agent reads the README, fetches `AGENT-SETUP.md`, detects what platform it's running on (Claude Code or Cursor), detects your project language, checks for any existing files that would conflict, and installs everything in the right places.
+The agent reads the README, fetches `AGENT-SETUP.md`, detects your platform, selects the CORE profile, and installs into `~/.claude/` (global). No cloning. No manual steps.
 
-No cloning. No manual steps.
+**Or use the scripts directly (after cloning):**
+
+```bash
+# CORE install — global, auto-detect platform (recommended):
+scripts/check-kit-updates.sh --profile core > /tmp/kit-plan.json
+scripts/install-kit.sh --plan /tmp/kit-plan.json
+
+# FULL install:
+scripts/check-kit-updates.sh --profile full > /tmp/kit-plan.json
+scripts/install-kit.sh --plan /tmp/kit-plan.json
+
+# Cursor only:
+scripts/check-kit-updates.sh --profile core --platform cursor > /tmp/kit-plan.json
+scripts/install-kit.sh --plan /tmp/kit-plan.json
+```
+
+See `PROFILES.md` for profile details and per-file decision (SKIP/MERGE) instructions.
+
+---
+
+## Profiles
+
+| | CORE (default) | FULL |
+|-|----------------|------|
+| Skills | extend-agent, git, testing, debugging, security | + planning, tdd, api-design, spec-interview, implement-jira-ticket |
+| Rules | base-conventions, security, testing | + git-workflow, performance, infrastructure |
+| Commands | commit, push, pr, ship, review, test | + debug, refactor, spec-interview, generate-prd, implement-jira-ticket |
+| Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer |
+
+CORE is ~60% smaller than FULL. Use CORE unless you need the extras. See `PROFILES.md`.
 
 ---
 
@@ -35,51 +64,54 @@ No cloning. No manual steps.
 ```
 agent-runtime-kit/
 ├── AGENT-SETUP.md          # AI self-configuration instructions
+├── PROFILES.md             # CORE vs FULL profile definitions
 ├── README.md               # This file
 │
 ├── skills/                 # Reusable skill modules (SKILL.md format)
-│   ├── extend-agent/       # Meta: create skills, commands, hooks, subagents
-│   ├── planning/           # Project planning hierarchy
-│   ├── debugging/          # Systematic debugging
-│   ├── git/                # Git workflows
-│   ├── security/           # Security reviews + hooks
-│   ├── testing/            # Test writing
-│   ├── tdd/                # Test-driven development
-│   ├── api-design/         # API design patterns
-│   └── spec-interview/     # Requirements gathering
+│   ├── extend-agent/       # Meta: create skills, commands, hooks, subagents  [CORE]
+│   ├── debugging/          # Systematic debugging                              [CORE]
+│   ├── git/                # Git workflows                                     [CORE]
+│   ├── security/           # Security reviews + hooks                          [CORE]
+│   ├── testing/            # Test writing                                      [CORE]
+│   ├── planning/           # Project planning hierarchy                        [FULL]
+│   ├── tdd/                # Test-driven development                           [FULL]
+│   ├── api-design/         # API design patterns                               [FULL]
+│   ├── spec-interview/     # Requirements gathering                            [FULL]
+│   └── implement-jira-ticket/ # Jira ticket implementation                    [FULL]
 │
 ├── subagents/              # Specialized AI subagents
-│   ├── architect.md        # Architecture decisions
-│   ├── reviewer.md         # Code review
-│   ├── planner.md          # Task planning
-│   ├── tester.md           # Test writing
-│   ├── git-ops.md          # Git operations
-│   ├── security.md         # Security analysis
-│   ├── db-expert.md        # Database design
-│   ├── doc-writer.md       # Documentation
-│   └── refactorer.md       # Code refactoring
+│   ├── reviewer.md         # Code review                                       [CORE]
+│   ├── tester.md           # Test writing                                      [CORE]
+│   ├── git-ops.md          # Git operations                                    [CORE]
+│   ├── security.md         # Security analysis                                 [CORE]
+│   ├── architect.md        # Architecture decisions                            [FULL]
+│   ├── planner.md          # Task planning                                     [FULL]
+│   ├── db-expert.md        # Database design                                   [FULL]
+│   ├── doc-writer.md       # Documentation                                     [FULL]
+│   └── refactorer.md       # Code refactoring                                  [FULL]
 │
-├── commands/               # Slash commands
-│   ├── commit.md           # /commit
-│   ├── push.md             # /push
-│   ├── pr.md               # /pr
-│   ├── ship.md             # /ship (commit + push + PR)
-│   ├── review.md           # /review
-│   ├── test.md             # /test (auto-detect and run tests)
-│   ├── debug.md            # /debug [issue]
-│   ├── refactor.md         # /refactor [target]
-│   ├── spec-interview.md   # /spec-interview
-│   └── generate-prd.md     # /generate-prd
+├── commands/               # Slash commands (Claude Code)
+│   ├── commit.md           # /commit                                           [CORE]
+│   ├── push.md             # /push                                             [CORE]
+│   ├── pr.md               # /pr                                               [CORE]
+│   ├── ship.md             # /ship (commit + push + PR)                        [CORE]
+│   ├── review.md           # /review                                           [CORE]
+│   ├── test.md             # /test                                             [CORE]
+│   ├── debug.md            # /debug [issue]                                    [FULL]
+│   ├── refactor.md         # /refactor [target]                                [FULL]
+│   ├── spec-interview.md   # /spec-interview                                   [FULL]
+│   ├── generate-prd.md     # /generate-prd                                     [FULL]
+│   └── implement-jira-ticket.md # /implement-jira-ticket                       [FULL]
 │
 ├── rules/                  # Project-level conventions
-│   ├── base-conventions.md
-│   ├── git-workflow.md
-│   ├── security.md
-│   ├── testing.md
-│   ├── performance.md
-│   └── infrastructure.md
+│   ├── base-conventions.md                                                     [CORE]
+│   ├── security.md                                                             [CORE]
+│   ├── testing.md                                                              [CORE]
+│   ├── git-workflow.md                                                         [FULL]
+│   ├── performance.md                                                          [FULL]
+│   └── infrastructure.md                                                       [FULL]
 │
-├── languages/              # Language-specific conventions
+├── languages/              # Language-specific conventions (detected auto)
 │   ├── python/             # conventions, testing, database
 │   ├── nodejs/             # conventions, testing
 │   ├── typescript/         # conventions, testing
@@ -87,12 +119,15 @@ agent-runtime-kit/
 │   ├── cpp/                # conventions, testing
 │   └── java/               # conventions
 │
-├── mcp/
-│   ├── recommended-servers.json  # MCP server list
-│   └── SETUP.md                  # Setup guide per platform
+├── templates/              # Source templates for AI agent generation
+│   ├── AGENTS.md           # Copilot + Gemini context file template
+│   ├── GEMINI.md           # Gemini CLI project context template
+│   └── .github/
+│       └── copilot-instructions.md
 │
-├── templates/
-│   └── full-setup-example.md     # Complete setup walkthrough
+├── mcp/
+│   ├── recommended-servers.json  # OPT-IN MCP server configs
+│   └── SETUP.md                  # Setup guide per platform
 │
 └── docs/
     ├── CUSTOMIZATION.md          # How to extend the kit
@@ -106,35 +141,32 @@ agent-runtime-kit/
 
 ### Claude Code
 
-Copy the files you want into `~/.claude/` (user-level) or `.claude/` (project-level):
-
 ```bash
-# Install skills
-cp -r skills/* ~/.claude/skills/
+# Global install (recommended — available in all projects)
+cp -r skills/extend-agent skills/git skills/testing skills/debugging skills/security ~/.claude/skills/
+cp subagents/reviewer.md subagents/tester.md subagents/git-ops.md subagents/security.md ~/.claude/agents/
+cp commands/commit.md commands/push.md commands/pr.md commands/ship.md \
+   commands/review.md commands/test.md ~/.claude/commands/
 
-# Install subagents
-cp -r subagents/* ~/.claude/agents/
-
-# Install commands
-cp -r commands/* ~/.claude/commands/
-
-# Install rules (project-level)
+# Project-level rules (CORE)
 mkdir -p .claude/rules
-cp rules/* .claude/rules/
-
-# Install language conventions (pick your stack)
-cp languages/python/* .claude/rules/
+cp rules/base-conventions.md rules/security.md rules/testing.md .claude/rules/
+cp languages/python/*.md .claude/rules/  # or typescript, nodejs, go, etc.
 ```
 
 ### Cursor
 
-Transform skills to `.mdc` format and place in `.cursor/rules/`:
+Generate `.mdc` files automatically:
 
 ```bash
-mkdir -p .cursor/rules
+# After cloning:
+bash scripts/generate-cursor-mdc.sh --kit-dir . --dest-dir ~/.cursor/rules --profile core
+```
 
-# Each skill's SKILL.md becomes a .mdc file
-# See AGENT-SETUP.md § Cursor Installation for the exact transform
+Or install project-level:
+
+```bash
+bash scripts/generate-cursor-mdc.sh --kit-dir . --dest-dir .cursor/rules --profile core
 ```
 
 ---
@@ -143,56 +175,43 @@ mkdir -p .cursor/rules
 
 Read `AGENT-SETUP.md`. It contains step-by-step instructions for:
 
-1. Detecting your identity (Claude Code vs Cursor)
-2. Detecting the project language
-3. Transforming and installing the right files
-4. Verifying the installation
+1. Cloning to `/tmp` (token-efficient, auto-cleaned after install)
+2. Running `check-kit-updates.sh --profile core` to generate a plan
+3. Reviewing the plan (SKIP/MERGE any file you want to keep)
+4. Running `install-kit.sh` from the plan
 
 ---
 
 ## Skills Reference
 
-| Skill | What It Does | Key Files |
-|-------|-------------|-----------|
-| `extend-agent/` | Create skills, commands, hooks, or subagents | SKILL.md + references + workflows |
-| `planning/` | Hierarchical project planning | SKILL.md + 6 templates + 8 workflows |
-| `debugging/` | Systematic bug investigation | SKILL.md |
-| `git/` | Commit, push, PR workflows | SKILL.md + 3 workflow files |
-| `security/` | Security review + blocking hooks | SKILL.md + 4 hook scripts |
-| `testing/` | Test strategy and writing (Python + Node.js examples) | SKILL.md |
-| `tdd/` | Red-green-refactor cycle (Python + Node.js examples) | SKILL.md |
-| `api-design/` | REST API design (FastAPI + Express examples) | SKILL.md |
-| `spec-interview/` | Requirements gathering | SKILL.md + spec template |
-
-### Meta-Skill: `extend-agent/`
-
-One unified skill that creates any extension type:
-
-| Creates | Format | Platform |
-|---------|--------|---------|
-| Skills | `SKILL.md` | Claude Code |
-| Rules | `.mdc` | Cursor |
-| Commands | `commands/*.md` | Claude Code |
-| Hooks | `hooks.json` entries | Claude Code |
-| Subagents | `agents/*.md` | Claude Code + Cursor |
+| Skill | Profile | What It Does |
+|-------|---------|-------------|
+| `extend-agent/` | CORE | Create skills, commands, hooks, or subagents |
+| `debugging/` | CORE | Systematic bug investigation |
+| `git/` | CORE | Commit, push, PR workflows |
+| `security/` | CORE | Security review + blocking hooks |
+| `testing/` | CORE | Test strategy and writing |
+| `planning/` | FULL | Hierarchical project planning |
+| `tdd/` | FULL | Red-green-refactor cycle |
+| `api-design/` | FULL | REST API design patterns |
+| `spec-interview/` | FULL | Requirements gathering |
+| `implement-jira-ticket/` | FULL | End-to-end Jira ticket implementation |
 
 ---
 
 ## Subagents Reference
 
-Subagents work in **both Claude Code and Cursor**. Both platforms read from `.claude/agents/` (or `.cursor/agents/` for Cursor).
-
-| Subagent | Model | Tools (Claude Code) | Use For |
-|----------|-------|---------------------|---------|
-| `architect` | opus | Read, Grep, Glob | Architecture decisions |
-| `reviewer` | sonnet | Read, Grep, Glob, Bash | Code review |
-| `planner` | opus | Read, Grep, Glob | Task planning |
-| `tester` | sonnet | Read, Write, Edit, Bash | Writing tests |
-| `git-ops` | haiku | Bash, Read | Git operations |
-| `security` | sonnet | Read, Grep, Glob, Bash | Security analysis |
-| `db-expert` | sonnet | Read, Write, Edit, Bash | Database design |
-| `doc-writer` | sonnet | Read, Write, Edit | Documentation |
-| `refactorer` | sonnet | Read, Write, Edit, Grep, Glob | Refactoring |
+| Subagent | Profile | Model | Use For |
+|----------|---------|-------|---------|
+| `reviewer` | CORE | sonnet | Code review |
+| `tester` | CORE | sonnet | Writing tests |
+| `git-ops` | CORE | haiku | Git operations |
+| `security` | CORE | sonnet | Security analysis |
+| `architect` | FULL | opus | Architecture decisions |
+| `planner` | FULL | opus | Task planning |
+| `db-expert` | FULL | sonnet | Database design |
+| `doc-writer` | FULL | sonnet | Documentation |
+| `refactorer` | FULL | sonnet | Refactoring |
 
 **Claude Code**: invoked automatically by description or by user request.
 **Cursor**: invoke explicitly with `/subagent-name` (e.g., `/reviewer check this PR`).
@@ -201,57 +220,54 @@ Subagents work in **both Claude Code and Cursor**. Both platforms read from `.cl
 
 ## Commands Reference
 
-| Command | Description |
-|---------|-------------|
-| `/commit` | Stage and commit with conventional commit format |
-| `/push` | Push current branch to remote |
-| `/pr` | Create pull request with template |
-| `/ship` | Full workflow: commit + push + PR |
-| `/review` | Code review of recent changes |
-| `/test` | Auto-detect and run the project's test suite |
-| `/debug [issue]` | Systematic root-cause analysis for an issue |
-| `/refactor [target]` | Improve code quality without changing behavior |
-| `/spec-interview` | Interactive requirements gathering |
-| `/generate-prd` | Generate product requirements document |
+| Command | Profile | Description |
+|---------|---------|-------------|
+| `/commit` | CORE | Stage and commit with conventional commit format |
+| `/push` | CORE | Push current branch to remote |
+| `/pr` | CORE | Create pull request with template |
+| `/ship` | CORE | Full workflow: commit + push + PR |
+| `/review` | CORE | Code review of recent changes |
+| `/test` | CORE | Auto-detect and run the project's test suite |
+| `/debug [issue]` | FULL | Systematic root-cause analysis |
+| `/refactor [target]` | FULL | Improve code quality without changing behavior |
+| `/spec-interview` | FULL | Interactive requirements gathering |
+| `/generate-prd` | FULL | Generate product requirements document |
+| `/implement-jira-ticket` | FULL | Implement a Jira ticket end-to-end |
 
 ---
 
-## Planning System
+## Project Overrides
 
-The planning skill creates a `.planning/` directory with a hierarchy:
+Project-level files always win over global defaults:
 
-```
-.planning/
-├── BRIEF.md          # Problem statement + goals
-├── ROADMAP.md        # High-level milestones
-├── RESEARCH.md       # Research findings (optional)
-└── phases/
-    ├── 01-foundation-PLAN.md
-    ├── 01-foundation-SUMMARY.md
-    ├── 02-features-PLAN.md
-    └── ...
-```
+| Platform | Location | Purpose |
+|----------|----------|---------|
+| Claude Code | `.claude/rules/*.md` | Project-specific rules |
+| Cursor | `.cursor/rules/*.mdc` | Project-specific rules |
+| All agents | `AGENTS.md` | Copilot + Gemini context |
+| Gemini CLI | `GEMINI.md` | Gemini project context |
+| GitHub Copilot | `.github/copilot-instructions.md` | Copilot behavior |
 
-**Key principles:**
-- Plans degrade at 40-50% context, not 80%
-- Maximum 2-3 tasks per PLAN.md
-- Each task includes: exact file paths, Action/Why/Depends on/Risk/Done when
+Templates for these files are in `templates/` and installed project-scope during setup.
 
 ---
 
-## MCP Servers
+## MCP Servers (Opt-in)
 
-`mcp/recommended-servers.json` contains configuration for:
+MCP is **never installed by default**. See `mcp/SETUP.md` for the full list and setup instructions.
 
-- **github** — PR/issue management
-- **filesystem** — File operations outside project
-- **postgres** — Database introspection
-- **atlassian** — Jira/Confluence integration
-- **brave-search** — Web search
-- **memory** — Persistent knowledge graph
-- **mermaid** — Diagram generation
+Quick reference — supported servers:
 
-See the file for Claude Code vs Cursor installation instructions.
+| Server | What It Enables |
+|--------|----------------|
+| `github` | PRs, issues, code search (use docker/remote, not deprecated npm) |
+| `atlassian` | Jira + Confluence (remote SSE, no local install) |
+| `postgres` | DB introspection (read-only) |
+| `websearch` | Web search via Tavily |
+| `mermaid` | Diagram rendering |
+| `sentry` | Error tracking |
+| `groundcover` | Cloud-native observability |
+| `filesystem` | File access outside project (use sparingly) |
 
 ---
 
@@ -260,12 +276,13 @@ See the file for Claude Code vs Cursor installation instructions.
 1. Fork this repo
 2. Add your skill/subagent/command to the appropriate directory
 3. Follow the patterns in existing files (XML tags, YAML frontmatter)
-4. Submit a PR
+4. Mark new items `[CORE]` or `[FULL]` in your PR description
+5. Submit a PR
 
 Use `/spec-interview` to gather requirements before building anything significant.
 
 ---
 
-**Version:** 2.0.0
-**Compatible With:** Claude Code (Claude 4.5+), Cursor 0.40+
-**Last Updated:** 2026-02-23
+**Version:** 2.1.0
+**Compatible With:** Claude Code (Claude 4.5+), Cursor 0.40+, GitHub Copilot, Gemini CLI
+**Last Updated:** 2026-02-26

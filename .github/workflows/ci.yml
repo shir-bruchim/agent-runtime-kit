@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**", "chore/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          echo "Checking mcp/recommended-servers.json..."
+          python3 -m json.tool mcp/recommended-servers.json > /dev/null
+          echo "✓ mcp/recommended-servers.json is valid JSON"
+
+      - name: Check script syntax
+        run: |
+          bash -n scripts/check-kit-updates.sh
+          bash -n scripts/install-kit.sh
+          bash -n scripts/generate-cursor-mdc.sh
+          echo "✓ All scripts pass syntax check"
+
+      - name: Validate file references
+        run: |
+          python3 scripts/validate-references.py
