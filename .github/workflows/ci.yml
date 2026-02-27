@@ -16,15 +16,47 @@ jobs:
         run: |
           echo "Checking mcp/recommended-servers.json..."
           python3 -m json.tool mcp/recommended-servers.json > /dev/null
-          echo "✓ mcp/recommended-servers.json is valid JSON"
+          echo "Checking routing/skill-rules.json..."
+          python3 -m json.tool routing/skill-rules.json > /dev/null
+          echo "✓ All JSON files are valid"
 
       - name: Check script syntax
         run: |
           bash -n scripts/check-kit-updates.sh
           bash -n scripts/install-kit.sh
           bash -n scripts/generate-cursor-mdc.sh
+          bash -n hooks/block-dangerous-commands.sh
+          bash -n hooks/protect-files.sh
+          python3 -m py_compile scripts/compile-claude-routing.py
           echo "✓ All scripts pass syntax check"
 
       - name: Validate file references
         run: |
           python3 scripts/validate-references.py
+
+      - name: Check file formatting (not single-line)
+        run: |
+          failed=0
+          for f in README.md AGENT-SETUP.md PROFILES.md languages/typescript/conventions.md mcp/SETUP.md; do
+            lines=$(wc -l < "$f")
+            if [ "$lines" -lt 10 ]; then
+              echo "ERROR: $f has only $lines line(s) — possible formatting regression (expected ≥10)"
+              failed=1
+            else
+              echo "  ✓ $f ($lines lines)"
+            fi
+          done
+          [ "$failed" -eq 0 ] && echo "✓ Formatting check passed" || exit 1
+
+      - name: Check no deprecated MCP package used
+        run: |
+          # Allow mentions in "Do NOT use" or deprecation notices, block actual usage
+          # Grep for the package appearing as a real npx argument (not in a comment)
+          if grep -rn '"@modelcontextprotocol/server-github"' \
+               --include="*.json" --include="*.sh" --include="*.py" . \
+               | grep -v '\.git'; then
+            echo "ERROR: Found active reference to deprecated @modelcontextprotocol/server-github"
+            echo "       Use docker or remote SSE instead — see mcp/SETUP.md"
+            exit 1
+          fi
+          echo "✓ No deprecated MCP package references found"

@@ -129,6 +129,13 @@ agent-runtime-kit/
 │   ├── recommended-servers.json  # OPT-IN MCP server configs
 │   └── SETUP.md                  # Setup guide per platform
 │
+├── hooks/                        # OPT-IN security hooks (--hooks flag)
+│   ├── block-dangerous-commands.sh  # Block destructive shell commands
+│   └── protect-files.sh             # Block writes to protected paths
+│
+├── routing/
+│   └── skill-rules.json          # Routing rules for compile-claude-routing.py
+│
 └── docs/
     ├── CUSTOMIZATION.md          # How to extend the kit
     ├── BEST-PRACTICES.md         # Design principles
@@ -271,6 +278,60 @@ Quick reference — supported servers:
 
 ---
 
+## Opt-in Enhancements (FULL-only)
+
+These features are never installed by default. Enable them explicitly when you need them.
+
+### Skill Routing (FULL-only)
+
+Generates a compact routing table that teaches the agent which skill to load for a given task. Adds ~200 tokens of context — worth it once you use multiple skills regularly.
+
+```bash
+# Preview what would be generated:
+python3 scripts/compile-claude-routing.py --dry-run
+
+# Write to ~/.claude/CLAUDE_ROUTING.md (global):
+python3 scripts/compile-claude-routing.py --target global --profile full
+
+# Or append to the current project's CLAUDE.md:
+python3 scripts/compile-claude-routing.py --target project --project-dir .
+```
+
+The output is delimited and idempotent — re-running replaces the previous block.
+
+### Security Hooks (OPT-IN)
+
+Hooks that block destructive shell commands and protect sensitive file paths. Source lives in `hooks/`.
+
+```bash
+# Include hooks in your install plan:
+scripts/check-kit-updates.sh --profile core --hooks > /tmp/kit-plan.json
+scripts/install-kit.sh --plan /tmp/kit-plan.json
+
+# Or install manually:
+mkdir -p ~/.claude/hooks
+cp hooks/block-dangerous-commands.sh hooks/protect-files.sh ~/.claude/hooks/
+chmod +x ~/.claude/hooks/*.sh
+```
+
+Then register in `~/.claude/settings.json`:
+```json
+"PreToolUse": [
+  {
+    "matcher": "Bash",
+    "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-commands.sh", "timeout": 10000}]
+  },
+  {
+    "matcher": "Write|Edit",
+    "hooks": [{"type": "command", "command": "~/.claude/hooks/protect-files.sh", "timeout": 10000}]
+  }
+]
+```
+
+Configure protected paths in `~/.claude/protected-paths.txt` (one prefix per line).
+
+---
+
 ## Contributing
 
 1. Fork this repo
@@ -283,6 +344,6 @@ Use `/spec-interview` to gather requirements before building anything significan
 
 ---
 
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Compatible With:** Claude Code (Claude 4.5+), Cursor 0.40+, GitHub Copilot, Gemini CLI
-**Last Updated:** 2026-02-26
+**Last Updated:** 2026-02-27

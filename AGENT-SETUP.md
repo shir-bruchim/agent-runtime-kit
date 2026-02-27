@@ -180,29 +180,58 @@ Proceed with install?
 
 ---
 
-## Step 5: Post-Install (Claude Code only)
+## Step 5: Opt-in Enhancements (Claude Code only)
 
-Install security hooks globally (runs in every project):
+These are **never installed automatically**. Ask the user if they want them before proceeding.
 
+### Security Hooks (OPT-IN)
+
+Hooks that block destructive shell commands and protect sensitive file paths.
+
+**Enable via install script (recommended):**
+```bash
+"${KIT_DIR}/scripts/check-kit-updates.sh" \
+  --profile core \
+  --platform claude \
+  --hooks \
+  > /tmp/kit-plan.json
+"${KIT_DIR}/scripts/install-kit.sh" --plan /tmp/kit-plan.json
+```
+
+**Or install manually:**
 ```bash
 mkdir -p ~/.claude/hooks
-cp "${KIT_DIR}/skills/security/hooks/protect-files.sh" ~/.claude/hooks/
-cp "${KIT_DIR}/skills/security/hooks/block-dangerous-bash.sh" ~/.claude/hooks/
+cp "${KIT_DIR}/hooks/block-dangerous-commands.sh" ~/.claude/hooks/
+cp "${KIT_DIR}/hooks/protect-files.sh" ~/.claude/hooks/
 chmod +x ~/.claude/hooks/*.sh
 ```
 
-Add to `~/.claude/settings.json` under `"hooks"` (merge if section already exists):
+Then add to `~/.claude/settings.json` under `"hooks"` (merge if section already exists):
 ```json
 "PreToolUse": [
   {
     "matcher": "Bash",
-    "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-bash.sh", "timeout": 10000}]
+    "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-commands.sh", "timeout": 10000}]
   },
   {
     "matcher": "Write|Edit",
     "hooks": [{"type": "command", "command": "~/.claude/hooks/protect-files.sh", "timeout": 10000}]
   }
 ]
+```
+
+Configure protected paths by creating `~/.claude/protected-paths.txt` (one path prefix per line).
+
+### Skill Routing (OPT-IN, FULL profile)
+
+Generates a compact routing table that auto-loads the right skill for each task.
+
+```bash
+# Preview:
+python3 "${KIT_DIR}/scripts/compile-claude-routing.py" --dry-run
+
+# Install globally:
+python3 "${KIT_DIR}/scripts/compile-claude-routing.py" --target global --profile full
 ```
 
 ---

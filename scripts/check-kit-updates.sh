@@ -16,6 +16,7 @@
 #   --platform auto|claude|cursor|both
 #                             Platform target (default: auto)
 #                             auto = detect from ~/.claude and ~/.cursor presence
+#   --hooks                   Include security hook files in the plan (OPT-IN)
 #   --force                   Re-check even if commit SHA hasn't changed
 #
 # Output (stdout): JSON action plan — pipe to install-kit.sh or save to file
@@ -50,6 +51,7 @@ LANG=""
 PROFILE="core"
 PLATFORM="auto"
 FORCE=false
+INSTALL_HOOKS=false
 STATE_FILE="${HOME}/.claude/.agent-kit-state.json"
 CLAUDE_DIR="${HOME}/.claude"
 CURSOR_DIR="${HOME}/.cursor"
@@ -61,6 +63,7 @@ while [[ $# -gt 0 ]]; do
     --lang)        LANG="$2";        shift 2 ;;
     --profile)     PROFILE="$2";     shift 2 ;;
     --platform)    PLATFORM="$2";    shift 2 ;;
+    --hooks)       INSTALL_HOOKS=true; shift  ;;
     --force)       FORCE=true;       shift   ;;
     -h|--help)
       sed -n '3,35p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
@@ -293,11 +296,13 @@ if [[ "${PLATFORM}" == "claude" || "${PLATFORM}" == "both" ]]; then
     done
   fi
 
-  # Security hooks (global)
-  for f in "${KIT_DIR}/skills/security/hooks"/*.sh; do
-    [[ -f "${f}" ]] || continue
-    emit "skills/security/hooks/$(basename "${f}")" "${CLAUDE_DIR}/hooks/$(basename "${f}")" "hook_file" "global"
-  done
+  # Security hooks (global) — OPT-IN via --hooks flag
+  if [[ "${INSTALL_HOOKS}" == "true" ]]; then
+    for f in "${KIT_DIR}/hooks"/*.sh; do
+      [[ -f "${f}" ]] || continue
+      emit "hooks/$(basename "${f}")" "${CLAUDE_DIR}/hooks/$(basename "${f}")" "hook_file" "global"
+    done
+  fi
 
 fi
 

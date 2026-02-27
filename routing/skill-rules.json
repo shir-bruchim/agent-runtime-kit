@@ -1,0 +1,72 @@
+{
+  "_comment": "Skill routing rules. Used by scripts/compile-claude-routing.py to generate a compact routing block. OPT-IN — not installed by default.",
+  "_usage": "Run: python3 scripts/compile-claude-routing.py --dry-run  to preview output.",
+
+  "skills": [
+    {
+      "name": "git",
+      "description": "Git operations: commit, push, PR, branch workflows.",
+      "keywords": ["commit", "push", "pull request", "branch", "git", "pr"],
+      "intentPatterns": ["create.*branch", "commit.*change", "push.*remote", "open.*pr", "merge.*branch"]
+    },
+    {
+      "name": "debugging",
+      "description": "Systematic bug investigation and root cause analysis.",
+      "keywords": ["bug", "debug", "error", "failing", "crash"],
+      "intentPatterns": ["fix.*bug", "debug.*issue", "root cause", "trace.*error", "why.*failing"]
+    },
+    {
+      "name": "testing",
+      "description": "Test strategy and writing for unit, integration, and E2E.",
+      "keywords": ["test", "unit test", "integration", "coverage", "pytest", "jest"],
+      "intentPatterns": ["write.*test", "add.*test", "test.*coverage", "failing.*test"]
+    },
+    {
+      "name": "security",
+      "description": "Security review, vulnerability checks, OWASP Top 10.",
+      "keywords": ["security", "vulnerability", "auth", "injection", "XSS"],
+      "intentPatterns": ["security.*review", "check.*vulnerability", "audit.*code", "is.*secure"]
+    },
+    {
+      "name": "extend-agent",
+      "description": "Create new skills, commands, hooks, or subagents.",
+      "keywords": ["skill", "command", "hook", "subagent", "extend"],
+      "intentPatterns": ["create.*skill", "add.*command", "new.*subagent", "extend.*agent"]
+    },
+    {
+      "name": "planning",
+      "description": "Hierarchical project planning, phases, milestones.",
+      "keywords": ["plan", "roadmap", "milestone", "PRD", "phases"],
+      "intentPatterns": ["create.*plan", "plan.*project", "roadmap", "breakdown.*tasks"],
+      "profile": "full"
+    },
+    {
+      "name": "tdd",
+      "description": "Test-driven development: red-green-refactor cycle.",
+      "keywords": ["TDD", "test-first", "red green", "refactor cycle"],
+      "intentPatterns": ["TDD", "test.*first", "red.*green.*refactor"],
+      "profile": "full"
+    },
+    {
+      "name": "api-design",
+      "description": "REST API design patterns, versioning, error handling.",
+      "keywords": ["API", "endpoint", "REST", "routes", "OpenAPI"],
+      "intentPatterns": ["design.*API", "new.*endpoint", "API.*structure", "REST.*pattern"],
+      "profile": "full"
+    },
+    {
+      "name": "spec-interview",
+      "description": "Requirements gathering through guided interview.",
+      "keywords": ["requirements", "spec", "interview", "gather", "discover"],
+      "intentPatterns": ["gather.*requirements", "spec.*interview", "what.*requirements"],
+      "profile": "full"
+    },
+    {
+      "name": "implement-jira-ticket",
+      "description": "End-to-end Jira ticket implementation with git, tests, approval gates.",
+      "keywords": ["Jira", "ticket", "issue", "implement ticket", "JIRA-ID"],
+      "intentPatterns": ["implement.*ticket", "implement.*[A-Z]+-[0-9]+", "jira.*ticket"],
+      "profile": "full"
+    }
+  ]
+}

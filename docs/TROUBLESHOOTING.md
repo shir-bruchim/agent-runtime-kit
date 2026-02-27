@@ -138,9 +138,11 @@ mkdir -p .planning/phases
 # List connected MCP servers (Claude Code)
 claude mcp list
 
-# Test server directly
-npx -y @modelcontextprotocol/server-github --help
+# Test a server standalone (example: postgres)
+npx -y @modelcontextprotocol/server-postgres postgresql://... --help
 ```
+
+> **Note:** Do NOT use `@modelcontextprotocol/server-github`. That npm package was deprecated in April 2025. Use the Docker or remote SSE option instead — see `mcp/SETUP.md`.
 
 **Server not showing up:**
 - Restart Claude Code after editing `~/.claude.json`

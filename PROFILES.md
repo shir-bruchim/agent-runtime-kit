@@ -37,6 +37,43 @@ Everything in CORE, plus:
 
 ---
 
+## Opt-in Enhancements
+
+Neither profile installs these by default. Enable explicitly when needed.
+
+### Security Hooks
+
+Blocks destructive shell commands and protects sensitive file paths. Source in `hooks/`.
+
+```bash
+# Enable during install:
+scripts/check-kit-updates.sh --profile core --hooks > /tmp/kit-plan.json
+scripts/install-kit.sh --plan /tmp/kit-plan.json
+
+# Or add --hooks to any profile install
+```
+
+### Skill Routing (FULL-only)
+
+Generates a compact routing table (~200 tokens) that teaches the agent which skill to
+load for a given task. Useful when you use multiple FULL skills regularly.
+
+```bash
+# Preview:
+python3 scripts/compile-claude-routing.py --dry-run
+
+# Write to global context (~/.claude/CLAUDE_ROUTING.md):
+python3 scripts/compile-claude-routing.py --target global --profile full
+
+# Write into current project's CLAUDE.md:
+python3 scripts/compile-claude-routing.py --target project --project-dir .
+```
+
+Why opt-in? Context budget. CORE keeps every token free for actual work. Enable routing
+only when the table's auto-routing value exceeds its context cost.
+
+---
+
 ## Precedence Rules
 
 1. **Project-level overrides global.** Files in `.claude/rules/` or `.cursor/rules/` take precedence over `~/.claude/` equivalents on name collision.
@@ -56,6 +93,12 @@ scripts/check-kit-updates.sh --profile core | scripts/install-kit.sh
 # FULL install:
 scripts/check-kit-updates.sh --profile full | scripts/install-kit.sh
 
+# CORE + security hooks (opt-in):
+scripts/check-kit-updates.sh --profile core --hooks | scripts/install-kit.sh
+
+# FULL + security hooks:
+scripts/check-kit-updates.sh --profile full --hooks | scripts/install-kit.sh
+
 # Cursor-only install:
 scripts/check-kit-updates.sh --profile core --platform cursor | scripts/install-kit.sh
 
@@ -64,6 +107,9 @@ scripts/check-kit-updates.sh --profile full --platform both | scripts/install-ki
 
 # Dry run (preview without writing):
 scripts/check-kit-updates.sh --profile core | scripts/install-kit.sh --dry-run
+
+# Enable skill routing (FULL-only, opt-in):
+python3 scripts/compile-claude-routing.py --target global --profile full
 ```
 
 ---
