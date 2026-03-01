@@ -202,6 +202,7 @@ Hooks that block destructive shell commands and protect sensitive file paths.
 ```bash
 mkdir -p ~/.claude/hooks
 cp "${KIT_DIR}/hooks/block-dangerous-commands.sh" ~/.claude/hooks/
+cp "${KIT_DIR}/hooks/block-dangerous-bash.sh" ~/.claude/hooks/
 cp "${KIT_DIR}/hooks/protect-files.sh" ~/.claude/hooks/
 chmod +x ~/.claude/hooks/*.sh
 ```

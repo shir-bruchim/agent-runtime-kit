@@ -30,7 +30,7 @@ type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; error: string };
 
-type PartialUser = Partial<Pick<User, "email" | "role">>;
+type PartialUser = Partial<User>;
 
 // Avoid: any (use unknown + type guards instead)
 function processInput(input: unknown) {

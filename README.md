@@ -131,6 +131,7 @@ agent-runtime-kit/
 │
 ├── hooks/                        # OPT-IN security hooks (--hooks flag)
 │   ├── block-dangerous-commands.sh  # Block destructive shell commands
+│   ├── block-dangerous-bash.sh      # Compatibility alias for above
 │   └── protect-files.sh             # Block writes to protected paths
 │
 ├── routing/
@@ -310,7 +311,7 @@ scripts/install-kit.sh --plan /tmp/kit-plan.json
 
 # Or install manually:
 mkdir -p ~/.claude/hooks
-cp hooks/block-dangerous-commands.sh hooks/protect-files.sh ~/.claude/hooks/
+cp hooks/block-dangerous-commands.sh hooks/block-dangerous-bash.sh hooks/protect-files.sh ~/.claude/hooks/
 chmod +x ~/.claude/hooks/*.sh
 ```
 
