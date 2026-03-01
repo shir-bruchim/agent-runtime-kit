@@ -26,6 +26,7 @@ jobs:
           bash -n scripts/install-kit.sh
           bash -n scripts/generate-cursor-mdc.sh
           bash -n hooks/block-dangerous-commands.sh
+          bash -n hooks/block-dangerous-bash.sh
           bash -n hooks/protect-files.sh
           python3 -m py_compile scripts/compile-claude-routing.py
           echo "✓ All scripts pass syntax check"

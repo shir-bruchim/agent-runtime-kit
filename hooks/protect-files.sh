@@ -66,9 +66,10 @@ protected_paths+=(
 for pattern in "${protected_paths[@]}"; do
   [[ -z "${pattern}" ]] && continue
   if [[ "${file_path}" == "${pattern}"* ]]; then
-    printf '{"decision":"block","reason":"Blocked: %s is under protected path %s. Set PROTECTED_PATHS to reconfigure."}\n' \
-      "${file_path}" "${pattern}"
-    exit 0
+    reason="Blocked: ${file_path} is under protected path ${pattern}. Set PROTECTED_PATHS to reconfigure."
+    printf '{"decision":"block","reason":"%s"}\n' "${reason}" >&2
+    echo "${reason}" >&2
+    exit 2
   fi
 done
 

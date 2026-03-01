@@ -44,47 +44,6 @@ const ROLES = ["admin", "user", "moderator"] as const;
 type Role = typeof ROLES[number]; // "admin" | "user" | "moderator"
 ```
 
-## React Component Patterns
-
-```typescript
-// Typed props interface
-interface ButtonProps {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  variant?: "primary" | "secondary" | "danger";
-}
-
-// Function component with typed props
-export function Button({ label, onClick, disabled = false, variant = "primary" }: ButtonProps) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`btn btn-${variant}`}
-    >
-      {label}
-    </button>
-  );
-}
-
-// Custom hooks
-function useUser(userId: string) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  
-  useEffect(() => {
-    fetchUser(userId)
-      .then(setUser)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [userId]);
-  
-  return { user, loading, error };
-}
-```
-
 ## Error Handling Pattern
 
 ```typescript

@@ -14,7 +14,7 @@
     "github": {
       "_description": "GitHub integration — PRs, issues, repos, code search. Preferred: remote hosted endpoint (no local install needed).",
       "_status": "supported — use remote/docker, NOT the deprecated @modelcontextprotocol/server-github npm package",
-      "_option_a_remote": "Remote hosted (Claude Code only — requires claude.ai login):",
+      "_option_a_remote": "Remote hosted (requires client support for SSE + GitHub token):",
       "type": "sse",
       "url": "https://api.githubcopilot.com/mcp/",
       "_env_a": { "GITHUB_TOKEN": "${GITHUB_TOKEN}" },

@@ -35,7 +35,7 @@ After editing, restart Claude Code / Cursor to reload. Check with `claude mcp li
 
 Enables: PR management, issue tracking, code search, repository operations.
 
-**Option A — Remote hosted** (Claude Code, no local install):
+**Option A — Remote hosted** (requires SSE support + GitHub token, no local install):
 ```json
 "github": {
   "type": "sse",

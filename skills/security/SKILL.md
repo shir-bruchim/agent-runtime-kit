@@ -12,8 +12,7 @@ What would you like to do?
 
 1. **Code review** — Review code for security vulnerabilities
 2. **Setup hooks** — Configure safety hooks to block dangerous operations
-3. **File protections** — Set up zero-access and read-only path protections
-4. **Review patterns** — Learn about common vulnerability patterns
+3. **File protections** — Set up protected-path blocking
 
 **Wait for response.**
 </intake>
@@ -22,9 +21,8 @@ What would you like to do?
 | Response | Action |
 |----------|--------|
 | 1, "review", "vulnerabilities" | Run security code review workflow below |
-| 2, "hooks", "safety" | See `hooks/` directory — install scripts |
-| 3, "file protections", "protect" | See `patterns.yaml` for path protection config |
-| 4, "patterns", "learn" | Read `references/owasp.md` |
+| 2, "hooks", "safety" | See hooks reference below — install scripts |
+| 3, "file protections", "protect" | See hooks reference below — protect-files.sh |
 </routing>
 
 <code_review_workflow>
@@ -59,18 +57,18 @@ When reviewing code for security:
 <hooks_reference>
 The `hooks/` directory contains ready-to-install safety scripts:
 
-**protect-files.sh** — Blocks writes to .env, *.pem, and other secret files
-**block-dangerous-bash.sh** — Blocks rm -rf, force pushes, and other destructive commands
+**block-dangerous-commands.sh** — Primary hook. Blocks rm -rf /, dd to disks, fork bombs, mkfs, and git force pushes. Exits 2 (hard stop).
+**block-dangerous-bash.sh** — Compatibility alias. Delegates to block-dangerous-commands.sh; use when your hooks.json references the "bash" filename.
+**protect-files.sh** — Blocks writes to ~/.ssh, ~/.gnupg, ~/.aws/credentials, and any paths in PROTECTED_PATHS or ~/.claude/protected-paths.txt. Exits 2 (hard stop).
 
-To install (Claude Code):
+To install (Claude Code) — add to `~/.claude/settings.json`:
 ```json
-// Add to .claude/hooks.json or ~/.claude/hooks.json:
 {
   "hooks": {
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [{"type": "command", "command": "bash ~/.claude/hooks/block-dangerous-bash.sh"}]
+        "hooks": [{"type": "command", "command": "bash ~/.claude/hooks/block-dangerous-commands.sh"}]
       },
       {
         "matcher": "Write|Edit",
@@ -81,10 +79,23 @@ To install (Claude Code):
 }
 ```
 
-**Cursor:** No native hook system. Add always-on rules listing operations to never perform.
+Copy hook files: `cp hooks/block-dangerous-commands.sh hooks/block-dangerous-bash.sh hooks/protect-files.sh ~/.claude/hooks/ && chmod +x ~/.claude/hooks/*.sh`
 </hooks_reference>
+
+<non_hook_platforms>
+**Cursor / GitHub Copilot / Gemini** — no native hook system.
+
+Instead, add a "never do" list to the project's `AGENTS.md` (or `GEMINI.md`) and to the AI's always-on rules:
+
+```
+NEVER run: rm -rf /, git push --force, dd to /dev/sd*, mkfs, fork bombs.
+NEVER write to: ~/.ssh/, ~/.gnupg/, ~/.aws/credentials, .env files with real secrets.
+```
+
+The safety is enforced by instruction, not by a hard block. For high-risk environments, prefer Claude Code with hooks.
+</non_hook_platforms>
 
 <success_criteria>
 Security review: All OWASP Top 10 categories checked. Findings with severity + specific fixes.
-Safety setup: Hooks installed, tested with debug mode, protecting key paths.
+Safety setup: Hooks installed, tested with a blocked command, protecting key paths.
 </success_criteria>
