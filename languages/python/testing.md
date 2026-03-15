@@ -121,6 +121,42 @@ async def test_async_mock(mocker: MockerFixture):
     ...
 ```
 
+## Pytest Best Practices
+
+```python
+# ALWAYS use plain assert statements (not unittest-style)
+assert result == expected          # Good
+self.assertEqual(result, expected) # Bad — don't use unittest style
+
+# Use pytest.raises() for exception testing
+with pytest.raises(ValueError, match="must be positive"):
+    calculate(-1)
+
+# Use pytest.approx() for float comparisons
+assert 0.1 + 0.2 == pytest.approx(0.3)
+
+# Use @pytest.mark.parametrize for multiple inputs
+@pytest.mark.parametrize("input,expected", [
+    (0, True),
+    (-1, False),
+    (100, True),
+])
+def test_is_valid_age(input, expected):
+    assert is_valid_age(input) == expected
+
+# ALWAYS use fixtures instead of setup/teardown methods
+# NEVER create tests that depend on execution order
+```
+
+## Edge Cases Checklist
+
+Always consider testing:
+- Empty inputs ("", [], {}, None)
+- Boundary values (0, -1, max, min)
+- Invalid inputs (wrong types, malformed data)
+- Error conditions (exceptions, failures)
+- Unicode and special characters
+
 ## Running Tests
 
 ```bash

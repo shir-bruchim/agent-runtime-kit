@@ -4,7 +4,7 @@ description: Comprehensive testing guidance for writing maintainable, effective 
 ---
 
 <objective>
-Testing guidance for multiple languages and frameworks. Core principles apply universally; language-specific patterns are in `references/` and `languages/` directories.
+Testing guidance for multiple languages and frameworks. Core principles apply universally; language-specific patterns and examples are in `languages/<lang>/testing.md`.
 </objective>
 
 <essential_principles>
@@ -47,150 +47,18 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 
 </pytest_principles>
 
-<quick_reference>
-## By Language
-
-**Python (pytest):**
-```python
-# Fixture pattern
-@pytest.fixture
-def db_session():
-    session = create_test_session()
-    yield session
-    session.rollback()
-
-# Parametrize pattern
-@pytest.mark.parametrize("email,valid", [
-    ("user@example.com", True),
-    ("not-an-email", False),
-])
-def test_email_validation(email, valid):
-    assert is_valid_email(email) == valid
-
-# Common commands
-pytest -v                                         # Verbose
-pytest -x                                         # Stop on first failure
-pytest --lf                                       # Re-run last failed
-pytest -k "pattern"                               # Filter by test name
-pytest --cov=src --cov-report=html --cov-fail-under=80
-```
-
-**TypeScript/JavaScript (Jest/Vitest):**
-```typescript
-// Arrange-Act-Assert
-describe('UserService', () => {
-  it('should return user when id exists', async () => {
-    const mockRepo = { findById: jest.fn().mockResolvedValue(mockUser) };
-    const service = new UserService(mockRepo);
-    const result = await service.getUser('123');
-    expect(result).toEqual(mockUser);
-  });
-});
-```
-
-**Go:**
-```go
-func TestCalculateTotal(t *testing.T) {
-    tests := []struct{
-        name     string
-        items    []Item
-        expected float64
-    }{
-        {"empty cart", []Item{}, 0},
-        {"single item", []Item{{Price: 10}}, 10},
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            got := calculateTotal(tt.items)
-            assert.Equal(t, tt.expected, got)
-        })
-    }
-}
-```
-</quick_reference>
-
 <routing>
 | Language/Task | Reference |
 |---------------|-----------|
-| Python pytest fixtures | `languages/python/testing.md` |
+| Python pytest patterns and examples | `languages/python/testing.md` |
 | Python mocking patterns | `languages/python/testing.md` |
 | TypeScript/JS testing | `languages/typescript/testing.md` |
+| Node.js testing | `languages/nodejs/testing.md` |
 | Go testing | `languages/go/testing.md` |
 | C++ testing | `languages/cpp/testing.md` |
+| Integration test infrastructure (LocalStack, Docker) | `skills/localstack-integration/SKILL.md` |
 | TDD workflow | `skills/tdd/SKILL.md` |
 </routing>
-
-<language_examples>
-
-### Python (pytest)
-```python
-# tests/test_user_service.py
-import pytest
-from app.services.user import UserService
-from app.models import User
-
-@pytest.fixture
-def user_service(db_session):
-    return UserService(db_session)
-
-def test_create_user_returns_user_with_id(user_service):
-    user = user_service.create(name="Alice", email="alice@example.com")
-    assert user.id is not None
-    assert user.name == "Alice"
-
-def test_create_user_fails_with_duplicate_email(user_service, existing_user):
-    with pytest.raises(ValueError, match="already exists"):
-        user_service.create(name="Bob", email=existing_user.email)
-
-@pytest.mark.parametrize("email,valid", [
-    ("alice@example.com", True),
-    ("not-an-email", False),
-    ("", False),
-])
-def test_email_validation(email, valid):
-    assert UserService.is_valid_email(email) == valid
-```
-
-### Node.js (Jest)
-```javascript
-// tests/userService.test.js
-const { UserService } = require('../src/services/userService');
-const { createTestDb } = require('./helpers');
-
-describe('UserService', () => {
-  let service;
-  let db;
-
-  beforeEach(async () => {
-    db = await createTestDb();
-    service = new UserService(db);
-  });
-
-  afterEach(async () => db.close());
-
-  it('creates a user and returns it with an id', async () => {
-    const user = await service.create({ name: 'Alice', email: 'alice@example.com' });
-    expect(user.id).toBeDefined();
-    expect(user.name).toBe('Alice');
-  });
-
-  it('throws when email already exists', async () => {
-    await service.create({ name: 'Alice', email: 'alice@example.com' });
-    await expect(
-      service.create({ name: 'Bob', email: 'alice@example.com' })
-    ).rejects.toThrow('already exists');
-  });
-
-  it.each([
-    ['alice@example.com', true],
-    ['not-an-email', false],
-    ['', false],
-  ])('validates email %s as %s', (email, expected) => {
-    expect(UserService.isValidEmail(email)).toBe(expected);
-  });
-});
-```
-</language_examples>
 
 <success_criteria>
 - Tests run in isolation (no order dependency)
