@@ -1,3 +1,7 @@
+---
+paths: ["**/Dockerfile*", "**/docker-compose*", "**/.github/**", "**/deploy*"]
+---
+
 # Infrastructure & Deployment
 
 ## Docker Best Practices

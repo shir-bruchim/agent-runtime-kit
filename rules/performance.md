@@ -1,3 +1,7 @@
+---
+paths: ["**/*.py", "**/*.ts", "**/*.js", "**/*.sql", "**/*.go"]
+---
+
 # Performance Guidelines
 
 ## Measure First, Optimize Second

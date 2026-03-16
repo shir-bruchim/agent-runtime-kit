@@ -56,8 +56,10 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 | Node.js testing | `languages/nodejs/testing.md` |
 | Go testing | `languages/go/testing.md` |
 | C++ testing | `languages/cpp/testing.md` |
-| Integration test infrastructure (LocalStack, Docker) | `skills/localstack-integration/SKILL.md` |
-| TDD workflow | `skills/tdd/SKILL.md` |
+| Integration test infrastructure (LocalStack, Docker Compose) | `references/localstack-integration.md` |
+| LocalStack AWS service configs (S3, SQS, DynamoDB, Secrets Manager) | `references/localstack-aws-services.md` |
+| Docker Compose test patterns, container management | `references/docker-compose-testing.md` |
+| TDD workflow (red-green-refactor) | `workflows/tdd.md` |
 </routing>
 
 <success_criteria>

@@ -110,10 +110,16 @@ cat /tmp/kit-plan.json
 
 | | CORE | FULL |
 |-|------|------|
-| Skills | extend-agent, git, testing, debugging, security | + planning, tdd, api-design, spec-interview, implement-jira-ticket |
-| Rules | base-conventions, security, testing | + git-workflow, performance, infrastructure |
-| Commands | commit, push, pr, ship, review, test | + debug, refactor, spec-interview, generate-prd, implement-jira-ticket |
-| Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer |
+| Skills | extend-agent, git, testing, debugging, security, strategic-compact (17 total) | + planning, api-design, implement-jira-ticket, design-doc-mermaid, perplexity-deep-search, verification-loop, pr-review |
+| Rules | base-conventions, security, testing (7 total — 4 path-scoped) | + git-workflow, performance(path-scoped), infrastructure(path-scoped), patterns(path-scoped) |
+| Commands | build-fix, commit, push, pr, ship, test (6 total) | (all commands now in CORE) |
+| Subagents | reviewer, tester, git-ops, security (15 total — 4 with memory) | + architect, planner, db-expert, doc-writer, refactorer, tdd-guide, perplexity-research |
+
+**Tagged opt-ins** (add with `--tags python,stack`):
+- `[PYTHON]`: Python language pack files (conventions, testing, database, async) + python-debugger, fastapi-specialist agents
+- `[STACK]`: postgres-patterns, docker-patterns, deployment-patterns skills + aws-specialist, k8s-specialist agents
+- `[ADVANCED]`: ralph-orchestrator skill + ralph-coder, ralph-tester agents
+- `[OPT-IN]`: Session hooks, concise mode, delegate-first, statusline, Perplexity search
 
 See `PROFILES.md` for full details.
 
@@ -203,6 +209,7 @@ Hooks that block destructive shell commands and protect sensitive file paths.
 mkdir -p ~/.claude/hooks
 cp "${KIT_DIR}/hooks/block-dangerous-commands.sh" ~/.claude/hooks/
 cp "${KIT_DIR}/hooks/block-dangerous-bash.sh" ~/.claude/hooks/
+cp "${KIT_DIR}/hooks/block-dangerous-read.sh" ~/.claude/hooks/
 cp "${KIT_DIR}/hooks/protect-files.sh" ~/.claude/hooks/
 chmod +x ~/.claude/hooks/*.sh
 ```
@@ -215,6 +222,10 @@ Then add to `~/.claude/settings.json` under `"hooks"` (merge if section already 
     "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-commands.sh", "timeout": 10000}]
   },
   {
+    "matcher": "Read",
+    "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-read.sh", "timeout": 10000}]
+  },
+  {
     "matcher": "Write|Edit",
     "hooks": [{"type": "command", "command": "~/.claude/hooks/protect-files.sh", "timeout": 10000}]
   }
@@ -222,6 +233,7 @@ Then add to `~/.claude/settings.json` under `"hooks"` (merge if section already 
 ```
 
 Configure protected paths by creating `~/.claude/protected-paths.txt` (one path prefix per line).
+Configure blocked read paths by creating `~/.claude/blocked-read-paths.txt` (one path per line).
 
 ### Skill Routing (OPT-IN, FULL profile)
 
@@ -241,10 +253,10 @@ python3 "${KIT_DIR}/scripts/compile-claude-routing.py" --target global --profile
 
 ### Claude Code:
 ```bash
-ls ~/.claude/skills/     # Should contain: extend-agent git testing debugging security (+ more if FULL)
+ls ~/.claude/skills/     # Should contain: extend-agent git testing debugging security strategic-compact (+ more if FULL)
 ls ~/.claude/agents/     # Should contain: reviewer.md tester.md git-ops.md security.md (+ more if FULL)
-ls ~/.claude/commands/   # Should contain: commit.md push.md pr.md ship.md review.md test.md (+ more if FULL)
-ls ~/.claude/hooks/      # Should contain: block-dangerous-bash.sh protect-files.sh
+ls ~/.claude/commands/   # Should contain: build-fix.md commit.md push.md pr.md ship.md test.md
+ls ~/.claude/hooks/      # Should contain: block-dangerous-commands.sh block-dangerous-read.sh protect-files.sh (if opted in)
 ```
 
 ### Cursor:
@@ -282,9 +294,9 @@ Installed (project):
 - GEMINI.md → project root
 
 Available immediately:
-- Commands: /commit, /push, /pr, /ship, /review, /test
-- Subagents: reviewer, tester, git-ops, security
-- Skills: extend-agent, git, testing, debugging, security
+- Commands: /build-fix, /commit, /push, /pr, /ship, /test
+- Subagents: reviewer (memory: user), tester (memory: user), git-ops, security (memory: user)
+- Skills: extend-agent, git, testing, debugging, security, strategic-compact
 
 To upgrade to FULL profile later:
   scripts/check-kit-updates.sh --profile full | scripts/install-kit.sh
@@ -378,11 +390,12 @@ rm -rf /tmp/agent-runtime-kit
 
 ### Skills (global)
 ```
-skills/extend-agent/    Meta: create skills, commands, hooks, subagents
+skills/extend-agent/    Meta: create skills, commands, hooks, subagents + cross-platform frontmatter docs
 skills/git/             Git workflows
-skills/testing/         Test writing
+skills/testing/         Test writing + TDD workflow + LocalStack integration references
 skills/debugging/       Systematic debugging
-skills/security/        Security review + hooks
+skills/security/        Security review + hooks + deep-review and setup-hooks workflows
+skills/strategic-compact/ Context management + /compact guidance
 ```
 
 ### Subagents (global)
@@ -395,11 +408,11 @@ subagents/security.md   Security analysis
 
 ### Commands (global)
 ```
+commands/build-fix.md   /build-fix
 commands/commit.md      /commit
 commands/push.md        /push
 commands/pr.md          /pr
 commands/ship.md        /ship
-commands/review.md      /review
 commands/test.md        /test
 ```
 
@@ -412,7 +425,7 @@ rules/testing.md            Test standards
 
 ### Languages (project-level — detected automatically)
 ```
-languages/python/           conventions, testing, database
+languages/python/           conventions, testing, database, async
 languages/nodejs/           conventions, testing
 languages/typescript/       conventions, testing
 languages/go/               conventions, testing

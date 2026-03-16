@@ -131,6 +131,7 @@ No planning structure found.
 | "handoff", "stopping" | `workflows/handoff.md` |
 | "resume", "continue" | `workflows/resume.md` |
 | "prd", "spec", "requirements" | `workflows/create-prd.md` |
+| "spec interview", "requirements gathering", "interview" | `workflows/spec-interview.md` |
 | "guidance", "help" | `workflows/get-guidance.md` |
 
 **After reading the workflow, follow it exactly.**
@@ -196,6 +197,7 @@ All in `workflows/`:
 | handoff.md | Create context handoff for pausing |
 | resume.md | Load handoff, restore context |
 | create-prd.md | Create PRD through guided discovery |
+| spec-interview.md | Requirements gathering through structured interview |
 | get-guidance.md | Help decide planning approach |
 </workflows_index>
 

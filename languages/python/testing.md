@@ -1,5 +1,11 @@
 # Python Testing (pytest)
 
+## TDD Cycle
+
+1. **RED**: Write failing pytest test
+2. **GREEN**: Write minimal code to pass
+3. **REFACTOR**: Improve, keep tests green
+
 ## Setup
 
 ```bash
@@ -27,6 +33,8 @@ tests/
 │   └── test_models.py
 ├── integration/
 │   └── test_api.py       # Tests against real DB (test instance)
+├── e2e/
+│   └── test_user_flow.py # End-to-end user workflows
 └── fixtures/
     └── data.json         # Test data files
 ```
@@ -103,9 +111,9 @@ from pytest_mock import MockerFixture
 
 def test_send_email_calls_service(mocker: MockerFixture):
     mock_send = mocker.patch("app.email.service.send_email")
-    
+
     notify_user(user_id=1, message="Hello")
-    
+
     mock_send.assert_called_once_with(
         to="user@example.com",
         subject="Notification",
@@ -121,6 +129,25 @@ async def test_async_mock(mocker: MockerFixture):
     ...
 ```
 
+Alternative with `unittest.mock`:
+```python
+from unittest.mock import patch, MagicMock
+
+@patch("mypackage.external_api_call")
+def test_with_mock(api_mock):
+    api_mock.return_value = {"status": "success"}
+    result = my_function()
+    api_mock.assert_called_once()
+
+# Async mocking with assert_awaited
+@pytest.mark.asyncio
+@patch("mypackage.async_api_call")
+async def test_async_mock(api_mock):
+    api_mock.return_value = {"status": "ok"}
+    result = await my_async_function()
+    api_mock.assert_awaited_once()
+```
+
 ## Pytest Best Practices
 
 ```python
@@ -132,20 +159,40 @@ self.assertEqual(result, expected) # Bad — don't use unittest style
 with pytest.raises(ValueError, match="must be positive"):
     calculate(-1)
 
+# Access exception details via exc_info
+with pytest.raises(ValueError) as exc_info:
+    validate_input("bad")
+assert exc_info.value.code == 400
+
 # Use pytest.approx() for float comparisons
 assert 0.1 + 0.2 == pytest.approx(0.3)
 
-# Use @pytest.mark.parametrize for multiple inputs
+# Use @pytest.mark.parametrize with ids for clarity
 @pytest.mark.parametrize("input,expected", [
     (0, True),
     (-1, False),
     (100, True),
-])
+], ids=["zero", "negative", "max"])
 def test_is_valid_age(input, expected):
     assert is_valid_age(input) == expected
 
 # ALWAYS use fixtures instead of setup/teardown methods
 # NEVER create tests that depend on execution order
+```
+
+## Custom Markers
+
+```python
+@pytest.mark.slow
+def test_slow_operation(): ...
+
+@pytest.mark.integration
+def test_api_integration(): ...
+```
+
+```bash
+pytest -m "not slow"        # skip slow tests
+pytest -m integration       # only integration
 ```
 
 ## Edge Cases Checklist
@@ -157,6 +204,14 @@ Always consider testing:
 - Error conditions (exceptions, failures)
 - Unicode and special characters
 
+## Coverage
+
+```bash
+pytest --cov=src --cov-report=term-missing --cov-fail-under=80
+```
+
+Target: 80%+ overall, 100% for critical paths (auth, payments, core logic).
+
 ## Running Tests
 
 ```bash
@@ -165,4 +220,14 @@ pytest -x                    # Stop on first failure
 pytest --lf                  # Re-run last failed
 pytest -k "test_login"       # Filter by name
 pytest --cov=src --cov-report=html  # Coverage report
+pytest --durations=10        # Show slowest tests
+pytest -n auto               # Parallel execution (pytest-xdist)
 ```
+
+## Anti-Patterns
+
+- Testing implementation details instead of behavior
+- Tests depending on each other (shared mutable state)
+- Not mocking external dependencies (DB, HTTP, Redis)
+- Using `time.sleep()` instead of mocking time
+- Bare `assert` without meaningful messages

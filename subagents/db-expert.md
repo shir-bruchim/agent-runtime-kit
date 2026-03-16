@@ -3,6 +3,9 @@ name: db-expert
 description: Database specialist for SQLAlchemy + PostgreSQL, query optimization, schema design, and migrations. Use when implementing database models, writing complex queries, optimizing performance, reviewing schema design, or creating migrations. Supports SQLAlchemy 2.0, Alembic, and raw PostgreSQL.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: sonnet
+memory: user
+skills:
+  - postgres-patterns
 ---
 
 <role>

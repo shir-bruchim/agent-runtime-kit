@@ -3,6 +3,9 @@ name: security
 description: Security review specialist. Use when reviewing code for vulnerabilities, auditing authentication/authorization flows, checking for OWASP Top 10 issues, or evaluating security of new features. Produces findings with severity ratings and specific remediations.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+memory: user
+skills:
+  - security
 ---
 
 <role>

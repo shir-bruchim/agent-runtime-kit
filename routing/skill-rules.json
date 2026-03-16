@@ -1,50 +1,64 @@
 {
   "_comment": "Skill routing rules. Used by scripts/compile-claude-routing.py to generate a compact routing block. OPT-IN — not installed by default.",
   "_usage": "Run: python3 scripts/compile-claude-routing.py --dry-run  to preview output.",
+  "_format": "Each skill entry supports: name, description, keywords, intentPatterns, filePaths (auto-trigger globs), agentMapping (subagent to invoke alongside), priority (high|medium|low), profile (core|full).",
 
   "skills": [
     {
       "name": "git",
       "description": "Git operations: commit, push, PR, branch workflows.",
       "keywords": ["commit", "push", "pull request", "branch", "git", "pr"],
-      "intentPatterns": ["create.*branch", "commit.*change", "push.*remote", "open.*pr", "merge.*branch"]
+      "intentPatterns": ["create.*branch", "commit.*change", "push.*remote", "open.*pr", "merge.*branch"],
+      "agentMapping": "git-ops",
+      "priority": "high"
     },
     {
       "name": "debugging",
       "description": "Systematic bug investigation and root cause analysis.",
       "keywords": ["bug", "debug", "error", "failing", "crash"],
-      "intentPatterns": ["fix.*bug", "debug.*issue", "root cause", "trace.*error", "why.*failing"]
+      "intentPatterns": ["fix.*bug", "debug.*issue", "root cause", "trace.*error", "why.*failing"],
+      "priority": "high"
     },
     {
       "name": "testing",
-      "description": "Test strategy and writing for unit, integration, and E2E.",
-      "keywords": ["test", "unit test", "integration", "coverage", "pytest", "jest"],
-      "intentPatterns": ["write.*test", "add.*test", "test.*coverage", "failing.*test"]
+      "description": "Test strategy, writing, TDD, and integration test infrastructure.",
+      "keywords": ["test", "unit test", "integration", "coverage", "pytest", "jest", "TDD", "test-first", "red green", "localstack"],
+      "intentPatterns": ["write.*test", "add.*test", "test.*coverage", "failing.*test", "TDD", "test.*first", "red.*green.*refactor", "integration.*test"],
+      "filePaths": ["**/test_*.py", "**/*.test.ts", "**/*.test.js", "**/*.spec.ts"],
+      "agentMapping": "tester",
+      "priority": "high"
     },
     {
       "name": "security",
-      "description": "Security review, vulnerability checks, OWASP Top 10.",
-      "keywords": ["security", "vulnerability", "auth", "injection", "XSS"],
-      "intentPatterns": ["security.*review", "check.*vulnerability", "audit.*code", "is.*secure"]
+      "description": "Security review, vulnerability checks, OWASP Top 10, comprehensive audits.",
+      "keywords": ["security", "vulnerability", "auth", "injection", "XSS", "security audit", "OWASP", "security checklist"],
+      "intentPatterns": ["security.*review", "check.*vulnerability", "audit.*code", "is.*secure", "security.*audit", "deep.*security", "OWASP.*check", "pre-deploy.*security"],
+      "agentMapping": "security",
+      "priority": "high"
     },
     {
       "name": "extend-agent",
       "description": "Create new skills, commands, hooks, or subagents.",
       "keywords": ["skill", "command", "hook", "subagent", "extend"],
-      "intentPatterns": ["create.*skill", "add.*command", "new.*subagent", "extend.*agent"]
+      "intentPatterns": ["create.*skill", "add.*command", "new.*subagent", "extend.*agent"],
+      "filePaths": ["**/SKILL.md", "**/.claude/commands/*.md", "**/.claude/hooks/*.sh"],
+      "priority": "medium"
+    },
+    {
+      "name": "strategic-compact",
+      "description": "Context management: when and how to /compact strategically.",
+      "keywords": ["compact", "context", "token limit", "session length", "compaction"],
+      "intentPatterns": ["context.*large", "running out.*context", "when.*compact", "session.*long"],
+      "priority": "medium"
     },
     {
       "name": "planning",
-      "description": "Hierarchical project planning, phases, milestones.",
-      "keywords": ["plan", "roadmap", "milestone", "PRD", "phases"],
-      "intentPatterns": ["create.*plan", "plan.*project", "roadmap", "breakdown.*tasks"],
-      "profile": "full"
-    },
-    {
-      "name": "tdd",
-      "description": "Test-driven development: red-green-refactor cycle.",
-      "keywords": ["TDD", "test-first", "red green", "refactor cycle"],
-      "intentPatterns": ["TDD", "test.*first", "red.*green.*refactor"],
+      "description": "Hierarchical project planning, phases, milestones, requirements gathering.",
+      "keywords": ["plan", "roadmap", "milestone", "PRD", "phases", "requirements", "spec", "interview", "gather", "discover"],
+      "intentPatterns": ["create.*plan", "plan.*project", "roadmap", "breakdown.*tasks", "gather.*requirements", "spec.*interview", "what.*requirements"],
+      "filePaths": ["**/.planning/**", "**/PLAN.md", "**/ROADMAP.md"],
+      "agentMapping": "planner",
+      "priority": "high",
       "profile": "full"
     },
     {
@@ -52,13 +66,9 @@
       "description": "REST API design patterns, versioning, error handling.",
       "keywords": ["API", "endpoint", "REST", "routes", "OpenAPI"],
       "intentPatterns": ["design.*API", "new.*endpoint", "API.*structure", "REST.*pattern"],
-      "profile": "full"
-    },
-    {
-      "name": "spec-interview",
-      "description": "Requirements gathering through guided interview.",
-      "keywords": ["requirements", "spec", "interview", "gather", "discover"],
-      "intentPatterns": ["gather.*requirements", "spec.*interview", "what.*requirements"],
+      "filePaths": ["**/routes/**", "**/api/**", "**/endpoints/**"],
+      "agentMapping": "architect",
+      "priority": "medium",
       "profile": "full"
     },
     {
@@ -66,7 +76,81 @@
       "description": "End-to-end Jira ticket implementation with git, tests, approval gates.",
       "keywords": ["Jira", "ticket", "issue", "implement ticket", "JIRA-ID"],
       "intentPatterns": ["implement.*ticket", "implement.*[A-Z]+-[0-9]+", "jira.*ticket"],
+      "priority": "high",
       "profile": "full"
+    },
+    {
+      "name": "design-doc-mermaid",
+      "description": "Create Mermaid diagrams and design documents from text or code.",
+      "keywords": ["diagram", "mermaid", "architecture diagram", "sequence diagram", "design doc"],
+      "intentPatterns": ["create.*diagram", "generate.*mermaid", "document.*architecture", "code.*diagram"],
+      "agentMapping": "architect",
+      "priority": "medium",
+      "profile": "full"
+    },
+    {
+      "name": "perplexity-deep-search",
+      "description": "AI-powered web search with three depth levels via Perplexity API.",
+      "keywords": ["search", "perplexity", "research", "web search", "current info"],
+      "intentPatterns": ["search.*web", "research.*topic", "current.*info", "compare.*technologies"],
+      "priority": "medium",
+      "profile": "full"
+    },
+    {
+      "name": "verification-loop",
+      "description": "Multi-phase verification: build, types, lint, tests, security, diff.",
+      "keywords": ["verify", "validation", "quality gate", "pre-PR check", "verification"],
+      "intentPatterns": ["verify.*implementation", "run.*checks", "quality.*gate", "pre-PR.*check"],
+      "priority": "high",
+      "profile": "full"
+    },
+    {
+      "name": "pr-review",
+      "description": "Structured PR and code review across 5 dimensions with severity ratings.",
+      "keywords": ["PR review", "pull request", "code review", "review diff", "review changes"],
+      "intentPatterns": ["review.*PR", "check.*pull request", "analyze.*diff", "review.*#[0-9]+", "review.*code", "review.*changes"],
+      "agentMapping": "reviewer",
+      "priority": "high",
+      "profile": "full"
+    },
+
+    {
+      "name": "postgres-patterns",
+      "description": "PostgreSQL schema design, indexing, query optimization, RLS.",
+      "keywords": ["postgres", "SQL", "index", "migration", "RLS", "query optimization"],
+      "intentPatterns": ["design.*schema", "optimize.*query", "add.*index", "database.*migration"],
+      "filePaths": ["**/migrations/**", "**/*.sql"],
+      "agentMapping": "db-expert",
+      "priority": "medium",
+      "profile": "stack"
+    },
+    {
+      "name": "docker-patterns",
+      "description": "Docker multi-stage builds, Compose, container security.",
+      "keywords": ["docker", "dockerfile", "compose", "container", "image"],
+      "intentPatterns": ["write.*dockerfile", "setup.*docker", "containerize", "docker.*compose"],
+      "filePaths": ["**/Dockerfile*", "**/docker-compose*.yml", "**/.dockerignore"],
+      "priority": "medium",
+      "profile": "stack"
+    },
+    {
+      "name": "deployment-patterns",
+      "description": "CI/CD, GitHub Actions, health checks, rollback strategies.",
+      "keywords": ["deploy", "CI/CD", "github actions", "rollback", "health check", "canary"],
+      "intentPatterns": ["setup.*CI", "deploy.*production", "github.*action", "rollback.*strategy"],
+      "filePaths": ["**/.github/workflows/*.yml", "**/deploy*.sh"],
+      "priority": "medium",
+      "profile": "stack"
+    },
+
+    {
+      "name": "ralph-orchestrator",
+      "description": "Autonomous PRD-to-code pipeline with parallel batch execution.",
+      "keywords": ["ralph", "autonomous", "pipeline", "PRD", "user stories", "orchestrate"],
+      "intentPatterns": ["run.*ralph", "autonomous.*pipeline", "PRD.*to.*code", "execute.*stories"],
+      "filePaths": ["**/tasks/prd.json", "**/SPEC.md"],
+      "priority": "high",
+      "profile": "advanced"
     }
   ]
 }

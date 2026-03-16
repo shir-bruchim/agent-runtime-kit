@@ -1,0 +1,67 @@
+{
+  "_comment": "Recommended settings for Claude Code with Agent Runtime Kit. Copy relevant sections to ~/.claude/settings.json.",
+
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/scripts/statusline.sh",
+    "padding": 0
+  },
+
+  "env": {
+    "ENABLE_TOOL_SEARCH": "true",
+    "PERPLEXITY_API_KEY": "<your-perplexity-api-key>"
+  },
+
+  "hooks": {
+    "_comment_hooks": "Pick the hooks you want. All are OPT-IN.",
+
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-commands.sh", "timeout": 10000}]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-read.sh", "timeout": 10000}]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [{"type": "command", "command": "~/.claude/hooks/protect-files.sh", "timeout": 10000}]
+      }
+    ],
+
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "~/.claude/hooks/session-start.sh", "timeout": 5000}]
+      }
+    ],
+
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "~/.claude/hooks/session-end.sh", "timeout": 10000}]
+      }
+    ],
+
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "~/.claude/hooks/pre-compact.sh", "timeout": 5000}]
+      }
+    ],
+
+    "UserPromptSubmit": [
+      {
+        "_comment": "Concise mode (optional — enable with /concise on)",
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "~/.claude/hooks/concise-mode.sh", "timeout": 5000}]
+      },
+      {
+        "_comment": "Delegate-first reminder (optional)",
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "~/.claude/hooks/delegate-first.sh", "timeout": 5000}]
+      }
+    ]
+  }
+}

@@ -10,17 +10,17 @@ High-signal, low-token footprint. Install this unless you know you need FULL.
 
 | Category | Included |
 |----------|---------|
-| **Skills** | `extend-agent`, `git`, `testing`, `debugging`, `security` |
-| **Rules** | `base-conventions`, `security`, `testing` |
-| **Commands** | `commit`, `push`, `pr`, `ship`, `review`, `test` |
-| **Subagents** | `reviewer`, `tester`, `git-ops`, `security` |
-| **Language pack** | Detected language only (e.g., `typescript/conventions.md` + `typescript/testing.md`) |
+| **Skills** | `extend-agent`, `git`, `testing`, `debugging`, `security`, `strategic-compact` (17 total in kit) |
+| **Rules** | `base-conventions`, `security`, `testing` (7 total in kit — 4 path-scoped) |
+| **Commands** | `build-fix`, `commit`, `push`, `pr`, `ship`, `test` (6 total in kit) |
+| **Subagents** | `reviewer`, `tester`, `git-ops`, `security` (15 total in kit — 4 with memory: user) |
+| **Language pack** | Detected language only (e.g., `python/conventions.md` + `python/testing.md` + `python/database.md` + `python/async.md`) |
 
 **What CORE excludes (by design):**
-- `planning`, `tdd`, `api-design`, `spec-interview`, `implement-jira-ticket` skills
-- `git-workflow`, `performance`, `infrastructure` rules (use if your project needs them)
+- `planning`, `api-design`, `implement-jira-ticket` and other specialized skills
+- `git-workflow`, `performance` (path-scoped), `infrastructure` (path-scoped), `patterns` (path-scoped) rules
 - `architect`, `planner`, `db-expert`, `doc-writer`, `refactorer` subagents
-- `debug`, `refactor`, `spec-interview`, `generate-prd`, `implement-jira-ticket` commands
+- Note: TDD is now a workflow in `testing/workflows/tdd.md`, spec-interview is in `planning/workflows/spec-interview.md`, security-review workflows are in `security/workflows/`
 
 ---
 
@@ -30,16 +30,36 @@ Everything in CORE, plus:
 
 | Category | Added |
 |----------|-------|
-| **Skills** | `planning`, `tdd`, `api-design`, `spec-interview`, `implement-jira-ticket` |
-| **Rules** | `git-workflow`, `performance`, `infrastructure` |
-| **Commands** | `debug`, `refactor`, `spec-interview`, `generate-prd`, `implement-jira-ticket` |
-| **Subagents** | `architect`, `planner`, `db-expert`, `doc-writer`, `refactorer` |
+| **Skills** | `planning`, `api-design`, `implement-jira-ticket`, `design-doc-mermaid`, `perplexity-deep-search`, `verification-loop`, `pr-review` |
+| **Rules** | `git-workflow`, `performance` (path-scoped), `infrastructure` (path-scoped), `patterns` (path-scoped) |
+| **Commands** | None — all commands now in CORE |
+| **Subagents** | `architect`, `planner`, `db-expert`, `doc-writer`, `refactorer`, `tdd-guide`, `perplexity-research` |
+
+### [ADVANCED] — Autonomous Agent Pipeline
+
+| Category | Included |
+|----------|---------|
+| **Skills** | `ralph-orchestrator` (with 4 workflows: full-pipeline, execute-only, from-prd, check-status) |
+| **Agents** | `ralph-coder`, `ralph-tester` |
+| **Commands** | `ralph-convert-prd` |
+
+Ralph orchestrates complete feature development: spec-interview -> PRD -> atomic user stories -> parallel batch execution via coder/tester subagents with worktree isolation. See `skills/ralph-orchestrator/SKILL.md` for full documentation.
 
 ---
 
 ## Opt-in Enhancements
 
 Neither profile installs these by default. Enable explicitly when needed.
+
+### [OPT-IN] — Session, Productivity, and Research Hooks
+
+| Category | Included |
+|----------|---------|
+| **Session Hooks** | `session-start.sh`, `session-end.sh`, `pre-compact.sh` |
+| **Productivity Hooks** | `concise-mode.sh`, `concise-toggle.sh`, `delegate-first.sh`, `suggest-compact.sh` |
+| **Scripts** | `statusline.sh`, `perplexity_search.py` |
+| **Commands** | `concise` |
+| **Templates** | `settings-template.json` |
 
 ### Security Hooks
 
@@ -53,7 +73,7 @@ scripts/install-kit.sh --plan /tmp/kit-plan.json
 # Or add --hooks to any profile install
 ```
 
-### Skill Routing (FULL-only)
+### Skill Routing
 
 Generates a compact routing table (~200 tokens) that teaches the agent which skill to
 load for a given task. Useful when you use multiple FULL skills regularly.
@@ -71,6 +91,26 @@ python3 scripts/compile-claude-routing.py --target project --project-dir .
 
 Why opt-in? Context budget. CORE keeps every token free for actual work. Enable routing
 only when the table's auto-routing value exceeds its context cost.
+
+---
+
+## Tagged Opt-ins
+
+Add with `--tags python,stack` during install. These are independent of CORE/FULL.
+
+### [PYTHON] — Python Language Pack
+
+| Category | Included |
+|----------|---------|
+| **Language Files** | `conventions.md`, `testing.md`, `database.md`, `async.md` (in `languages/python/`) |
+| **Agents** | `python-debugger`, `fastapi-specialist` (in `languages/python/agents/`) |
+
+### [STACK] — Infrastructure Pack
+
+| Category | Included |
+|----------|---------|
+| **Skills** | `postgres-patterns`, `docker-patterns`, `deployment-patterns` |
+| **Agents** | `aws-specialist`, `k8s-specialist` |
 
 ---
 

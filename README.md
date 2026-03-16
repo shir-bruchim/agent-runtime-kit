@@ -50,10 +50,19 @@ See `PROFILES.md` for profile details and per-file decision (SKIP/MERGE) instruc
 
 | | CORE (default) | FULL |
 |-|----------------|------|
-| Skills | extend-agent, git, testing, debugging, security | + planning, tdd, api-design, spec-interview, implement-jira-ticket |
-| Rules | base-conventions, security, testing | + git-workflow, performance, infrastructure |
-| Commands | commit, push, pr, ship, review, test | + debug, refactor, spec-interview, generate-prd, implement-jira-ticket |
-| Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer |
+| Skills | extend-agent, git, testing, debugging, security, strategic-compact | + planning, api-design, implement-jira-ticket, design-doc-mermaid, perplexity-deep-search, verification-loop, pr-review |
+| Rules | base-conventions, security, testing | + git-workflow, performance(path-scoped), infrastructure(path-scoped), patterns(path-scoped) |
+| Commands | commit, push, pr, ship, test, build-fix | (none — commands now in CORE) |
+| Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer, tdd-guide, perplexity-research, aws-specialist, k8s-specialist |
+
+**Tagged opt-ins** (add with `--tags`):
+
+| Tag | What It Adds |
+|-----|-------------|
+| `[PYTHON]` | `languages/python/` — conventions, testing, database, async language files + python-debugger, fastapi-specialist agents |
+| `[STACK]` | postgres-patterns, docker-patterns, deployment-patterns skills + aws-specialist, k8s-specialist agents |
+| `[ADVANCED]` | ralph-orchestrator skill + ralph-coder, ralph-tester agents — autonomous PRD-to-code pipeline |
+| `[OPT-IN]` | Session hooks, concise mode, delegate-first, statusline, Perplexity search, settings template |
 
 CORE is ~60% smaller than FULL. Use CORE unless you need the extras. See `PROFILES.md`.
 
@@ -71,13 +80,31 @@ agent-runtime-kit/
 │   ├── extend-agent/       # Meta: create skills, commands, hooks, subagents  [CORE]
 │   ├── debugging/          # Systematic debugging                              [CORE]
 │   ├── git/                # Git workflows                                     [CORE]
-│   ├── security/           # Security reviews + hooks                          [CORE]
-│   ├── testing/            # Test writing                                      [CORE]
-│   ├── planning/           # Project planning hierarchy                        [FULL]
-│   ├── tdd/                # Test-driven development                           [FULL]
+│   ├── security/           # Security reviews + hooks + workflows              [CORE]
+│   ├── testing/            # Test writing + TDD workflow                       [CORE]
+│   ├── strategic-compact/  # Context management + /compact guidance            [CORE]
+│   ├── planning/           # Project planning + spec-interview workflow        [FULL]
 │   ├── api-design/         # API design patterns                               [FULL]
-│   ├── spec-interview/     # Requirements gathering                            [FULL]
-│   └── implement-jira-ticket/ # Jira ticket implementation                    [FULL]
+│   ├── implement-jira-ticket/ # Jira ticket implementation                    [FULL]
+│   ├── design-doc-mermaid/ # Mermaid diagrams + design documents              [FULL]
+│   ├── perplexity-deep-search/ # AI-powered web search (3 modes)             [FULL]
+│   ├── verification-loop/  # Multi-phase verification system                  [FULL]
+│   └── pr-review/          # Structured PR review (5 dimensions)              [FULL]
+│   ├── postgres-patterns/  # PostgreSQL schema, indexing, optimization        [STACK]
+│   ├── docker-patterns/    # Docker builds, Compose, security                [STACK]
+│   ├── deployment-patterns/# CI/CD, health checks, rollback                  [STACK]
+│   └── ralph-orchestrator/ # Autonomous PRD-to-code pipeline                 [ADVANCED]
+│       └── workflows/      # full-pipeline, execute-only, from-prd, check-status
+│
+├── languages/              # Language-specific packs (tagged opt-in)
+│   └── python/
+│       ├── conventions.md       # Framework selection, project structure  [PYTHON]
+│       ├── testing.md           # pytest, fixtures, mocking              [PYTHON]
+│       ├── database.md          # SQLAlchemy, Alembic, connection pools  [PYTHON]
+│       ├── async.md             # asyncio, concurrent patterns           [PYTHON]
+│       └── agents/
+│           ├── python-debugger.md   # Hypothesis-driven debugging        [PYTHON]
+│           └── fastapi-specialist.md # FastAPI patterns, DI, Pydantic v2 [PYTHON]
 │
 ├── subagents/              # Specialized AI subagents
 │   ├── reviewer.md         # Code review                                       [CORE]
@@ -88,40 +115,35 @@ agent-runtime-kit/
 │   ├── planner.md          # Task planning                                     [FULL]
 │   ├── db-expert.md        # Database design                                   [FULL]
 │   ├── doc-writer.md       # Documentation                                     [FULL]
-│   └── refactorer.md       # Code refactoring                                  [FULL]
+│   ├── refactorer.md       # Code refactoring                                  [FULL]
+│   ├── tdd-guide.md        # Test-driven development                           [FULL]
+│   ├── perplexity-research.md # Web research via Perplexity API                [FULL]
+│   ├── aws-specialist.md  # AWS Lambda, SQS, S3, IAM                         [STACK]
+│   ├── k8s-specialist.md  # Kubernetes, Helm, HPA, RBAC                      [STACK]
+│   ├── ralph-coder.md     # Ralph: implements production code per story       [ADVANCED]
+│   └── ralph-tester.md    # Ralph: writes tests + verification per story      [ADVANCED]
 │
 ├── commands/               # Slash commands (Claude Code)
+│   ├── build-fix.md        # /build-fix                                        [CORE]
 │   ├── commit.md           # /commit                                           [CORE]
-│   ├── push.md             # /push                                             [CORE]
 │   ├── pr.md               # /pr                                               [CORE]
-│   ├── ship.md             # /ship (commit + push + PR)                        [CORE]
-│   ├── review.md           # /review                                           [CORE]
-│   ├── test.md             # /test                                             [CORE]
-│   ├── debug.md            # /debug [issue]                                    [FULL]
-│   ├── refactor.md         # /refactor [target]                                [FULL]
-│   ├── spec-interview.md   # /spec-interview                                   [FULL]
-│   ├── generate-prd.md     # /generate-prd                                     [FULL]
-│   └── implement-jira-ticket.md # /implement-jira-ticket                       [FULL]
+│   ├── push.md             # /push                                             [CORE]
+│   ├── ship.md             # /ship (commit + push + PR + auto-review)          [CORE]
+│   └── test.md             # /test                                             [CORE]
 │
 ├── rules/                  # Project-level conventions
 │   ├── base-conventions.md                                                     [CORE]
 │   ├── security.md                                                             [CORE]
-│   ├── testing.md                                                              [CORE]
+│   ├── testing.md          # Path-scoped to test/ directories                 [CORE]
 │   ├── git-workflow.md                                                         [FULL]
-│   ├── performance.md                                                          [FULL]
-│   └── infrastructure.md                                                       [FULL]
-│
-├── languages/              # Language-specific conventions (detected auto)
-│   ├── python/             # conventions, testing, database
-│   ├── nodejs/             # conventions, testing
-│   ├── typescript/         # conventions, testing
-│   ├── go/                 # conventions, testing
-│   ├── cpp/                # conventions, testing
-│   └── java/               # conventions
+│   ├── performance.md      # Path-scoped                                      [FULL]
+│   ├── infrastructure.md   # Path-scoped                                      [FULL]
+│   └── patterns.md         # Path-scoped, common design patterns               [FULL]
 │
 ├── templates/              # Source templates for AI agent generation
 │   ├── AGENTS.md           # Copilot + Gemini context file template
 │   ├── GEMINI.md           # Gemini CLI project context template
+│   ├── settings-template.json  # Recommended Claude Code settings            [OPT-IN]
 │   └── .github/
 │       └── copilot-instructions.md
 │
@@ -129,13 +151,29 @@ agent-runtime-kit/
 │   ├── recommended-servers.json  # OPT-IN MCP server configs
 │   └── SETUP.md                  # Setup guide per platform
 │
-├── hooks/                        # OPT-IN security hooks (--hooks flag)
-│   ├── block-dangerous-commands.sh  # Block destructive shell commands
-│   ├── block-dangerous-bash.sh      # Compatibility alias for above
-│   └── protect-files.sh             # Block writes to protected paths
+├── hooks/                        # OPT-IN hooks (--hooks flag)
+│   ├── block-dangerous-commands.sh  # Block destructive shell commands          [SECURITY]
+│   ├── block-dangerous-bash.sh      # Compatibility alias for above             [SECURITY]
+│   ├── block-dangerous-read.sh      # Block reads of secrets, keys, credentials [SECURITY]
+│   ├── protect-files.sh             # Block writes to protected paths           [SECURITY]
+│   ├── session-start.sh             # Load previous session context             [OPT-IN]
+│   ├── session-end.sh               # Save session summary on exit              [OPT-IN]
+│   ├── pre-compact.sh               # Log compaction events                     [OPT-IN]
+│   ├── suggest-compact.sh           # Suggest /compact at tool-call threshold   [OPT-IN]
+│   ├── concise-mode.sh              # Brief response style (UserPromptSubmit)   [OPT-IN]
+│   ├── concise-toggle.sh            # Toggle concise mode on/off                [OPT-IN]
+│   └── delegate-first.sh            # Remind to use subagents first             [OPT-IN]
 │
 ├── routing/
 │   └── skill-rules.json          # Routing rules for compile-claude-routing.py
+│
+├── scripts/
+│   ├── check-kit-updates.sh      # Generate install plan
+│   ├── install-kit.sh            # Execute install plan
+│   ├── compile-claude-routing.py  # Generate skill routing table
+│   ├── generate-cursor-mdc.sh    # Generate Cursor .mdc files
+│   ├── statusline.sh             # Terminal status bar (model, branch, context)  [OPT-IN]
+│   └── perplexity_search.py      # Perplexity API search script                 [OPT-IN]
 │
 └── docs/
     ├── CUSTOMIZATION.md          # How to extend the kit
@@ -151,10 +189,10 @@ agent-runtime-kit/
 
 ```bash
 # Global install (recommended — available in all projects)
-cp -r skills/extend-agent skills/git skills/testing skills/debugging skills/security ~/.claude/skills/
+cp -r skills/extend-agent skills/git skills/testing skills/debugging skills/security skills/strategic-compact ~/.claude/skills/
 cp subagents/reviewer.md subagents/tester.md subagents/git-ops.md subagents/security.md ~/.claude/agents/
 cp commands/commit.md commands/push.md commands/pr.md commands/ship.md \
-   commands/review.md commands/test.md ~/.claude/commands/
+   commands/build-fix.md commands/test.md ~/.claude/commands/
 
 # Project-level rules (CORE)
 mkdir -p .claude/rules
@@ -194,32 +232,47 @@ Read `AGENT-SETUP.md`. It contains step-by-step instructions for:
 
 | Skill | Profile | What It Does |
 |-------|---------|-------------|
-| `extend-agent/` | CORE | Create skills, commands, hooks, or subagents |
+| `extend-agent/` | CORE | Create skills, commands, hooks, or subagents — includes cross-platform frontmatter guide |
 | `debugging/` | CORE | Systematic bug investigation |
 | `git/` | CORE | Commit, push, PR workflows |
-| `security/` | CORE | Security review + blocking hooks |
-| `testing/` | CORE | Test strategy and writing |
-| `planning/` | FULL | Hierarchical project planning |
-| `tdd/` | FULL | Red-green-refactor cycle |
+| `security/` | CORE | Security review + blocking hooks + deep-review and setup-hooks workflows |
+| `testing/` | CORE | Test strategy and writing + TDD workflow + LocalStack integration references |
+| `strategic-compact/` | CORE | Context management + strategic /compact guidance |
+| `planning/` | FULL | Hierarchical project planning + spec-interview workflow |
 | `api-design/` | FULL | REST API design patterns |
-| `spec-interview/` | FULL | Requirements gathering |
 | `implement-jira-ticket/` | FULL | End-to-end Jira ticket implementation |
+| `design-doc-mermaid/` | FULL | Mermaid diagrams and design documents |
+| `perplexity-deep-search/` | FULL | AI-powered web search (3 depth modes) |
+| `verification-loop/` | FULL | Multi-phase verification system |
+| `pr-review/` | FULL | Structured PR review across 5 dimensions |
+| `postgres-patterns/` | STACK | PostgreSQL schema, indexing, query optimization |
+| `docker-patterns/` | STACK | Docker builds, Compose, container security |
+| `deployment-patterns/` | STACK | CI/CD, health checks, rollback strategies |
+| `ralph-orchestrator/` | ADVANCED | Autonomous PRD-to-code pipeline with parallel batch execution |
 
 ---
 
 ## Subagents Reference
 
-| Subagent | Profile | Model | Use For |
-|----------|---------|-------|---------|
-| `reviewer` | CORE | sonnet | Code review |
-| `tester` | CORE | sonnet | Writing tests |
-| `git-ops` | CORE | haiku | Git operations |
-| `security` | CORE | sonnet | Security analysis |
-| `architect` | FULL | opus | Architecture decisions |
-| `planner` | FULL | opus | Task planning |
-| `db-expert` | FULL | sonnet | Database design |
-| `doc-writer` | FULL | sonnet | Documentation |
-| `refactorer` | FULL | sonnet | Refactoring |
+| Subagent | Profile | Model | Memory | Preloaded Skills | Use For |
+|----------|---------|-------|--------|------------------|---------|
+| `reviewer` | CORE | sonnet | user | git, testing, security | Code review |
+| `tester` | CORE | sonnet | user | testing | Writing tests |
+| `git-ops` | CORE | haiku | - | - | Git operations |
+| `security` | CORE | sonnet | user | security | Security analysis |
+| `architect` | FULL | opus | - | - | Architecture decisions |
+| `planner` | FULL | opus | - | - | Task planning |
+| `db-expert` | FULL | sonnet | user | postgres-patterns | Database design |
+| `doc-writer` | FULL | sonnet | - | - | Documentation |
+| `refactorer` | FULL | sonnet | - | - | Refactoring |
+| `tdd-guide` | FULL | sonnet | - | testing | Test-driven development |
+| `perplexity-research` | FULL | sonnet | - | perplexity-deep-search | Web research via Perplexity |
+| `aws-specialist` | STACK | sonnet | - | - | AWS infrastructure (Lambda, SQS, S3) |
+| `k8s-specialist` | STACK | sonnet | - | - | Kubernetes (Deployments, Helm, HPA) |
+| `python-debugger` | PYTHON | sonnet | - | - | Hypothesis-driven Python debugging |
+| `fastapi-specialist` | PYTHON | sonnet | - | - | FastAPI patterns, DI, Pydantic v2 |
+| `ralph-coder` | ADVANCED | sonnet | - | - | Implements production code per user story |
+| `ralph-tester` | ADVANCED | sonnet | - | - | Writes tests + runs verification per story |
 
 **Claude Code**: invoked automatically by description or by user request.
 **Cursor**: invoke explicitly with `/subagent-name` (e.g., `/reviewer check this PR`).
@@ -230,17 +283,12 @@ Read `AGENT-SETUP.md`. It contains step-by-step instructions for:
 
 | Command | Profile | Description |
 |---------|---------|-------------|
+| `/build-fix` | CORE | Incrementally fix build errors |
 | `/commit` | CORE | Stage and commit with conventional commit format |
-| `/push` | CORE | Push current branch to remote |
 | `/pr` | CORE | Create pull request with template |
-| `/ship` | CORE | Full workflow: commit + push + PR |
-| `/review` | CORE | Code review of recent changes |
+| `/push` | CORE | Push current branch to remote |
+| `/ship` | CORE | Full workflow: commit + push + PR + auto-review |
 | `/test` | CORE | Auto-detect and run the project's test suite |
-| `/debug [issue]` | FULL | Systematic root-cause analysis |
-| `/refactor [target]` | FULL | Improve code quality without changing behavior |
-| `/spec-interview` | FULL | Interactive requirements gathering |
-| `/generate-prd` | FULL | Generate product requirements document |
-| `/implement-jira-ticket` | FULL | Implement a Jira ticket end-to-end |
 
 ---
 
@@ -279,9 +327,60 @@ Quick reference — supported servers:
 
 ---
 
-## Opt-in Enhancements (FULL-only)
+## Opt-in Enhancements
 
 These features are never installed by default. Enable them explicitly when you need them.
+
+### Session Hooks (OPT-IN)
+
+Session continuity across conversations. Saves summaries on exit, loads context on start, logs compaction events.
+
+```bash
+# Install session hooks:
+cp hooks/session-start.sh hooks/session-end.sh hooks/pre-compact.sh ~/.claude/hooks/
+chmod +x ~/.claude/hooks/session-*.sh ~/.claude/hooks/pre-compact.sh
+```
+
+See `templates/settings-template.json` for the hooks registration JSON.
+
+### Concise Mode (OPT-IN)
+
+Toggle brief 1-3 sentence responses. Useful for rapid iteration.
+
+```bash
+cp hooks/concise-mode.sh hooks/concise-toggle.sh ~/.claude/hooks/
+cp commands/concise.md ~/.claude/commands/
+chmod +x ~/.claude/hooks/concise-*.sh
+# Then use: /concise on | /concise off
+```
+
+### Delegate-First (OPT-IN)
+
+Reminds the agent to check for specialized subagents before starting work.
+
+```bash
+cp hooks/delegate-first.sh ~/.claude/hooks/
+chmod +x ~/.claude/hooks/delegate-first.sh
+```
+
+### Status Line (OPT-IN)
+
+Terminal status bar showing model, branch, context usage with progress bar.
+
+```bash
+cp scripts/statusline.sh ~/.claude/scripts/
+chmod +x ~/.claude/scripts/statusline.sh
+# Add to settings.json: "statusLine": {"type": "command", "command": "~/.claude/scripts/statusline.sh"}
+```
+
+### Perplexity Search (OPT-IN)
+
+Web research via Perplexity API. Used by `perplexity-deep-search` skill and `perplexity-research` agent.
+
+```bash
+cp scripts/perplexity_search.py ~/.claude/scripts/
+# Requires: PERPLEXITY_API_KEY in settings.json env
+```
 
 ### Skill Routing (FULL-only)
 
@@ -302,7 +401,7 @@ The output is delimited and idempotent — re-running replaces the previous bloc
 
 ### Security Hooks (OPT-IN)
 
-Hooks that block destructive shell commands and protect sensitive file paths. Source lives in `hooks/`.
+Hooks that block destructive shell commands, prevent reading secrets, and protect sensitive file paths. Source lives in `hooks/`.
 
 ```bash
 # Include hooks in your install plan:
@@ -311,7 +410,8 @@ scripts/install-kit.sh --plan /tmp/kit-plan.json
 
 # Or install manually:
 mkdir -p ~/.claude/hooks
-cp hooks/block-dangerous-commands.sh hooks/block-dangerous-bash.sh hooks/protect-files.sh ~/.claude/hooks/
+cp hooks/block-dangerous-commands.sh hooks/block-dangerous-bash.sh \
+   hooks/block-dangerous-read.sh hooks/protect-files.sh ~/.claude/hooks/
 chmod +x ~/.claude/hooks/*.sh
 ```
 
@@ -323,6 +423,10 @@ Then register in `~/.claude/settings.json`:
     "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-commands.sh", "timeout": 10000}]
   },
   {
+    "matcher": "Read",
+    "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-read.sh", "timeout": 10000}]
+  },
+  {
     "matcher": "Write|Edit",
     "hooks": [{"type": "command", "command": "~/.claude/hooks/protect-files.sh", "timeout": 10000}]
   }
@@ -330,6 +434,7 @@ Then register in `~/.claude/settings.json`:
 ```
 
 Configure protected paths in `~/.claude/protected-paths.txt` (one prefix per line).
+Configure blocked read paths in `~/.claude/blocked-read-paths.txt` (one path per line).
 
 ---
 
@@ -345,6 +450,6 @@ Use `/spec-interview` to gather requirements before building anything significan
 
 ---
 
-**Version:** 2.2.0
+**Version:** 3.1.0
 **Compatible With:** Claude Code (Claude 4.5+), Cursor 0.40+, GitHub Copilot, Gemini CLI
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-03-16

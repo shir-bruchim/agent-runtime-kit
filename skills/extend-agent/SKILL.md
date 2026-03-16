@@ -7,26 +7,35 @@ description: Create new skills, commands, hooks, or subagents for your AI agent.
 
 ## Types of Agent Extensions
 
-| Type | Claude Code | Cursor | Purpose |
-|------|-------------|--------|---------|
-| **Skill** | `~/.claude/skills/<name>/SKILL.md` | `.cursor/rules/<name>.mdc` | Domain knowledge + workflows |
-| **Command** | `~/.claude/commands/<name>.md` | `.cursor/rules/<name>.mdc` (on-demand rule) | Quick action shortcuts |
-| **Hook** | `.claude/hooks.json` | `alwaysApply: true` rules | Event-driven automation |
-| **Subagent** | `~/.claude/agents/<name>.md` | `.cursor/agents/<name>.md` | Specialist AI instances |
+| Type | Claude Code | Cursor | Gemini CLI | Copilot | Purpose |
+|------|-------------|--------|------------|---------|---------|
+| **Skill** | `skills/<name>/SKILL.md` | `.cursor/rules/<name>.mdc` | N/A (use GEMINI.md) | N/A (use instructions) | Domain knowledge + workflows |
+| **Command** | `commands/<name>.md` | `.cursor/rules/<name>.mdc` | `.gemini/commands/<name>.toml` | N/A | Quick action shortcuts |
+| **Hook** | `settings.json` hooks | `alwaysApply: true` rules | `settings.json` hooks | N/A | Event-driven automation |
+| **Subagent** | `agents/<name>.md` | `.cursor/agents/<name>.md` | N/A (use MCP/extensions) | N/A | Specialist AI instances |
+| **Rule** | `.claude/rules/<name>.md` | `.cursor/rules/<name>.mdc` | `GEMINI.md` sections | `.github/instructions/*.instructions.md` | Coding conventions |
 
-Both Claude Code and Cursor use the same `.claude/agents/` path for subagents.
+### Skill Frontmatter — All Fields (Claude Code)
 
-### Frontmatter Format by Type
-
-**Skill — Claude Code (SKILL.md):**
 ```yaml
 ---
-name: skill-name
-description: What it does and when to use it.
+name: skill-name                    # Required: unique identifier
+description: What and when to use   # Required: Claude reads this to decide invocation
+disable-model-invocation: true      # Optional: only user can invoke via /name (zero context cost)
+user-invocable: false               # Optional: hides from / menu, Claude auto-invokes only
+context: fork                       # Optional: runs in isolated subagent context
+agent: general-purpose              # Optional: which agent type for forked context
+allowed-tools: Read, Grep, Glob     # Optional: restrict available tools
 ---
 ```
 
-**Skill — Cursor (.mdc):**
+**Context cost rules:**
+- `disable-model-invocation: true` → description NOT in context (zero cost, user-only)
+- `user-invocable: false` → description IN context (Claude auto-invokes)
+- Default → description IN context + appears in / menu
+
+### Skill Frontmatter — Cursor (.mdc)
+
 ```yaml
 ---
 description: What it does and when it applies
@@ -35,15 +44,47 @@ alwaysApply: false       # true = always in context
 ---
 ```
 
-**Subagent — Claude Code vs Cursor differences:**
-| Field | Claude Code | Cursor |
-|-------|-------------|--------|
-| `name` | ✅ Required | ✅ Required |
-| `description` | ✅ Required | ✅ Required |
-| `model` | `sonnet/opus/haiku/inherit` | `fast/inherit/<model-id>` |
-| `tools` | ✅ Restricts tool access | Ignored |
-| `readonly` | Ignored | ✅ Read-only mode |
-| `is_background` | Ignored | ✅ Background execution |
+### Skill Frontmatter — Copilot (.instructions.md)
+
+```yaml
+---
+applyTo: "**/*.py,**/*.ts"          # Glob patterns for file scope
+excludeAgent: "code-review"         # Optional: exclude from specific agent
+---
+```
+
+### Subagent Frontmatter — All Fields (Claude Code)
+
+```yaml
+---
+name: agent-name                    # Required
+description: When to use            # Required
+tools: Read, Grep, Glob, Bash      # Optional: restrict tool access
+model: sonnet                       # Optional: sonnet/opus/haiku
+memory: user                        # Optional: persistent cross-session learning
+skills:                             # Optional: preload skills at startup
+  - testing
+  - security
+maxTurns: 10                        # Optional: limit agent turns
+isolation: worktree                 # Optional: isolated git worktree
+---
+```
+
+### Command Frontmatter — Gemini CLI (.toml)
+
+```toml
+description = "What this command does"
+prompt = "The prompt to send when invoked"
+```
+
+### Rule Path-Scoping (Cross-Platform)
+
+| Platform | Field | Format |
+|----------|-------|--------|
+| Claude Code | `paths:` | `["**/test_*", "**/*.spec.*"]` |
+| Cursor | `globs:` | `["**/test_*", "**/*.spec.*"]` |
+| Copilot | `applyTo:` | `"**/test_*,**/*.spec.*"` |
+| Gemini CLI | N/A | Context files loaded by directory hierarchy |
 
 </essential_principles>
 
@@ -205,16 +246,34 @@ See `skills/security/hooks/` for working hook script examples.
 
 <create_skill_and_subagent_notes>
 
-**Skill complexity rule:**
+**Skill design patterns:**
 - Simple (4-10 lines of instructions) → single `SKILL.md` file
 - Complex (multi-step workflows, multiple domains) → router pattern with `workflows/`, `references/`, `templates/` subdirs
+- Keep SKILL.md under 500 lines — move detailed content to `references/` subdirectory
+- Description is critical — Claude uses it to decide when to invoke. Be specific about triggers.
+- Use progressive disclosure: lean SKILL.md routes to detailed workflow/reference files
 
 **Subagent execution model — critical constraints:**
 - Subagents **cannot** use `AskUserQuestion` or wait for user input
 - Run isolated — user sees only final output, not intermediate steps
 - Invoked automatically (Claude matches `description` field) or explicitly via the Task tool
 - Project subagents (`.claude/agents/`) override user subagents (`~/.claude/agents/`) on name conflict
-- For multi-stage orchestration (research → plan → execute pipeline): use the planning skill + Task tool, not a single subagent
+- `memory: user` enables persistent learning at `~/.claude/agent-memory/<name>/`
+- `skills:` preloading injects full skill content at startup (no need for inline "read skills/X/SKILL.md")
+- For multi-stage orchestration: use the planning skill + Task tool, not a single subagent
+
+**When to use subagents proactively:**
+
+| Situation | Agent | Why |
+|-----------|-------|-----|
+| Complex feature | planner | Break down before building |
+| Code just written | reviewer | Catch issues immediately |
+| New feature or bug fix | tester | Tests alongside code |
+| Architecture decision | architect | Design before implementation |
+| Security-sensitive code | security | Audit before commit |
+| Database work | db-expert | Schema and query optimization |
+
+Always launch independent agents in parallel when possible.
 
 </create_skill_and_subagent_notes>
 

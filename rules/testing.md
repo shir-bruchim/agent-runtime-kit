@@ -1,3 +1,7 @@
+---
+paths: ["**/test_*", "**/*.test.*", "**/*.spec.*", "**/conftest.py"]
+---
+
 # Testing Standards
 
 ## Test What Matters

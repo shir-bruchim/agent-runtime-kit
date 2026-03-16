@@ -3,6 +3,8 @@ name: architect
 description: System design and architecture specialist. Use proactively for architectural decisions, designing new systems, evaluating technical approaches, defining component boundaries, or planning major refactors. Produces detailed technical designs with trade-off analysis.
 tools: Read, Grep, Glob
 model: opus
+skills:
+  - api-design
 ---
 
 <role>

@@ -80,15 +80,17 @@ def generate_block(rules: dict, profile: str) -> str:
         "\n",
         "Match user intent → load the corresponding skill before writing code.\n",
         "\n",
-        "| Keywords | Skill | Description |\n",
-        "|----------|-------|-------------|\n",
+        "| Keywords | Skill | Agent | Active When Editing |\n",
+        "|----------|-------|-------|--------------------|\n",
     ]
 
     for skill in skills:
         keywords = ", ".join(f"`{k}`" for k in skill.get("keywords", [])[:3])
         name = skill["name"]
-        desc = skill.get("description", "")
-        lines.append(f"| {keywords} | `{name}` | {desc} |\n")
+        agent = skill.get("agentMapping", "—")
+        file_paths = skill.get("filePaths", [])
+        globs = ", ".join(f"`{fp}`" for fp in file_paths[:2]) if file_paths else "—"
+        lines.append(f"| {keywords} | `{name}` | {agent} | {globs} |\n")
 
     lines.append("\n")
     lines.append("### Detailed Patterns\n\n")
@@ -98,7 +100,8 @@ def generate_block(rules: dict, profile: str) -> str:
         desc = skill.get("description", "")
         patterns = skill.get("intentPatterns", [])
         profile_tag = skill.get("profile", "core").upper()
-        lines.append(f"**`{name}`** `[{profile_tag}]` — {desc}\n")
+        priority = skill.get("priority", "medium")
+        lines.append(f"**`{name}`** `[{profile_tag}]` `[{priority}]` — {desc}\n")
         if patterns:
             pattern_str = " | ".join(f"`{p}`" for p in patterns[:4])
             lines.append(f"Triggers: {pattern_str}\n")

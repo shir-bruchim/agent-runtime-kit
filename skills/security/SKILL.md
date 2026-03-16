@@ -13,6 +13,7 @@ What would you like to do?
 1. **Code review** — Review code for security vulnerabilities
 2. **Setup hooks** — Configure safety hooks to block dangerous operations
 3. **File protections** — Set up protected-path blocking
+4. **Deep review** — Comprehensive security audit across 10 dimensions with checklists
 
 **Wait for response.**
 </intake>
@@ -21,8 +22,9 @@ What would you like to do?
 | Response | Action |
 |----------|--------|
 | 1, "review", "vulnerabilities" | Run security code review workflow below |
-| 2, "hooks", "safety" | See hooks reference below — install scripts |
-| 3, "file protections", "protect" | See hooks reference below — protect-files.sh |
+| 2, "hooks", "safety" | See `workflows/setup-hooks.md` — install scripts |
+| 3, "file protections", "protect" | See `workflows/setup-hooks.md` — protect-files.sh |
+| 4, "deep review", "comprehensive", "audit" | See `workflows/deep-review.md` — comprehensive 10-dimension security audit with checklists |
 </routing>
 
 <code_review_workflow>

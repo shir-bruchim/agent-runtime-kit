@@ -1,9 +1,9 @@
 ---
-description: Full ship workflow — commit, push, and open a pull request in one step
+description: Full ship workflow — commit, push, open a pull request, and auto-review in one step
 ---
 
 <objective>
-Complete the full git workflow: stage + commit + push + create PR.
+Complete the full git workflow: stage + commit + push + create PR + auto-review.
 
 Use when you've finished a feature or fix and want to ship it for review in one command.
 </objective>
@@ -15,28 +15,63 @@ Recent commits: !`git log --oneline -5`
 </context>
 
 <process>
+
+### Phase 1 — Create PR
+
 Run in sequence — stop if any step fails:
 
-1. **Review changes**: Check `git status` and `git diff` for what's staged
-2. **Stage**: `git add` the relevant changed files
-3. **Commit**: Write a conventional commit message (`type(scope): description`)
-4. **Push**: `git push -u origin <current-branch>`
-5. **Create PR**: `gh pr create` with title from commit, template body
-6. **Output PR URL**
+1. **Verify prerequisites**
+   - `gh auth status` — abort if not authenticated
+   - Confirm current branch is not `main` or `master`
+2. **Review changes**: Check `git status` and `git diff` for staged/unstaged
+3. **Stage**: `git add` the relevant changed files
+4. **Commit**: Write a conventional commit message (`type(scope): description`)
+5. **Push**: `git push -u origin <current-branch>`
+6. **Create PR**: `gh pr create` with title from commit, structured body:
+   ```
+   ## Summary
+   - <what changed>
+   - <why / motivation>
+
+   ## Test plan
+   - [ ] <specific thing to verify>
+   - [ ] All existing tests pass
+   ```
+7. **Capture PR number** from output
+
+### Phase 2 — Auto-Review
+
+After PR creation, load `skills/pr-review/` and run the review:
+
+8. **Fetch the diff**: `gh pr diff <number>`
+9. **Analyze across 5 dimensions**: correctness, security, best practices, test coverage, code quality
+10. **Output review report** with CRITICAL/Warning/Suggestion tiers
+
 </process>
 
 <success_criteria>
-- All three steps completed without errors
+- All steps completed without errors
 - PR URL returned to user
-- PR title matches the commit message
+- Review report produced with per-dimension status
+- Critical issues (if any) called out prominently
 
 ## Example output
 ```
-✅ Staged: 3 files changed
-✅ Committed: feat(auth): add JWT refresh token rotation
-✅ Pushed: origin feature/auth
-✅ PR created: https://github.com/org/repo/pull/42
-🎉 Ready for review!
+PR Created
+URL: https://github.com/org/repo/pull/42
+Title: feat(auth): add JWT refresh token rotation
+Branch: feat/auth → main
+
+PR Review: feat(auth): add JWT refresh token rotation (#42)
+
+Warnings:
+- src/auth.py:23 — No test for invalid token path
+
+Looks Good:
+- Password hashed with bcrypt
+- JWT expiry set correctly
+
+Verdict: APPROVE
 ```
 </success_criteria>
 

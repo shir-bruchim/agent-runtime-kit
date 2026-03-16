@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 # =============================================================================
-# protect-files.sh — Prevent writes to protected file paths
+# protect-files.sh — Prevent writes to protected file paths and sensitive files
 #
 # OPT-IN security hook. Install to ~/.claude/hooks/ and register in
 # ~/.claude/settings.json under PreToolUse for Write|Edit tools.
 #
-# Configuration (checked in order):
-#   1. PROTECTED_PATHS env var: colon-separated list of path prefixes
-#   2. ~/.claude/protected-paths.txt: one path prefix per line (# = comment)
-#   3. Built-in defaults: ~/.ssh, ~/.gnupg, ~/.aws/credentials
+# Two layers of protection:
+#   Layer 1 — Path prefixes (configurable):
+#     1. PROTECTED_PATHS env var: colon-separated list of path prefixes
+#     2. ~/.claude/protected-paths.txt: one path prefix per line (# = comment)
+#     3. Built-in defaults: ~/.ssh, ~/.gnupg, ~/.aws/credentials
+#
+#   Layer 2 — Filename patterns (built-in, always active):
+#     .env files, private keys (*.pem, *.key), credential files, tfstate,
+#     kubeconfig. Allows .env.example/.env.sample/.env.template.
 #
 # Example ~/.claude/protected-paths.txt:
 #   ~/.ssh
@@ -72,5 +77,46 @@ for pattern in "${protected_paths[@]}"; do
     exit 2
   fi
 done
+
+# --- Built-in zero-access filename patterns (secrets, credentials, keys) ---
+block() {
+  local reason="$1"
+  printf '{"decision":"block","reason":"%s"}\n' "${reason}" >&2
+  echo "${reason}" >&2
+  exit 2
+}
+
+basename=$(basename "${file_path}")
+basename_lower=$(echo "${basename}" | tr '[:upper:]' '[:lower:]')
+
+# .env files (allow .env.example, .env.sample, .env.template)
+if [[ "${basename_lower}" == ".env" || "${basename_lower}" == .env.* ]]; then
+  case "${basename_lower}" in
+    .env.example|.env.sample|.env.template) ;;
+    *) block "Blocked write: ${file_path} — .env files are protected." ;;
+  esac
+fi
+
+# Private key files
+case "${basename_lower}" in
+  *.pem|*.key|*.p12|*.pfx)
+    block "Blocked write: ${file_path} — private key files are protected."
+    ;;
+esac
+
+# Credential/secret files
+if echo "${basename_lower}" | grep -qE '(^secrets\.|^credentials\.|serviceaccount|firebase-adminsdk)'; then
+  block "Blocked write: ${file_path} — credential files are protected."
+fi
+
+# Terraform state
+if echo "${basename_lower}" | grep -qE '\.tfstate(\.backup)?$'; then
+  block "Blocked write: ${file_path} — Terraform state files are protected."
+fi
+
+# Kubeconfig
+if [[ "${basename_lower}" == "kubeconfig" || "${basename_lower}" == ".kubeconfig" ]]; then
+  block "Blocked write: ${file_path} — kubeconfig files are protected."
+fi
 
 exit 0

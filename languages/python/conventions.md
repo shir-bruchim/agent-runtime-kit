@@ -9,9 +9,24 @@ Simple script or prototype?   → Flask (minimal, flexible)
 Background workers?           → Celery + any framework
 ```
 
+| Factor | FastAPI | Django | Flask |
+|--------|---------|--------|-------|
+| Best for | APIs, microservices | Full-stack, CMS | Simple, learning |
+| Async | Native | Django 5.0+ | Via extensions |
+| Admin | Manual | Built-in | Via extensions |
+| ORM | Choose your own | Django ORM | Choose your own |
+
+**Always ask:** Is this API-only or full-stack? Need admin? Team knows async?
+
 ## Code Style
 
-Follow PEP 8. Use type hints everywhere (Python 3.10+):
+Follow PEP 8. Use type hints everywhere (Python 3.10+).
+
+### Type Hint Strategy
+
+**Always type:** Function parameters and return types, class attributes, public APIs.
+**Can skip:** Local variables (inference), one-off scripts, tests (usually).
+Use Pydantic for validation when dealing with API models, configuration, data validation, or serialization.
 
 ```python
 # Required: type hints on all function signatures
@@ -32,7 +47,25 @@ class UserProfile:
     name: str | None = None
 ```
 
-## Project Structure (FastAPI)
+## Project Structure
+
+Scale structure to project size:
+
+```
+Small:                Medium API:              Large:
+├── main.py           ├── app/                 ├── src/myapp/
+├── utils.py          │   ├── main.py          │   ├── core/
+└── requirements.txt  │   ├── models/           │   ├── api/
+                      │   ├── routes/           │   ├── services/
+                      │   ├── services/         │   └── models/
+                      │   └── schemas/          ├── tests/
+                      ├── tests/               └── pyproject.toml
+                      └── pyproject.toml
+```
+
+Organize by feature (users/, products/) or by layer (routes/, services/).
+
+### FastAPI Structure (Large)
 
 ```
 src/
@@ -50,7 +83,20 @@ src/
     └── middleware.py    # Cross-cutting concerns
 ```
 
-## Async Patterns
+## Async vs Sync
+
+```
+I/O-bound (database, HTTP, file) → async
+CPU-bound (computing)             → sync + multiprocessing
+```
+
+| Need | Library |
+|------|---------|
+| HTTP client | httpx |
+| PostgreSQL | asyncpg |
+| Redis | redis-py async |
+| File I/O | aiofiles |
+| ORM | SQLAlchemy 2.0 async |
 
 ```python
 # Use async for I/O-bound work
@@ -124,3 +170,11 @@ select = ["E", "F", "I", "UP"]
 [tool.mypy]
 strict = true
 ```
+
+## Anti-Patterns
+
+- Don't default to Django for simple APIs (FastAPI may be better)
+- Don't use sync libraries in async code
+- Don't skip type hints for public APIs
+- Don't put business logic in routes/views
+- Don't ignore N+1 queries
