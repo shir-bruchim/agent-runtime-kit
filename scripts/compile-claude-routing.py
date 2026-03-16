@@ -57,11 +57,18 @@ def load_rules(rules_file: Path) -> dict:
 
 
 def filter_skills(skills: list, profile: str) -> list:
-    """Return skills included in the given profile."""
+    """Return skills included in the given profile.
+
+    Profile hierarchy: core < full. Tags (stack, advanced) are independent
+    and only included when explicitly requested via --tags.
+    """
+    included_profiles = {"core"}
+    if profile == "full":
+        included_profiles.add("full")
     result = []
     for skill in skills:
         skill_profile = skill.get("profile", "core")
-        if profile == "full" or skill_profile == "core":
+        if skill_profile in included_profiles:
             result.append(skill)
     return result
 
