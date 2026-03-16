@@ -259,7 +259,7 @@ See `skills/security/hooks/` for working hook script examples.
 - Invoked automatically (Claude matches `description` field) or explicitly via the Task tool
 - Project subagents (`.claude/agents/`) override user subagents (`~/.claude/agents/`) on name conflict
 - `memory: user` enables persistent learning at `~/.claude/agent-memory/<name>/`
-- `skills:` preloading injects full skill content at startup (no need for inline "read skills/X/SKILL.md")
+- `skills:` preloading injects full skill content at startup (no need for inline "read SKILL.md")
 - For multi-stage orchestration: use the planning skill + Task tool, not a single subagent
 
 **When to use subagents proactively:**
