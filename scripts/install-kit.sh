@@ -152,6 +152,34 @@ except:
 PYEOF
 }
 
+# ── Pre-flight checks ─────────────────────────────────────────────────────────
+
+# Check write permissions
+preflight_dir="${HOME}/.claude"
+mkdir -p "${preflight_dir}" 2>/dev/null || true
+preflight_test="${preflight_dir}/.preflight-write-test-$$"
+if ! touch "${preflight_test}" 2>/dev/null; then
+  echo "❌ Cannot write to ${preflight_dir}/ — check permissions." >&2
+  exit 1
+fi
+rm -f "${preflight_test}"
+
+# Check disk space (require at least 5MB free in HOME)
+available_kb=$(df -k "${HOME}" 2>/dev/null | awk 'NR==2{print $4}' 2>/dev/null || echo "999999")
+if [[ "${available_kb}" =~ ^[0-9]+$ ]] && (( available_kb < 5120 )); then
+  echo "❌ Less than 5MB disk space available in ${HOME}. Free space before installing." >&2
+  exit 1
+fi
+
+# Validate state file (detect corruption)
+if [[ -f "${STATE_FILE}" ]]; then
+  if ! python3 -c "import json; json.load(open('${STATE_FILE}'))" 2>/dev/null; then
+    echo "⚠  State file corrupted. Backing up to ${STATE_FILE}.bak and resetting." >&2
+    cp "${STATE_FILE}" "${STATE_FILE}.bak" 2>/dev/null || true
+    rm -f "${STATE_FILE}"
+  fi
+fi
+
 # ── Guard against unresolved interrupted install ──────────────────────────────
 INSTALL_STATUS=$(state_get "install_status" "idle")
 if [[ "${INSTALL_STATUS}" == "in_progress" && "${RESUME}" == "false" && "${DRY_RUN}" == "false" ]]; then

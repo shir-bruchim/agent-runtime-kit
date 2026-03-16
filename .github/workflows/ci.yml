@@ -18,18 +18,84 @@ jobs:
           python3 -m json.tool mcp/recommended-servers.json > /dev/null
           echo "Checking routing/skill-rules.json..."
           python3 -m json.tool routing/skill-rules.json > /dev/null
+          echo "Checking templates/settings-template.json..."
+          python3 -m json.tool templates/settings-template.json > /dev/null
           echo "✓ All JSON files are valid"
 
-      - name: Check script syntax
+      - name: Check script syntax (all hooks + scripts)
         run: |
-          bash -n scripts/check-kit-updates.sh
-          bash -n scripts/install-kit.sh
-          bash -n scripts/generate-cursor-mdc.sh
-          bash -n hooks/block-dangerous-commands.sh
-          bash -n hooks/block-dangerous-bash.sh
-          bash -n hooks/protect-files.sh
-          python3 -m py_compile scripts/compile-claude-routing.py
-          echo "✓ All scripts pass syntax check"
+          failed=0
+          for f in scripts/check-kit-updates.sh scripts/install-kit.sh scripts/generate-cursor-mdc.sh \
+                   hooks/block-dangerous-commands.sh hooks/block-dangerous-bash.sh \
+                   hooks/block-dangerous-read.sh hooks/protect-files.sh \
+                   hooks/session-start.sh hooks/session-end.sh hooks/pre-compact.sh \
+                   hooks/concise-mode.sh hooks/concise-toggle.sh hooks/delegate-first.sh \
+                   skills/strategic-compact/suggest-compact.sh; do
+            if [ -f "$f" ]; then
+              if bash -n "$f" 2>&1; then
+                echo "  ✓ $f"
+              else
+                echo "  ✗ $f — syntax error"
+                failed=1
+              fi
+            else
+              echo "  ⚠ $f — not found (skipped)"
+            fi
+          done
+          python3 -m py_compile scripts/compile-claude-routing.py && echo "  ✓ compile-claude-routing.py"
+          [ "$failed" -eq 0 ] && echo "✓ All scripts pass syntax check" || exit 1
+
+      - name: Validate YAML frontmatter in skills and subagents
+        run: |
+          python3 -c "
+          import re, sys, pathlib
+
+          errors = []
+
+          # Check skill frontmatter
+          for f in pathlib.Path('skills').rglob('SKILL.md'):
+              content = f.read_text()
+              m = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+              if not m:
+                  errors.append(f'{f}: missing YAML frontmatter')
+                  continue
+              fm = m.group(1)
+              if 'name:' not in fm:
+                  errors.append(f'{f}: missing name field')
+              if 'description:' not in fm:
+                  errors.append(f'{f}: missing description field')
+
+          # Check subagent frontmatter
+          for f in pathlib.Path('subagents').glob('*.md'):
+              content = f.read_text()
+              m = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+              if not m:
+                  errors.append(f'{f}: missing YAML frontmatter')
+                  continue
+              fm = m.group(1)
+              for field in ['name', 'description', 'tools', 'model']:
+                  if f'{field}:' not in fm:
+                      errors.append(f'{f}: missing {field} field')
+
+          # Check command frontmatter
+          for f in pathlib.Path('commands').glob('*.md'):
+              content = f.read_text()
+              m = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+              if not m:
+                  errors.append(f'{f}: missing YAML frontmatter')
+                  continue
+              fm = m.group(1)
+              if 'description:' not in fm:
+                  errors.append(f'{f}: missing description field')
+
+          if errors:
+              print('Frontmatter validation errors:')
+              for e in errors:
+                  print(f'  ✗ {e}')
+              sys.exit(1)
+          else:
+              print('✓ All frontmatter is valid')
+          "
 
       - name: Validate file references
         run: |
@@ -61,3 +127,11 @@ jobs:
             exit 1
           fi
           echo "✓ No deprecated MCP package references found"
+
+      - name: Routing compiler dry-run test
+        run: |
+          python3 scripts/compile-claude-routing.py --dry-run --profile core > /dev/null
+          echo "  ✓ --profile core"
+          python3 scripts/compile-claude-routing.py --dry-run --profile full > /dev/null
+          echo "  ✓ --profile full"
+          echo "✓ Routing compiler dry-run passed"

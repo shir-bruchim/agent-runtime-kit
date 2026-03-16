@@ -24,8 +24,16 @@
 
 read -r input 2>/dev/null || input=""
 
-# Extract file_path from tool_input
-file_path=$(echo "${input}" | python3 -c "
+# Extract file_path from tool_input (try jq first, then python3; fail-closed if both missing)
+extract_file_path() {
+  local json="$1"
+  if command -v jq &>/dev/null; then
+    local result
+    result=$(echo "${json}" | jq -r '.tool_input.file_path // .tool_input.path // empty' 2>/dev/null)
+    [[ -n "${result}" ]] && echo "${result}" && return
+  fi
+  if command -v python3 &>/dev/null; then
+    echo "${json}" | python3 -c "
 import json, sys
 try:
     d = json.load(sys.stdin)
@@ -33,11 +41,29 @@ try:
     print(inp.get('file_path', inp.get('path', '')))
 except:
     pass
-" 2>/dev/null || echo "")
+" 2>/dev/null && return
+  fi
+  echo "__PARSE_FAILED__"
+}
+
+file_path=$(extract_file_path "${input}")
+
+if [[ "${file_path}" == "__PARSE_FAILED__" ]]; then
+  reason="Security hook cannot parse input (jq and python3 unavailable)."
+  printf '{"decision":"block","reason":"%s"}\n' "${reason}" >&2
+  echo "${reason}" >&2
+  exit 2
+fi
 
 [[ -z "${file_path}" ]] && exit 0
 
-# Expand ~ in file_path
+# Expand ~ to HOME — but block ~otheruser paths entirely (potential bypass)
+if [[ "${file_path}" =~ ^~[a-zA-Z] ]]; then
+  reason="Blocked: ${file_path} — paths with ~username are restricted."
+  printf '{"decision":"block","reason":"%s"}\n' "${reason}" >&2
+  echo "${reason}" >&2
+  exit 2
+fi
 file_path="${file_path/#\~/${HOME}}"
 
 # Build list of protected path prefixes

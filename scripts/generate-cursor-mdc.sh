@@ -59,10 +59,10 @@ case "${PROFILE}" in core|full) ;; *)
 esac
 
 # ── Profile definitions ───────────────────────────────────────────────────────
-CORE_SKILLS=(extend-agent git testing debugging security)
-FULL_SKILLS=(planning tdd api-design spec-interview implement-jira-ticket)
+CORE_SKILLS=(extend-agent git testing debugging security strategic-compact)
+FULL_SKILLS=(planning api-design implement-jira-ticket design-doc-mermaid perplexity-deep-search verification-loop pr-review)
 CORE_RULES=(base-conventions security testing)
-FULL_RULES=(git-workflow performance infrastructure)
+FULL_RULES=(git-workflow performance infrastructure patterns)
 
 SELECTED_SKILLS=("${CORE_SKILLS[@]}")
 SELECTED_RULES=("${CORE_RULES[@]}")

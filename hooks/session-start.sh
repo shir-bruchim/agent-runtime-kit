@@ -14,11 +14,7 @@ LEARNED_DIR="${HOME}/.claude/learned-skills"
 mkdir -p "$SESSIONS_DIR" "$LEARNED_DIR"
 
 # Find recent session files (last 7 days)
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    RECENT_SESSIONS=$(find "$SESSIONS_DIR" -name "*-session.tmp" -mtime -7 -type f 2>/dev/null | sort -r)
-else
-    RECENT_SESSIONS=$(find "$SESSIONS_DIR" -name "*-session.tmp" -mtime -7 -type f 2>/dev/null | sort -r)
-fi
+RECENT_SESSIONS=$(find "$SESSIONS_DIR" -name "*-session.tmp" -mtime -7 -type f 2>/dev/null | sort -r)
 
 SESSION_COUNT=$(echo "$RECENT_SESSIONS" | grep -c . 2>/dev/null || echo 0)
 
@@ -27,9 +23,9 @@ if [ "$SESSION_COUNT" -gt 0 ]; then
     >&2 echo "[SessionStart] Found $SESSION_COUNT recent session(s)"
     >&2 echo "[SessionStart] Latest: $LATEST"
 
-    # Read and inject latest session content (only if it has real content)
+    # Read and inject latest session content (only if it has real content, capped at 10KB)
     if [ -f "$LATEST" ]; then
-        CONTENT=$(cat "$LATEST")
+        CONTENT=$(head -c 10000 "$LATEST")
         if ! echo "$CONTENT" | grep -q '\[Session context goes here\]'; then
             echo "Previous session summary:"
             echo "$CONTENT"

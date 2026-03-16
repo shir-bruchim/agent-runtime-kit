@@ -427,7 +427,7 @@ Then register in `~/.claude/settings.json`:
     "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-read.sh", "timeout": 10000}]
   },
   {
-    "matcher": "Write|Edit",
+    "matcher": "Write|Edit|NotebookEdit",
     "hooks": [{"type": "command", "command": "~/.claude/hooks/protect-files.sh", "timeout": 10000}]
   }
 ]

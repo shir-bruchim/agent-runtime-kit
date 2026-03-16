@@ -28,17 +28,36 @@ def find_repo_root():
     return os.getcwd()
 
 
+def _fenced_code_ranges(content: str):
+    """Return set of (start, end) byte offsets for fenced code blocks."""
+    ranges = []
+    for m in re.finditer(r'^```[^\n]*\n.*?\n```', content, re.MULTILINE | re.DOTALL):
+        ranges.append((m.start(), m.end()))
+    return ranges
+
+
+def _in_code_block(pos: int, ranges: list) -> bool:
+    return any(start <= pos <= end for start, end in ranges)
+
+
 def extract_references(content: str, file_path: str):
-    """Extract repo-relative path references from markdown content."""
+    """Extract repo-relative path references from markdown content.
+
+    Skips paths that appear inside fenced code blocks (``` ... ```) since
+    those are examples, not real repo references.
+    """
     refs = []
+    code_ranges = _fenced_code_ranges(content)
 
     # Markdown links: [text](path) — only local paths (no http, no #anchor-only)
     for m in re.finditer(r'\[([^\]]*)\]\(([^)]+)\)', content):
+        if _in_code_block(m.start(), code_ranges):
+            continue
         path = m.group(2).split('#')[0].strip()
         if path and not path.startswith(('http', 'mailto', '#')):
             refs.append((path, m.start()))
 
-    # Code blocks with paths: skills/..., subagents/..., rules/..., etc.
+    # Inline path references (outside code blocks): skills/..., subagents/..., etc.
     path_pattern = re.compile(
         r'(?:^|\s|`|\'|")'
         r'((?:skills|subagents|commands|rules|languages|mcp|docs|templates|scripts|\.github)'
@@ -47,6 +66,8 @@ def extract_references(content: str, file_path: str):
         re.MULTILINE
     )
     for m in path_pattern.finditer(content):
+        if _in_code_block(m.start(), code_ranges):
+            continue
         path = m.group(1).strip()
         if path:
             refs.append((path, m.start()))
@@ -57,6 +78,8 @@ def extract_references(content: str, file_path: str):
         r'/[a-zA-Z0-9_\-./]+/)`'
     )
     for m in dir_pattern.finditer(content):
+        if _in_code_block(m.start(), code_ranges):
+            continue
         refs.append((m.group(1).rstrip('/'), m.start()))
 
     return refs

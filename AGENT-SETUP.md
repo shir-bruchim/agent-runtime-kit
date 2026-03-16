@@ -226,7 +226,7 @@ Then add to `~/.claude/settings.json` under `"hooks"` (merge if section already 
     "hooks": [{"type": "command", "command": "~/.claude/hooks/block-dangerous-read.sh", "timeout": 10000}]
   },
   {
-    "matcher": "Write|Edit",
+    "matcher": "Write|Edit|NotebookEdit",
     "hooks": [{"type": "command", "command": "~/.claude/hooks/protect-files.sh", "timeout": 10000}]
   }
 ]
