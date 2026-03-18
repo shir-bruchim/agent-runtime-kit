@@ -51,7 +51,7 @@ See `PROFILES.md` for profile details and per-file decision (SKIP/MERGE) instruc
 | | CORE (default) | FULL |
 |-|----------------|------|
 | Skills | extend-agent, git, testing, debugging, security, strategic-compact | + planning, api-design, implement-jira-ticket, design-doc-mermaid, perplexity-deep-search, verification-loop, pr-review |
-| Rules | base-conventions, security, testing | + git-workflow, performance(path-scoped), infrastructure(path-scoped), patterns(path-scoped) |
+| Rules | base-conventions, security, testing, agent-behavior, concurrent-sessions | + git-workflow, performance(path-scoped), infrastructure(path-scoped), patterns(path-scoped) |
 | Commands | commit, push, pr, ship, test, build-fix | (none — commands now in CORE) |
 | Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer, tdd-guide, perplexity-research, aws-specialist, k8s-specialist |
 
@@ -135,6 +135,8 @@ agent-runtime-kit/
 │   ├── base-conventions.md                                                     [CORE]
 │   ├── security.md                                                             [CORE]
 │   ├── testing.md          # Path-scoped to test/ directories                 [CORE]
+│   ├── agent-behavior.md   # Agent behavioral safety rules                    [CORE]
+│   ├── concurrent-sessions.md # Multi-agent session isolation                 [CORE]
 │   ├── git-workflow.md                                                         [FULL]
 │   ├── performance.md      # Path-scoped                                      [FULL]
 │   ├── infrastructure.md   # Path-scoped                                      [FULL]
