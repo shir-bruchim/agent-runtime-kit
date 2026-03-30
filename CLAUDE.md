@@ -23,6 +23,7 @@ The repo distributes configuration files to AI agents. There are two destination
 | `commands/*.md` | `~/.claude/commands/` | Global |
 | `skills/security/hooks/*.sh` | `~/.claude/hooks/` | Global |
 | `rules/*.md` + `languages/**/*.md` | Project `CLAUDE.md` or `.claude/rules/` | Per-project |
+| `rules/*.md` + `languages/**/*.md` | `.kiro/steering/` (for Kiro) | Per-project |
 
 **`AGENT-SETUP.md`** is the self-install instruction file — when a user pastes the GitHub URL into Claude, the agent reads this file and follows its steps to detect platform (Claude Code vs Cursor) and install files in the right locations.
 
@@ -73,3 +74,4 @@ argument-hint: [optional-arg]
 - **New command**: Follow command format. Update `README.md` commands table.
 - **New language pack**: Add `languages/<lang>/conventions.md` and optionally `testing.md`, `database.md`. Update `AGENT-SETUP.md` language detection section.
 - **Hook scripts**: Place in `skills/security/hooks/` and update install instructions in `AGENT-SETUP.md`.
+- **Kiro support**: Steering files go in `templates/` with `inclusion:` frontmatter. Update `AGENT-SETUP.md` Kiro sections.

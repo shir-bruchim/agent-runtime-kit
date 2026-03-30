@@ -1,6 +1,6 @@
 # Agent Runtime Kit
 
-> A universal, production-ready configuration kit for AI agents. Works with Claude Code, Cursor, GitHub Copilot, and Gemini CLI.
+> A universal, production-ready configuration kit for AI agents. Works with Claude Code, Cursor, GitHub Copilot, Gemini CLI, and Kiro.
 
 ---
 
@@ -9,7 +9,7 @@
 A curated collection of skills, rules, subagents, commands, and language conventions that you clone once and use everywhere.
 
 **Philosophy:**
-- **Universal** — works for Claude Code, Cursor, Copilot, and Gemini
+- **Universal** — works for Claude Code, Cursor, Copilot, Gemini, and Kiro
 - **Self-configuring** — the agent reads `AGENT-SETUP.md` and installs itself
 - **CORE by default** — small, high-signal. Opt into FULL for the full toolkit
 - **Self-extending** — meta-skills let you create new skills from within
@@ -143,6 +143,7 @@ agent-runtime-kit/
 ├── templates/              # Source templates for AI agent generation
 │   ├── AGENTS.md           # Copilot + Gemini context file template
 │   ├── GEMINI.md           # Gemini CLI project context template
+│   ├── kiro-steering-conventions.md  # Kiro steering file template
 │   ├── settings-template.json  # Recommended Claude Code settings            [OPT-IN]
 │   └── .github/
 │       └── copilot-instructions.md
@@ -214,6 +215,26 @@ Or install project-level:
 ```bash
 bash scripts/generate-cursor-mdc.sh --kit-dir . --dest-dir .cursor/rules --profile core
 ```
+
+### Kiro
+
+Kiro uses steering files (`.kiro/steering/*.md`) for project conventions and `.kiro/settings/mcp.json` for MCP servers.
+
+```bash
+# Project-level steering (recommended):
+mkdir -p .kiro/steering
+cp templates/kiro-steering-conventions.md .kiro/steering/conventions.md
+
+# Rules as steering files:
+cp rules/base-conventions.md .kiro/steering/base-conventions.md
+cp rules/security.md .kiro/steering/security.md
+cp rules/testing.md .kiro/steering/testing.md
+```
+
+Kiro steering files support frontmatter for inclusion control:
+- `inclusion: auto` — always included (default)
+- `inclusion: fileMatch` + `fileMatchPattern` — included when matching files are open
+- `inclusion: manual` — included via `#` context key in chat
 
 ---
 
@@ -300,6 +321,7 @@ Project-level files always win over global defaults:
 |----------|----------|---------|
 | Claude Code | `.claude/rules/*.md` | Project-specific rules |
 | Cursor | `.cursor/rules/*.mdc` | Project-specific rules |
+| Kiro | `.kiro/steering/*.md` | Project-specific steering files |
 | All agents | `AGENTS.md` | Copilot + Gemini context |
 | Gemini CLI | `GEMINI.md` | Gemini project context |
 | GitHub Copilot | `.github/copilot-instructions.md` | Copilot behavior |
@@ -320,6 +342,7 @@ Quick reference — supported servers:
 | `atlassian` | Jira + Confluence (remote SSE, no local install) |
 | `postgres` | DB introspection (read-only) |
 | `websearch` | Web search via Tavily |
+| `context7` | Up-to-date library docs and code examples (by Upstash) |
 | `mermaid` | Diagram rendering |
 | `sentry` | Error tracking |
 | `groundcover` | Cloud-native observability |
@@ -451,5 +474,5 @@ Use `/spec-interview` to gather requirements before building anything significan
 ---
 
 **Version:** 3.1.0
-**Compatible With:** Claude Code (Claude 4.5+), Cursor 0.40+, GitHub Copilot, Gemini CLI
+**Compatible With:** Claude Code (Claude 4.5+), Cursor 0.40+, GitHub Copilot, Gemini CLI, Kiro
 **Last Updated:** 2026-03-16

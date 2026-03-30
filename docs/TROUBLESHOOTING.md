@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Common issues and their fixes across Claude Code and Cursor.
+Common issues and their fixes across Claude Code, Cursor, and Kiro.
 
 ---
 
@@ -35,6 +35,22 @@ head -10 .cursor/rules/skill-name.mdc
 - File extension is `.md` instead of `.mdc`
 - `alwaysApply` value is a string (`"false"`) instead of boolean (`false`)
 - `globs` patterns don't match any open file → rule won't trigger
+
+### Kiro
+```bash
+# Check steering file exists
+ls .kiro/steering/<name>.md
+
+# Steering files must be in:
+.kiro/steering/     # project-level
+~/.kiro/steering/   # user-level (global)
+```
+
+**Common issues:**
+- Missing or invalid frontmatter — `inclusion:` must be `auto`, `fileMatch`, or `manual`
+- `fileMatchPattern` missing when `inclusion: fileMatch` is set
+- File placed in wrong directory (`.kiro/` instead of `.kiro/steering/`)
+- Manual inclusion files not showing up — user must reference via `#` context key in chat
 
 ---
 
@@ -115,6 +131,22 @@ echo '{"tool_input":{"command":"rm -rf /"}}' | bash .claude/hooks/block-dangerou
 echo "Exit code: $?"
 ```
 
+### Kiro
+```bash
+# Check hook files exist
+ls .kiro/hooks/*.json
+
+# Validate JSON syntax
+python3 -m json.tool .kiro/hooks/<hook-name>.json
+```
+
+**Common issues:**
+- Invalid JSON in hook file — validate with `json.tool` or `jq`
+- `when.type` uses an unsupported event type — valid types: `fileEdited`, `fileCreated`, `fileDeleted`, `userTriggered`, `promptSubmit`, `agentStop`, `preToolUse`, `postToolUse`, `preTaskExecution`, `postTaskExecution`
+- `when.patterns` missing for file-based events (`fileEdited`, `fileCreated`, `fileDeleted`)
+- `then.prompt` missing for `askAgent` actions, or `then.command` missing for `runCommand` actions
+- Hook file not in `.kiro/hooks/` directory
+
 ---
 
 ## Planning System Issues
@@ -145,9 +177,10 @@ npx -y @modelcontextprotocol/server-postgres postgresql://... --help
 > **Note:** Do NOT use `@modelcontextprotocol/server-github`. That npm package was deprecated in April 2025. Use the Docker or remote SSE option instead — see `mcp/SETUP.md`.
 
 **Server not showing up:**
-- Restart Claude Code after editing `~/.claude.json`
+- Restart Claude Code / Cursor / Kiro after editing config
 - Check environment variable names (case-sensitive)
 - Verify `npx` can reach npm registry: `npm ping`
+- Kiro: check `.kiro/settings/mcp.json` or `~/.kiro/settings/mcp.json`
 
 **Authentication failures:**
 - GitHub: token needs `repo` scope minimum
@@ -191,3 +224,4 @@ The `block-dangerous-bash.sh` hook blocks `git push --force` and direct pushes t
 2. Check `docs/BEST-PRACTICES.md` for design principles
 3. Run `claude --debug` for Claude Code to see hook and skill loading details
 4. For Cursor: Check the Output panel (View → Output → Cursor) for error messages
+5. For Kiro: Check the Agent Hooks section in the explorer view, or use the command palette to search for MCP-related commands
