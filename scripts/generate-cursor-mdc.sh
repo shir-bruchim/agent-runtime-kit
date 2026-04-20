@@ -58,18 +58,30 @@ case "${PROFILE}" in core|full) ;; *)
   echo "Unknown profile: ${PROFILE}. Use core or full." >&2; exit 1 ;;
 esac
 
-# ── Profile definitions ───────────────────────────────────────────────────────
-CORE_SKILLS=(extend-agent git testing debugging security strategic-compact)
-FULL_SKILLS=(planning api-design implement-jira-ticket design-doc-mermaid perplexity-deep-search verification-loop pr-review)
-CORE_RULES=(base-conventions security testing)
-FULL_RULES=(git-workflow performance infrastructure patterns)
-
-SELECTED_SKILLS=("${CORE_SKILLS[@]}")
-SELECTED_RULES=("${CORE_RULES[@]}")
-if [[ "${PROFILE}" == "full" ]]; then
-  SELECTED_SKILLS+=("${FULL_SKILLS[@]}")
-  SELECTED_RULES+=("${FULL_RULES[@]}")
+# ── Profile definitions (read from manifest.json — single source of truth) ────
+MANIFEST="${KIT_DIR}/manifest.json"
+if [[ ! -f "${MANIFEST}" ]]; then
+  echo "Error: manifest.json not found at ${MANIFEST}" >&2
+  exit 1
 fi
+
+read_manifest_list() {
+  python3 - "${MANIFEST}" "$@" <<'PYEOF'
+import json, sys
+manifest = json.load(open(sys.argv[1]))
+profile = sys.argv[2]
+category = sys.argv[3]
+items = list(manifest["profiles"]["core"].get(category, []))
+if profile == "full":
+    items += manifest["profiles"]["full"].get(category, [])
+print("\n".join(items))
+PYEOF
+}
+
+mapfile -t SELECTED_SKILLS < <(read_manifest_list "${PROFILE}" "skills")
+mapfile -t SELECTED_RULES < <(read_manifest_list "${PROFILE}" "rules")
+
+CORE_RULES_SET=$(python3 -c "import json; m=json.load(open('${MANIFEST}')); print(' '.join(m['profiles']['core']['rules']))" 2>/dev/null)
 
 # ── Helper: extract description from SKILL.md/rules frontmatter ──────────────
 extract_description() {

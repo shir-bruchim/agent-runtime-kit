@@ -345,43 +345,10 @@ while IFS=$'\t' read -r action source dest ftype; do
   }
 done < "${TMPENTRIES}"
 
-# ── Create project hooks.json if missing (Claude installs only) ───────────────
-if [[ "${PLATFORM}" == "claude" || "${PLATFORM}" == "both" ]]; then
-  HOOKS_JSON="${PROJECT_DIR}/.claude/hooks.json"
-  if [[ ! -f "${HOOKS_JSON}" && "${DRY_RUN}" == "false" ]]; then
-    mkdir -p "${PROJECT_DIR}/.claude"
-    cat > "${HOOKS_JSON}" <<'HOOKEOF'
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-dangerous-bash.sh",
-            "timeout": 10000
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/protect-files.sh",
-            "timeout": 10000
-          }
-        ]
-      }
-    ]
-  }
-}
-HOOKEOF
-    mark_done "${HOOKS_JSON}"
-    echo "  ✓  created: ${HOOKS_JSON}"
-  fi
-fi
+# ── Note: hooks.json is NOT auto-created ──────────────────────────────────────
+# Security hooks are opt-in. The installer only installs hook *files* when
+# the plan includes hook_file entries (via --hooks flag). Users must manually
+# register hooks in ~/.claude/settings.json. See templates/settings-template.json.
 
 # ── Finalise ──────────────────────────────────────────────────────────────────
 echo ""

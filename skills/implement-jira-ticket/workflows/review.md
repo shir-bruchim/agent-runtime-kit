@@ -62,14 +62,15 @@ Then update `README.md` with:
 Before reporting complete:
 
 - [ ] Feature branch created from develop: `feature/{JIRA-ID}`
-- [ ] Implementation plan was approved by user
-- [ ] All code changes implemented per plan (no ping-pong)
+- [ ] Implementation plan (with test specs) approved by user
+- [ ] Tests written FIRST and verified failing (Red phase approved)
+- [ ] All code implemented — tests pass (Green phase approved)
+- [ ] Code refactored without breaking tests (Refactor phase)
 - [ ] Existing patterns followed (studied end-to-end examples)
 - [ ] Single responsibility maintained (1 repo per table)
 - [ ] No functions > O(n) complexity
-- [ ] All existing tests pass
-- [ ] Unit tests created for all new functions
-- [ ] Integration tests created (if behavior/DB state changed)
+- [ ] Unit tests cover all new functions
+- [ ] Integration/localstack tests updated if API behavior changed (MANDATORY)
 - [ ] No unused code, params, or imports
 - [ ] Jira ticket fully addressed (every acceptance criterion checked)
 - [ ] README updated (if significant behavior change)

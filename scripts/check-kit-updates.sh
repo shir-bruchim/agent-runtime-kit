@@ -17,6 +17,7 @@
 #                             Platform target (default: auto)
 #                             auto = detect from ~/.claude and ~/.cursor presence
 #   --hooks                   Include security hook files in the plan (OPT-IN)
+#   --tags TAGS               Comma-separated tags: python,stack,advanced,opt-in
 #   --force                   Re-check even if commit SHA hasn't changed
 #
 # Output (stdout): JSON action plan — pipe to install-kit.sh or save to file
@@ -52,6 +53,7 @@ PROFILE="core"
 PLATFORM="auto"
 FORCE=false
 INSTALL_HOOKS=false
+INSTALL_TAGS=""
 STATE_FILE="${HOME}/.claude/.agent-kit-state.json"
 CLAUDE_DIR="${HOME}/.claude"
 CURSOR_DIR="${HOME}/.cursor"
@@ -64,6 +66,7 @@ while [[ $# -gt 0 ]]; do
     --profile)     PROFILE="$2";     shift 2 ;;
     --platform)    PLATFORM="$2";    shift 2 ;;
     --hooks)       INSTALL_HOOKS=true; shift  ;;
+    --tags)        INSTALL_TAGS="$2"; shift 2 ;;
     --force)       FORCE=true;       shift   ;;
     -h|--help)
       sed -n '3,35p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
@@ -145,30 +148,70 @@ if [[ -z "${LANG}" ]]; then
   fi
 fi
 
-# ── Profile definitions ───────────────────────────────────────────────────────
-CORE_SKILLS=(extend-agent git testing debugging security)
-FULL_SKILLS=(planning tdd api-design spec-interview implement-jira-ticket)
+# ── Profile definitions (read from manifest.json — single source of truth) ────
+MANIFEST="${KIT_DIR}/manifest.json"
+if [[ ! -f "${MANIFEST}" ]]; then
+  echo "Error: manifest.json not found at ${MANIFEST}" >&2
+  exit 1
+fi
 
-CORE_AGENTS=(reviewer.md tester.md git-ops.md security.md)
-FULL_AGENTS=(architect.md planner.md db-expert.md doc-writer.md refactorer.md)
+read_manifest() {
+  python3 - "${MANIFEST}" "$@" <<'PYEOF'
+import json, sys
+manifest = json.load(open(sys.argv[1]))
+profile = sys.argv[2]   # core or full
+category = sys.argv[3]  # skills, subagents, commands, rules
+suffix = sys.argv[4] if len(sys.argv) > 4 else ""
 
-CORE_COMMANDS=(commit.md push.md pr.md ship.md review.md test.md)
-FULL_COMMANDS=(debug.md refactor.md spec-interview.md generate-prd.md implement-jira-ticket.md)
+items = list(manifest["profiles"]["core"].get(category, []))
+if profile == "full":
+    items += manifest["profiles"]["full"].get(category, [])
 
-CORE_RULES=(base-conventions.md security.md testing.md)
-FULL_RULES=(git-workflow.md performance.md infrastructure.md)
+if suffix:
+    items = [i + suffix for i in items]
 
-# Build selected lists
-SELECTED_SKILLS=("${CORE_SKILLS[@]}")
-SELECTED_AGENTS=("${CORE_AGENTS[@]}")
-SELECTED_COMMANDS=("${CORE_COMMANDS[@]}")
-SELECTED_RULES=("${CORE_RULES[@]}")
+print("\n".join(items))
+PYEOF
+}
 
-if [[ "${PROFILE}" == "full" ]]; then
-  SELECTED_SKILLS+=("${FULL_SKILLS[@]}")
-  SELECTED_AGENTS+=("${FULL_AGENTS[@]}")
-  SELECTED_COMMANDS+=("${FULL_COMMANDS[@]}")
-  SELECTED_RULES+=("${FULL_RULES[@]}")
+# Parse --tags flag (comma-separated)
+TAGS=""
+# Re-parse args for --tags (consumed here, not in main arg loop above)
+for arg_check in "$@"; do :; done  # no-op, tags parsed below
+
+mapfile -t SELECTED_SKILLS < <(read_manifest "${PROFILE}" "skills")
+mapfile -t SELECTED_AGENTS < <(read_manifest "${PROFILE}" "subagents" ".md")
+mapfile -t SELECTED_COMMANDS < <(read_manifest "${PROFILE}" "commands" ".md")
+mapfile -t SELECTED_RULES < <(read_manifest "${PROFILE}" "rules" ".md")
+
+# ── Handle --tags (comma-separated: python,stack,advanced,opt-in) ────────────
+read_tag_items() {
+  python3 - "${MANIFEST}" "$@" <<'PYEOF'
+import json, sys
+manifest = json.load(open(sys.argv[1]))
+tag = sys.argv[2]
+category = sys.argv[3]
+suffix = sys.argv[4] if len(sys.argv) > 4 else ""
+
+tag_data = manifest.get("tags", {}).get(tag, {})
+items = tag_data.get(category, [])
+if suffix:
+    items = [i + suffix for i in items]
+print("\n".join(items))
+PYEOF
+}
+
+if [[ -n "${INSTALL_TAGS}" ]]; then
+  IFS=',' read -ra TAG_LIST <<< "${INSTALL_TAGS}"
+  for tag in "${TAG_LIST[@]}"; do
+    tag=$(echo "${tag}" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+    mapfile -t tag_skills < <(read_tag_items "${tag}" "skills")
+    SELECTED_SKILLS+=("${tag_skills[@]}")
+    mapfile -t tag_agents < <(read_tag_items "${tag}" "subagents" ".md")
+    SELECTED_AGENTS+=("${tag_agents[@]}")
+    mapfile -t tag_commands < <(read_tag_items "${tag}" "commands" ".md")
+    SELECTED_COMMANDS+=("${tag_commands[@]}")
+  done
 fi
 
 # ── Comparison helpers ────────────────────────────────────────────────────────
@@ -272,9 +315,23 @@ if [[ "${PLATFORM}" == "claude" || "${PLATFORM}" == "both" ]]; then
     emit "skills/${skill_name}" "${CLAUDE_DIR}/skills/${skill_name}" "skill_dir" "global"
   done
 
-  # Subagents (global)
+  # Subagents (global) — standard location
   for f in "${SELECTED_AGENTS[@]}"; do
-    emit "subagents/${f}" "${CLAUDE_DIR}/agents/${f}" "agent_file" "global"
+    # Check if this agent has a custom path (e.g. language-pack agents)
+    custom_path=$(python3 -c "
+import json, sys
+m = json.load(open(sys.argv[1]))
+for tag_data in m.get('tags', {}).values():
+    paths = tag_data.get('subagent_paths', {})
+    name = sys.argv[2].replace('.md', '')
+    if name in paths:
+        print(paths[name]); sys.exit(0)
+" "${MANIFEST}" "${f}" 2>/dev/null || echo "")
+    if [[ -n "${custom_path}" ]]; then
+      emit "${custom_path}" "${CLAUDE_DIR}/agents/${f}" "agent_file" "global"
+    else
+      emit "subagents/${f}" "${CLAUDE_DIR}/agents/${f}" "agent_file" "global"
+    fi
   done
 
   # Commands (global)
@@ -315,19 +372,11 @@ if [[ "${PLATFORM}" == "cursor" || "${PLATFORM}" == "both" ]]; then
     emit_cursor_mdc "skills/${skill_name}/SKILL.md" "${CURSOR_RULES_DIR}" "skill-${skill_name}" "global"
   done
 
-  # CORE rules → .mdc (alwaysApply: true)
-  for f in "${CORE_RULES[@]}"; do
+  # Rules → .mdc (all selected rules)
+  for f in "${SELECTED_RULES[@]}"; do
     name="${f%.md}"
     emit_cursor_mdc "rules/${f}" "${CURSOR_RULES_DIR}" "${name}" "global"
   done
-
-  # FULL rules → .mdc (if full profile)
-  if [[ "${PROFILE}" == "full" ]]; then
-    for f in "${FULL_RULES[@]}"; do
-      name="${f%.md}"
-      emit_cursor_mdc "rules/${f}" "${CURSOR_RULES_DIR}" "${name}" "global"
-    done
-  fi
 
   # Language conventions → project .cursor/rules
   if [[ -n "${LANG}" && -d "${KIT_DIR}/languages/${LANG}" ]]; then

@@ -1,0 +1,98 @@
+{
+  "_comment": "Canonical manifest for Agent Runtime Kit. Single source of truth for all components, profiles, and platform mappings. All scripts (check-kit-updates.sh, install-kit.sh, generate-cursor-mdc.sh, validate-references.py) derive from this file.",
+  "_version": "3.2.0",
+
+  "profiles": {
+    "core": {
+      "skills": ["extend-agent", "git", "testing", "debugging", "security", "strategic-compact"],
+      "subagents": ["reviewer", "tester", "git-ops", "security"],
+      "commands": ["build-fix", "commit", "push", "pr", "ship", "test"],
+      "rules": ["base-conventions", "security", "testing"]
+    },
+    "full": {
+      "_extends": "core",
+      "skills": ["planning", "api-design", "implement-jira-ticket", "design-doc-mermaid", "perplexity-deep-search", "verification-loop", "pr-review"],
+      "subagents": ["architect", "planner", "db-expert", "doc-writer", "refactorer", "tdd-guide", "perplexity-research"],
+      "commands": [],
+      "rules": ["git-workflow", "performance", "infrastructure", "patterns"]
+    }
+  },
+
+  "tags": {
+    "python": {
+      "description": "Python language pack — conventions, testing, database, async + debugger and FastAPI agents",
+      "languages": ["python"],
+      "subagents": ["python-debugger", "fastapi-specialist"],
+      "subagent_paths": {
+        "python-debugger": "languages/python/agents/python-debugger.md",
+        "fastapi-specialist": "languages/python/agents/fastapi-specialist.md"
+      }
+    },
+    "stack": {
+      "description": "Infrastructure pack — Postgres, Docker, deployment skills + AWS and K8s agents",
+      "skills": ["postgres-patterns", "docker-patterns", "deployment-patterns"],
+      "subagents": ["aws-specialist", "k8s-specialist"]
+    },
+    "advanced": {
+      "description": "Autonomous PRD-to-code pipeline (Ralph orchestrator)",
+      "skills": ["ralph-orchestrator"],
+      "subagents": ["ralph-coder", "ralph-tester"]
+    },
+    "opt-in": {
+      "description": "Session hooks, concise mode, delegate-first, statusline, Perplexity search, settings template",
+      "hooks": ["session-start", "session-end", "pre-compact", "concise-mode", "concise-toggle", "delegate-first"],
+      "commands": ["concise"],
+      "scripts": ["statusline.sh", "perplexity_search.py"],
+      "templates": ["settings-template.json"]
+    }
+  },
+
+  "security_hooks": {
+    "_comment": "OPT-IN security hooks. Enabled via --hooks flag.",
+    "hooks": ["block-dangerous-commands", "block-dangerous-bash", "block-dangerous-read", "protect-files"]
+  },
+
+  "languages": {
+    "python":     {"files": ["conventions.md", "testing.md", "database.md", "async.md"]},
+    "nodejs":     {"files": ["conventions.md", "testing.md"]},
+    "typescript": {"files": ["conventions.md", "testing.md", "react.md"]},
+    "go":         {"files": ["conventions.md", "testing.md"]},
+    "java":       {"files": ["conventions.md"]},
+    "cpp":        {"files": ["conventions.md", "testing.md"]}
+  },
+
+  "templates": {
+    "project_files": ["AGENTS.md", "GEMINI.md", ".github/copilot-instructions.md"]
+  },
+
+  "platforms": {
+    "claude": {
+      "support_level": "full",
+      "skills_dest": "~/.claude/skills/",
+      "subagents_dest": "~/.claude/agents/",
+      "commands_dest": "~/.claude/commands/",
+      "rules_dest": ".claude/rules/",
+      "hooks_dest": "~/.claude/hooks/",
+      "notes": "Primary supported platform. All features work."
+    },
+    "cursor": {
+      "support_level": "strong",
+      "rules_dest": "~/.cursor/rules/",
+      "project_rules_dest": ".cursor/rules/",
+      "format": ".mdc",
+      "notes": "Skills and rules converted to .mdc format. Subagents referenced via skills. Commands not directly supported (use as on-demand rules). Hooks not supported."
+    },
+    "copilot": {
+      "support_level": "template",
+      "config_file": ".github/copilot-instructions.md",
+      "context_file": "AGENTS.md",
+      "notes": "Template-based support only. Copilot reads AGENTS.md and .github/copilot-instructions.md. No skill/subagent/hook system."
+    },
+    "gemini": {
+      "support_level": "template",
+      "config_file": "GEMINI.md",
+      "context_file": "AGENTS.md",
+      "notes": "Template-based support only. Gemini CLI reads GEMINI.md. No skill/subagent/hook system."
+    }
+  }
+}

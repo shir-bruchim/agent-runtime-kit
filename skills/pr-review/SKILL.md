@@ -18,7 +18,7 @@ Fetch a PR diff via `gh`, analyze it across 5 dimensions, and output a structure
 
 ### Step 1 — Fetch PR Diff
 ```bash
-# By PR number (current repo)
+# By PR number (current repo)/
 gh pr diff <number>
 
 # Get PR metadata
