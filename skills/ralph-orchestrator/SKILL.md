@@ -10,7 +10,7 @@ Orchestrate the complete Ralph pipeline for autonomous feature development:
 1. **spec-interview** → Gather comprehensive requirements through guided discovery
 2. **generate-prd** → Create actionable Product Requirements Document
 3. **ralph-convert-prd** → Transform PRD into atomic user stories (prd.json)
-4. **Subagent execution** → Spawn ralph-coder/ralph-tester subagents via Task tool
+4. **Subagent execution** → Spawn ralph-coder/ralph-tester subagents via Agent tool
 
 This skill coordinates these tools while keeping you in control at decision points.
 </objective>
@@ -20,7 +20,7 @@ This skill coordinates these tools while keeping you in control at decision poin
 <principle name="CRITICAL_never_implement_directly">
 **NEVER implement user stories yourself.** The orchestrator's ONLY job is to:
 1. Run spec-interview, generate-prd, ralph-convert-prd skills
-2. Spawn ralph-coder and ralph-tester subagents via the Task tool to execute stories
+2. Spawn ralph-coder and ralph-tester subagents via the **Agent tool** (with `isolation: "worktree"`) to execute stories
 3. Manage prd.json state, git operations (commit/merge), and progress tracking
 
 **ALL code implementation MUST happen through subagents** — ralph-coder implements production code, ralph-tester writes tests and verifies. You are the orchestrator, NOT the implementer. Do not write code, create files, modify source files, or make any project changes directly.
@@ -42,9 +42,9 @@ If you catch yourself about to write code or modify project files: **STOP. Spawn
 <principle name="parallel_batch_execution">
 Stories with no dependencies between them run in parallel. The orchestrator:
 1. Groups independent stories into batches
-2. Spawns multiple ralph-coder subagents simultaneously (each in its own worktree)
-3. After coders complete, spawns ralph-tester subagents in parallel (in the same worktrees)
-4. Merges successful worktree branches to main sequentially
+2. Spawns multiple ralph-coder Agent calls simultaneously (each with `isolation: "worktree"`)
+3. After coders complete, spawns ralph-tester Agent calls in parallel — each directed to `cd` into the coder's worktree path (returned in Agent result)
+4. Commits in worktrees, merges worktree branches to main sequentially, then cleans up worktrees
 5. Updates prd.json and moves to the next batch
 
 This maximizes throughput while maintaining correct dependency ordering.
@@ -62,7 +62,7 @@ Separation gives each agent a focused context window. The orchestrator wraps ANY
 **The orchestrator owns all state:**
 - **prd.json** — only the orchestrator reads/writes story status. Agents return JSON results, orchestrator updates prd.json. This prevents race conditions during parallel execution.
 - **Git operations** — only the orchestrator commits and merges. Neither coder nor tester commits. Orchestrator commits only after tester confirms all verification passes.
-- **Worktree lifecycle** — orchestrator creates worktrees (via Task isolation), merges branches, and manages cleanup.
+- **Worktree lifecycle** — orchestrator creates worktrees (via Agent tool's `isolation: "worktree"` parameter), merges branches, and cleans up worktrees after merge with `git worktree remove`.
 </principle>
 
 <principle name="agent_discovery">
@@ -246,14 +246,14 @@ What would you like to do?
 **Execution model:**
 ```
 BATCH 1 (independent stories):
-  Phase 1: Task(coder, US-001, worktree) + Task(coder, US-005, worktree)  ← parallel
-  Phase 2: Task(tester, US-001) + Task(tester, US-005)                    ← parallel
-  Merge: US-001 → main, US-005 → main                                    ← sequential
+  Phase 1: Agent(ralph-coder, US-001, isolation:worktree) + Agent(ralph-coder, US-005, isolation:worktree)  ← parallel
+  Phase 2: Agent(ralph-tester, US-001, cd worktree) + Agent(ralph-tester, US-005, cd worktree)            ← parallel
+  Merge: US-001 → main, US-005 → main, cleanup worktrees                                                  ← sequential
 
 BATCH 2 (stories that depended on BATCH 1):
-  Phase 1: Task(coder, US-002, worktree) + Task(coder, US-003, worktree)
-  Phase 2: Task(tester, US-002) + Task(tester, US-003)
-  Merge: US-002 → main, US-003 → main
+  Phase 1: Agent(ralph-coder, US-002, isolation:worktree) + Agent(ralph-coder, US-003, isolation:worktree)
+  Phase 2: Agent(ralph-tester, US-002, cd worktree) + Agent(ralph-tester, US-003, cd worktree)
+  Merge: US-002 → main, US-003 → main, cleanup worktrees
 ```
 
 **Commands:**

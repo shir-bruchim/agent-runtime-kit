@@ -95,7 +95,7 @@ Build routing table — for each storyType, find the best matching agent:
 <step name="4_execute_subagent_loop">
 **Run autonomous implementation via parallel batch subagent loop**
 
-**CRITICAL: ALL implementation MUST go through ralph-coder/ralph-tester subagents via the Task tool. NEVER write code or modify project files directly.**
+**CRITICAL: ALL implementation MUST go through ralph-coder/ralph-tester subagents via the Agent tool. NEVER write code or modify project files directly.**
 
 Ask user for max iterations:
 "How many story iterations? (default: 10, remaining stories: [N])"
@@ -147,24 +147,28 @@ For each story in batch: set `status = "in_progress"`, increment `attempts`
 
 --- **PHASE 1: CODE (parallel across batch)** ---
 
-**f. Spawn coder Tasks IN PARALLEL**
-For each story in the batch, spawn a Task with:
-- `subagent_type`: The matched coder agent name (e.g., "general-purpose")
-- `isolation`: "worktree"
-- `prompt`: Include:
-  - Full story object (id, title, description, acceptanceCriteria, storyType, docsToUpdate)
-  - Framework profile
-  - Relevant progress.txt learnings
-  - The coder agent instructions (from the matched agent's .md file, or ralph-coder defaults)
-  - Expected return format (JSON with files_created, files_modified, implementation_notes, needs_attention)
-  - Constraints: Do NOT commit, do NOT write tests, do NOT touch prd.json
+**f. Spawn coder Agents IN PARALLEL**
+For each story in the batch, spawn an Agent call with:
+- `subagent_type`: The matched coder agent name (e.g., `"ralph-coder"`) — use the name from the routing table built in step 3
+- `isolation`: `"worktree"` — each coder gets an isolated git worktree automatically
+- `prompt`: Include all context the coder needs (see template below)
 
-**Important Task prompt structure:**
+**Agent call example (spawn ALL batch stories in a single message for parallelism):**
+```
+Agent({
+  description: "Ralph coder: US-001 - Add DB schema",
+  subagent_type: "ralph-coder",
+  isolation: "worktree",
+  prompt: "... (see template below)"
+})
+```
+
+**Prompt template for coder Agent:**
 ```
 You are executing Ralph story {story.id}: {story.title}
 
 ## Story Spec
-{full story JSON}
+{full story JSON object}
 
 ## Framework Profile
 {framework_profile JSON}
@@ -176,7 +180,7 @@ You are executing Ralph story {story.id}: {story.title}
 {tasks/common_knowledge.md content — patterns, conventions, gotchas from previous stories}
 
 ## Instructions
-{coder agent instructions - either from matched agent or ralph-coder.md}
+{coder agent instructions — from ralph-coder.md or matched project agent}
 
 ## Constraints
 - Do NOT commit any changes
@@ -188,61 +192,140 @@ You are executing Ralph story {story.id}: {story.title}
 
 ## Return Format
 When done, output ONLY a JSON block:
-{expected JSON format — includes docs_updated field}
+{
+  "story_id": "US-XXX",
+  "status": "done" or "failed",
+  "files_created": ["path/to/new/file.ts"],
+  "files_modified": ["path/to/existing/file.ts"],
+  "docs_updated": ["docs/api.md"],
+  "implementation_notes": "Brief description",
+  "needs_attention": "Anything the tester should know, or null"
+}
 ```
 
-**g. Wait for ALL coder Tasks to complete**
-Collect results from each Task. Parse the JSON output.
+**g. Wait for ALL coder Agents to complete**
+Collect results from each Agent call. The Agent tool returns:
+- The agent's text output (parse the JSON block from it)
+- If `isolation: "worktree"` was used and the agent made changes: the **worktree path** and **branch name** are returned in the result metadata
+
+**IMPORTANT:** Save the worktree path and branch name from each coder's result — you need these for the tester phase and for merging.
 
 **h. Handle coder failures**
-If a coder returns `status: "failed"`:
-- Update prd.json: set story `status = "failed"`, write `lastAttemptLog`
+If a coder returns `status: "failed"` or the Agent call itself fails:
+- Update prd.json: set story `status = "failed"`, write `lastAttemptLog` with the failure details
 - Skip the tester phase for this story
 - Log to progress.txt
+- The worktree is automatically cleaned up if the agent made no changes
 
 --- **PHASE 2: TEST (parallel across batch)** ---
 
-**i. Spawn tester Tasks IN PARALLEL**
-For each story where coder succeeded, spawn a Task with:
-- `subagent_type`: The matched tester agent name (e.g., "general-purpose")
-- `isolation`: DO NOT use isolation — tester must run in the SAME worktree as its coder
-  - Pass the worktree path from the coder's Task result so the tester works on the same files
-  - Use Bash to `cd` into the worktree directory, OR pass the worktree path in the prompt
-- `prompt`: Include:
-  - Full story object (including verificationCommands)
-  - Coder's result (files_created, files_modified, implementation_notes, needs_attention)
-  - Framework profile
-  - Project-level testCommands from prd.json root
-  - Relevant progress.txt learnings
-  - Content from tasks/common_knowledge.md (shared knowledge from previous stories)
-  - The tester agent instructions
-  - Expected return format
-  - Constraints: Do NOT commit, do NOT modify production code (except minor bug fixes), do NOT touch prd.json
-  - Responsibility: Update tasks/test-log.md, tasks/review-notes.md, tasks/common_knowledge.md, and docs/ folder
+**i. Spawn tester Agents IN PARALLEL**
+For each story where coder succeeded, spawn an Agent call. The tester must work in the **same worktree** as the coder so it can see the implementation files.
 
-**j. Wait for ALL tester Tasks to complete**
-Collect results from each Task. Parse the JSON output.
+- `subagent_type`: The matched tester agent name (e.g., `"ralph-tester"`)
+- `isolation`: **DO NOT set** — the tester must NOT get its own worktree
+- `prompt`: **MUST start with `cd [worktree_path]`** — include the worktree path from the coder's result so the tester works on the coder's files
+
+**Agent call example:**
+```
+Agent({
+  description: "Ralph tester: US-001 - Add DB schema",
+  subagent_type: "ralph-tester",
+  prompt: "IMPORTANT: First run `cd [worktree_path]` to enter the worktree where the coder implemented this story. ALL your work must happen in that directory.\n\n... (rest of prompt)"
+})
+```
+
+**Prompt template for tester Agent:**
+```
+IMPORTANT: First run this command before doing anything else:
+cd {worktree_path_from_coder_result}
+
+ALL your work (reading files, writing tests, running commands) must happen in this directory.
+This is the worktree where the coder implemented story {story.id}.
+
+## Story Spec
+{full story JSON object, including verificationCommands}
+
+## Coder Result
+{coder's JSON result: files_created, files_modified, implementation_notes, needs_attention}
+
+## Framework Profile
+{framework_profile JSON}
+
+## Test Commands (project-level regression suite)
+{testCommands from prd.json root}
+
+## Progress Learnings
+{relevant progress.txt content}
+
+## Common Knowledge
+{tasks/common_knowledge.md content}
+
+## Instructions
+{tester agent instructions — from ralph-tester.md or matched project agent}
+
+## Constraints
+- First cd into the worktree: {worktree_path}
+- Do NOT commit any changes
+- Do NOT modify production code (except minor bug fixes like typos, missing imports)
+- Do NOT touch tasks/prd.json
+- Update tasks/test-log.md, tasks/review-notes.md, tasks/common_knowledge.md, and docs/
+
+## Return Format
+When done, output ONLY a JSON block:
+{
+  "story_id": "US-XXX",
+  "status": "done" or "failed",
+  "tests_created": ["tests/unit/test_x.py"],
+  "tests_modified": [],
+  "docs_updated": [],
+  "verification_results": [
+    {"command": "...", "expect": "exit_code:0", "passed": true}
+  ],
+  "regression_passed": true,
+  "failure_details": null,
+  "review_notes": "observations"
+}
+```
+
+**j. Wait for ALL tester Agents to complete**
+Collect results from each Agent call. Parse the JSON block from the output.
 
 --- **MERGE & UPDATE** ---
 
 **k. Process results for each story**
 
+The Agent tool with `isolation: "worktree"` returns the worktree path and branch name when the agent made changes. Use these values below.
+
 **If tester returns `status: "done"`:**
-1. Commit in the worktree:
+1. Commit in the worktree (use the worktree path from coder's Agent result):
    ```bash
-   cd [worktree_path] && git add -A && git commit -m "feat(US-XXX): [story title]"
+   cd {worktree_path} && git add -A && git commit -m "feat({story.id}): {story.title}
+
+   Co-Authored-By: ralph-coder <noreply@anthropic.com>"
    ```
-2. Merge worktree branch to main (sequentially, one at a time):
+2. Merge worktree branch to main (sequentially, one story at a time):
    ```bash
-   git checkout main && git merge [worktree_branch] --no-edit
+   git checkout main && git merge {worktree_branch} --no-edit
    ```
-3. If merge conflict → mark story as "failed", log conflict details
-4. Update prd.json: set `status = "done"`, set `completedAt` to ISO timestamp
+   The `{worktree_branch}` is the branch name returned from the coder Agent's result metadata.
+3. If merge conflict → **STOP.** Mark story as "failed" with conflict details in `lastAttemptLog`. Do NOT try to resolve conflicts automatically — ask the user.
+4. Clean up the worktree after successful merge:
+   ```bash
+   git worktree remove {worktree_path} --force
+   git branch -d {worktree_branch}
+   ```
+5. Update prd.json: set `status = "done"`, set `completedAt` to ISO timestamp
 
 **If tester returns `status: "failed"`:**
 1. Do NOT commit
-2. Update prd.json: set `status = "failed"`, write tester's `failure_details` to `lastAttemptLog`
-3. Log failure to progress.txt
+2. Clean up the worktree (discard the failed work):
+   ```bash
+   git worktree remove {worktree_path} --force
+   git branch -D {worktree_branch}
+   ```
+3. Update prd.json: set `status = "failed"`, write tester's `failure_details` to `lastAttemptLog`
+4. Log failure to progress.txt
 
 **l. Update tracking files**
 - `tasks/prd.json` — story statuses (done or failed)
@@ -260,7 +343,7 @@ BATCH [N] COMPLETE:
 ```
 
 **n. Increment iterations**
-`iterations += batch_size`
+`iterations += 1` (count completed batches, not individual stories — each batch loop is one iteration regardless of how many parallel stories it contains)
 
 **End of LOOP**
 
@@ -284,20 +367,20 @@ prd.json stories:
   US-005: Add export feature   (blockedBy: [])           → BATCH 1
 
 Execution:
-  BATCH 1 (2 stories in parallel):
-    Phase 1: Task(ralph-coder, US-001, worktree) + Task(ralph-coder, US-005, worktree)
-    Phase 2: Task(ralph-tester, US-001) + Task(ralph-tester, US-005)
-    Merge: US-001 → main, US-005 → main
+  BATCH 1 (iteration 1 — 2 stories in parallel):
+    Phase 1: Agent(ralph-coder, US-001, isolation:worktree) + Agent(ralph-coder, US-005, isolation:worktree)
+    Phase 2: Agent(ralph-tester, US-001, cd worktree) + Agent(ralph-tester, US-005, cd worktree)
+    Merge: US-001 → main, US-005 → main, git worktree remove both
 
-  BATCH 2 (2 stories in parallel, after BATCH 1 merged):
-    Phase 1: Task(ralph-coder, US-002, worktree) + Task(ralph-coder, US-003, worktree)
-    Phase 2: Task(ralph-tester, US-002) + Task(ralph-tester, US-003)
-    Merge: US-002 → main, US-003 → main
+  BATCH 2 (iteration 2 — 2 stories, after BATCH 1 merged):
+    Phase 1: Agent(ralph-coder, US-002, isolation:worktree) + Agent(ralph-coder, US-003, isolation:worktree)
+    Phase 2: Agent(ralph-tester, US-002, cd worktree) + Agent(ralph-tester, US-003, cd worktree)
+    Merge: US-002 → main, US-003 → main, git worktree remove both
 
-  BATCH 3 (1 story):
-    Phase 1: Task(ralph-coder, US-004, worktree)
-    Phase 2: Task(ralph-tester, US-004)
-    Merge: US-004 → main
+  BATCH 3 (iteration 3 — 1 story):
+    Phase 1: Agent(ralph-coder, US-004, isolation:worktree)
+    Phase 2: Agent(ralph-tester, US-004, cd worktree)
+    Merge: US-004 → main, git worktree remove
 ```
 </parallel_execution_example>
 

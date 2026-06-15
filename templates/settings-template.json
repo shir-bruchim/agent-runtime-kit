@@ -8,8 +8,7 @@
   },
 
   "env": {
-    "ENABLE_TOOL_SEARCH": "true",
-    "PERPLEXITY_API_KEY": "<your-perplexity-api-key>"
+    "ENABLE_TOOL_SEARCH": "true"
   },
 
   "hooks": {

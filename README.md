@@ -50,10 +50,10 @@ See `PROFILES.md` for profile details and per-file decision (SKIP/MERGE) instruc
 
 | | CORE (default) | FULL |
 |-|----------------|------|
-| Skills | extend-agent, git, testing, debugging, security, strategic-compact | + planning, api-design, implement-jira-ticket, design-doc-mermaid, perplexity-deep-search, verification-loop, pr-review |
+| Skills | extend-agent, git, testing, debugging, security, strategic-compact | + planning, api-design, implement-jira-ticket, design-doc-mermaid, web-deep-search, verification-loop, pr-review |
 | Rules | base-conventions, security, testing | + git-workflow, performance(path-scoped), infrastructure(path-scoped), patterns(path-scoped) |
 | Commands | commit, push, pr, ship, test, build-fix | (none — commands now in CORE) |
-| Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer, tdd-guide, perplexity-research, aws-specialist, k8s-specialist |
+| Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer, tdd-guide, web-research, aws-specialist, k8s-specialist |
 
 **Tagged opt-ins** (add with `--tags`):
 
@@ -62,7 +62,7 @@ See `PROFILES.md` for profile details and per-file decision (SKIP/MERGE) instruc
 | `[PYTHON]` | `languages/python/` — conventions, testing, database, async language files + python-debugger, fastapi-specialist agents |
 | `[STACK]` | postgres-patterns, docker-patterns, deployment-patterns skills + aws-specialist, k8s-specialist agents |
 | `[ADVANCED]` | ralph-orchestrator skill + ralph-coder, ralph-tester agents — autonomous PRD-to-code pipeline |
-| `[OPT-IN]` | Session hooks, concise mode, delegate-first, statusline, Perplexity search, settings template |
+| `[OPT-IN]` | Session hooks, concise mode, delegate-first, statusline, settings template |
 
 CORE is ~60% smaller than FULL. Use CORE unless you need the extras. See `PROFILES.md`.
 
@@ -87,7 +87,7 @@ agent-runtime-kit/
 │   ├── api-design/         # API design patterns                               [FULL]
 │   ├── implement-jira-ticket/ # Jira ticket implementation                    [FULL]
 │   ├── design-doc-mermaid/ # Mermaid diagrams + design documents              [FULL]
-│   ├── perplexity-deep-search/ # AI-powered web search (3 modes)             [FULL]
+│   ├── web-deep-search/    # Web research via WebSearch + WebFetch (3 modes)  [FULL]
 │   ├── verification-loop/  # Multi-phase verification system                  [FULL]
 │   └── pr-review/          # Structured PR review (5 dimensions)              [FULL]
 │   ├── postgres-patterns/  # PostgreSQL schema, indexing, optimization        [STACK]
@@ -117,7 +117,7 @@ agent-runtime-kit/
 │   ├── doc-writer.md       # Documentation                                     [FULL]
 │   ├── refactorer.md       # Code refactoring                                  [FULL]
 │   ├── tdd-guide.md        # Test-driven development                           [FULL]
-│   ├── perplexity-research.md # Web research via Perplexity API                [FULL]
+│   ├── web-research.md       # Web research via WebSearch + WebFetch          [FULL]
 │   ├── aws-specialist.md  # AWS Lambda, SQS, S3, IAM                         [STACK]
 │   ├── k8s-specialist.md  # Kubernetes, Helm, HPA, RBAC                      [STACK]
 │   ├── ralph-coder.md     # Ralph: implements production code per story       [ADVANCED]
@@ -172,8 +172,7 @@ agent-runtime-kit/
 │   ├── install-kit.sh            # Execute install plan
 │   ├── compile-claude-routing.py  # Generate skill routing table
 │   ├── generate-cursor-mdc.sh    # Generate Cursor .mdc files
-│   ├── statusline.sh             # Terminal status bar (model, branch, context)  [OPT-IN]
-│   └── perplexity_search.py      # Perplexity API search script                 [OPT-IN]
+│   └── statusline.sh             # Terminal status bar (model, branch, context)  [OPT-IN]
 │
 └── docs/
     ├── CUSTOMIZATION.md          # How to extend the kit
@@ -242,7 +241,7 @@ Read `AGENT-SETUP.md`. It contains step-by-step instructions for:
 | `api-design/` | FULL | REST API design patterns |
 | `implement-jira-ticket/` | FULL | End-to-end Jira ticket implementation |
 | `design-doc-mermaid/` | FULL | Mermaid diagrams and design documents |
-| `perplexity-deep-search/` | FULL | AI-powered web search (3 depth modes) |
+| `web-deep-search/` | FULL | Web research via built-in WebSearch + WebFetch (3 depth modes) |
 | `verification-loop/` | FULL | Multi-phase verification system |
 | `pr-review/` | FULL | Structured PR review across 5 dimensions |
 | `postgres-patterns/` | STACK | PostgreSQL schema, indexing, query optimization |
@@ -266,7 +265,7 @@ Read `AGENT-SETUP.md`. It contains step-by-step instructions for:
 | `doc-writer` | FULL | sonnet | - | - | Documentation |
 | `refactorer` | FULL | sonnet | - | - | Refactoring |
 | `tdd-guide` | FULL | sonnet | - | testing | Test-driven development |
-| `perplexity-research` | FULL | sonnet | - | perplexity-deep-search | Web research via Perplexity |
+| `web-research` | FULL | sonnet | - | web-deep-search | Web research via WebSearch + WebFetch |
 | `aws-specialist` | STACK | sonnet | - | - | AWS infrastructure (Lambda, SQS, S3) |
 | `k8s-specialist` | STACK | sonnet | - | - | Kubernetes (Deployments, Helm, HPA) |
 | `python-debugger` | PYTHON | sonnet | - | - | Hypothesis-driven Python debugging |
@@ -371,15 +370,6 @@ Terminal status bar showing model, branch, context usage with progress bar.
 cp scripts/statusline.sh ~/.claude/scripts/
 chmod +x ~/.claude/scripts/statusline.sh
 # Add to settings.json: "statusLine": {"type": "command", "command": "~/.claude/scripts/statusline.sh"}
-```
-
-### Perplexity Search (OPT-IN)
-
-Web research via Perplexity API. Used by `perplexity-deep-search` skill and `perplexity-research` agent.
-
-```bash
-cp scripts/perplexity_search.py ~/.claude/scripts/
-# Requires: PERPLEXITY_API_KEY in settings.json env
 ```
 
 ### Skill Routing (FULL-only)

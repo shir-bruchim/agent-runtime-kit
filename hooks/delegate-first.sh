@@ -6,4 +6,4 @@
 #
 # Install: Add to settings.json under hooks.UserPromptSubmit
 
-echo '{"userPromptSuffix": "\n\n[DELEGATION CHECK: Before starting this task, check if there is a subagent or skill that fits. Use Explore agent for codebase exploration, planner for design decisions, git-ops for commits/PRs, tester for tests, perplexity-research for ANY web research. Delegate when appropriate to keep context clean.]"}'
+echo '{"userPromptSuffix": "\n\n[DELEGATION CHECK: Before starting this task, check if there is a subagent or skill that fits. Use Explore agent for codebase exploration, planner for design decisions, git-ops for commits/PRs, tester for tests, web-research for ANY web research. Delegate when appropriate to keep context clean.]"}'

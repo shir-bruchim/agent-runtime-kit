@@ -110,16 +110,16 @@ cat /tmp/kit-plan.json
 
 | | CORE | FULL |
 |-|------|------|
-| Skills | extend-agent, git, testing, debugging, security, strategic-compact (17 total) | + planning, api-design, implement-jira-ticket, design-doc-mermaid, perplexity-deep-search, verification-loop, pr-review |
+| Skills | extend-agent, git, testing, debugging, security, strategic-compact (17 total) | + planning, api-design, implement-jira-ticket, design-doc-mermaid, web-deep-search, verification-loop, pr-review |
 | Rules | base-conventions, security, testing (7 total — 4 path-scoped) | + git-workflow, performance(path-scoped), infrastructure(path-scoped), patterns(path-scoped) |
 | Commands | build-fix, commit, push, pr, ship, test (6 total) | (all commands now in CORE) |
-| Subagents | reviewer, tester, git-ops, security (15 total — 4 with memory) | + architect, planner, db-expert, doc-writer, refactorer, tdd-guide, perplexity-research |
+| Subagents | reviewer, tester, git-ops, security (15 total — 4 with memory) | + architect, planner, db-expert, doc-writer, refactorer, tdd-guide, web-research |
 
 **Tagged opt-ins** (add with `--tags python,stack`):
 - `[PYTHON]`: Python language pack files (conventions, testing, database, async) + python-debugger, fastapi-specialist agents
 - `[STACK]`: postgres-patterns, docker-patterns, deployment-patterns skills + aws-specialist, k8s-specialist agents
 - `[ADVANCED]`: ralph-orchestrator skill + ralph-coder, ralph-tester agents
-- `[OPT-IN]`: Session hooks, concise mode, delegate-first, statusline, Perplexity search
+- `[OPT-IN]`: Session hooks, concise mode, delegate-first, statusline
 
 See `PROFILES.md` for full details.
 

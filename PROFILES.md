@@ -30,10 +30,10 @@ Everything in CORE, plus:
 
 | Category | Added |
 |----------|-------|
-| **Skills** | `planning`, `api-design`, `implement-jira-ticket`, `design-doc-mermaid`, `perplexity-deep-search`, `verification-loop`, `pr-review` |
+| **Skills** | `planning`, `api-design`, `implement-jira-ticket`, `design-doc-mermaid`, `web-deep-search`, `verification-loop`, `pr-review` |
 | **Rules** | `git-workflow`, `performance` (path-scoped), `infrastructure` (path-scoped), `patterns` (path-scoped) |
 | **Commands** | None — all commands now in CORE |
-| **Subagents** | `architect`, `planner`, `db-expert`, `doc-writer`, `refactorer`, `tdd-guide`, `perplexity-research` |
+| **Subagents** | `architect`, `planner`, `db-expert`, `doc-writer`, `refactorer`, `tdd-guide`, `web-research` |
 
 ### [ADVANCED] — Autonomous Agent Pipeline
 
@@ -57,7 +57,7 @@ Neither profile installs these by default. Enable explicitly when needed.
 |----------|---------|
 | **Session Hooks** | `session-start.sh`, `session-end.sh`, `pre-compact.sh` |
 | **Productivity Hooks** | `concise-mode.sh`, `concise-toggle.sh`, `delegate-first.sh`, `suggest-compact.sh` |
-| **Scripts** | `statusline.sh`, `perplexity_search.py` |
+| **Scripts** | `statusline.sh` |
 | **Commands** | `concise` |
 | **Templates** | `settings-template.json` |
 

@@ -11,8 +11,8 @@
     },
     "full": {
       "_extends": "core",
-      "skills": ["planning", "api-design", "implement-jira-ticket", "design-doc-mermaid", "perplexity-deep-search", "verification-loop", "pr-review"],
-      "subagents": ["architect", "planner", "db-expert", "doc-writer", "refactorer", "tdd-guide", "perplexity-research"],
+      "skills": ["planning", "api-design", "implement-jira-ticket", "design-doc-mermaid", "web-deep-search", "verification-loop", "pr-review"],
+      "subagents": ["architect", "planner", "db-expert", "doc-writer", "refactorer", "tdd-guide", "web-research"],
       "commands": [],
       "rules": ["git-workflow", "performance", "infrastructure", "patterns"]
     }
@@ -39,10 +39,10 @@
       "subagents": ["ralph-coder", "ralph-tester"]
     },
     "opt-in": {
-      "description": "Session hooks, concise mode, delegate-first, statusline, Perplexity search, settings template",
+      "description": "Session hooks, concise mode, delegate-first, statusline, settings template",
       "hooks": ["session-start", "session-end", "pre-compact", "concise-mode", "concise-toggle", "delegate-first"],
       "commands": ["concise"],
-      "scripts": ["statusline.sh", "perplexity_search.py"],
+      "scripts": ["statusline.sh"],
       "templates": ["settings-template.json"]
     }
   },

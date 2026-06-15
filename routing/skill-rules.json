@@ -89,9 +89,9 @@
       "profile": "full"
     },
     {
-      "name": "perplexity-deep-search",
-      "description": "AI-powered web search with three depth levels via Perplexity API.",
-      "keywords": ["search", "perplexity", "research", "web search", "current info"],
+      "name": "web-deep-search",
+      "description": "Deep web research with three depth levels via built-in WebSearch + WebFetch.",
+      "keywords": ["search", "research", "web search", "current info", "fact-check"],
       "intentPatterns": ["search.*web", "research.*topic", "current.*info", "compare.*technologies"],
       "priority": "medium",
       "profile": "full"

@@ -97,7 +97,7 @@ ls -la ~/.claude/agents/ralph-coder.md ~/.claude/agents/ralph-tester.md 2>/dev/n
 <step name="5_execute_ralph">
 **Run autonomous implementation via subagent loop**
 
-**CRITICAL: ALL implementation MUST go through ralph-coder/ralph-tester subagents via the Task tool. NEVER write code or modify project files directly. You are the orchestrator, NOT the implementer.**
+**CRITICAL: ALL implementation MUST go through ralph-coder/ralph-tester subagents via the Agent tool. NEVER write code or modify project files directly. You are the orchestrator, NOT the implementer.**
 
 Follow the subagent execution loop defined in `workflows/execute-only.md` step 3 (framework detection) and step 4 (subagent loop).
 
@@ -105,9 +105,9 @@ This will:
 1. Detect project framework and build agent routing table
 2. Group independent stories into parallel batches
 3. For each batch:
-   - Phase 1: Spawn ralph-coder Tasks in parallel (one per story, each in a worktree)
-   - Phase 2: Spawn ralph-tester Tasks in parallel (in same worktrees)
-   - Merge successful stories to main, update prd.json
+   - Phase 1: Spawn ralph-coder Agents in parallel (one per story, each with `isolation: "worktree"`)
+   - Phase 2: Spawn ralph-tester Agents in parallel (directed to `cd` into each coder's worktree)
+   - Commit in worktrees, merge to main, clean up worktrees, update prd.json
 4. Continue until all stories done or max iterations reached
 
 **After the loop completes:**
