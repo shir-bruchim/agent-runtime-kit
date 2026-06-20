@@ -11,6 +11,10 @@ description: Implements Jira tickets end-to-end with git setup, planning, coding
 - **Single responsibility** — 1 DB repository per table, no cross-table logic in repos.
 - **TDD: Red → Green → Refactor** — write tests FIRST (they fail), then implement (they pass), then refactor. See `workflows/testing.md`.
 - **API changes → update integration tests** — if the ticket changes API behavior, updating integration/localstack tests is MANDATORY, not optional. See `workflows/testing.md`.
+- **Real objects, not MagicMock for domain types** — instantiate real pydantic schemas, ORM rows, internal models with real values. Mock only at system boundaries (DB session, HTTP, S3, Kafka, scraper, logger). MagicMock for a domain object silently accepts wrong attribute access and papers over schema breaks. Imports at the top of the test file — never `from foo import Bar` inside a test body.
+- **Test factories in conftest** — when a test needs a real model/schema/ORM object, add a `make_*` factory fixture to `tests/conftest.py`, not a private `_make_*` helper inside a single test file. Use via dependency injection: `def test_x(make_thing): ...`.
+- **Self-review during implementation** — before marking the implementation phase complete, run the pr-review project-specific lens (if any) on your own diff. Real duplication, magic strings, redundant DB fetches, ticket-prefixed comments, trailing-newline misses — all fixable on the first pass.
+- **Enumerate docs before editing** — when a behaviour changes, scan `CLAUDE.md`, `README.md`, `docs/*.md` to find every place that references it. Identify the canonical source-of-truth (often `README.md`, others link to it), edit that one, prune duplicates if any.
 - **Use MCP tools** — if Atlassian MCP is connected, use it. If groundcover MCP is connected, use it for logs.
 
 </essential_principles>

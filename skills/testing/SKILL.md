@@ -41,6 +41,9 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 **When writing pytest (Python):**
 - No fake tests — every assertion must test real behavior (invariants, boundaries, error semantics)
 - Mock ONLY at system boundaries: DB, external HTTP, filesystem, clock. Never mock internal logic
+- **Real objects for domain types** — instantiate real pydantic schemas, ORM rows, internal models with real values. `MagicMock` for a domain object silently accepts any attribute access and lets schema breaks pass — production-only failure mode. Mocks remain ok for system boundaries (DB session, HTTP client, scraper, logger).
+- **Test factories live in conftest** — when a test needs a real model/schema/ORM object, add a `make_*` factory fixture to `tests/conftest.py`, not a private `_make_*` helper inside a single test file. Use via dependency injection: `def test_x(make_thing): ...`. The factory takes `**overrides` so each test can customize.
+- **Imports at the top of the file** — never `from foo import Bar` inside a test body.
 - Use existing fixtures from `conftest.py` before creating new ones
 - When fixing failing tests: fix test inputs/data to match real behavior — do not add more mocks
 - Delete flaky tests outright — do not weaken assertions to make them pass

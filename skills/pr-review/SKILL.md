@@ -16,6 +16,15 @@ Fetch a PR diff via `gh`, analyze it across 5 dimensions, and output a structure
 
 <workflow>
 
+### Step 0 — Ordering when both PR comments and CI failures exist
+
+If the user's request includes BOTH unresolved bot/reviewer comments AND a CI run, address comments FIRST, then check CI:
+
+1. Fetch and address unresolved bot/reviewer comments via `gh api repos/<o>/<r>/pulls/<n>/comments`. Reply per-thread with rationale (apply / declined-with-reason / false-positive).
+2. THEN inspect CI failure logs.
+
+Bot comments often explain or contextualize the CI failure. Reading CI first risks fixing a symptom that the bot already proposed a different fix for.
+
 ### Step 1 — Fetch PR Diff
 ```bash
 # By PR number (current repo)/
@@ -130,3 +139,24 @@ gh pr view <number> --json title,body,additions,deletions,changedFiles,baseRefNa
 - [ ] Verdict clearly stated
 - [ ] No false positives on generated/lock files
 </success_criteria>
+
+<self_review_first>
+Before presenting any non-trivial change as "complete", run the project-specific lens (if any) below on your own diff. Apply review-grade cleanups during the initial implementation, not after. Common easy wins:
+
+- Two near-identical helpers in two siblings? Extract to the base on the first pass, not the third.
+- Repeating a string literal across multiple files? Module-level constant on the first pass.
+- Reusable test factory in two test files? Conftest fixture, not a private helper per file.
+- Comment carrying a ticket prefix? Strip the prefix; ticket history belongs in PR/git, not in code.
+- Trailing newlines on every file you touch — fix while you're there.
+
+The "I'll let pr-review catch it" loop is avoidable churn.
+</self_review_first>
+
+<duplication_classification>
+When a finding suggests extracting a shared helper, classify it BEFORE applying:
+
+- **Real duplication** — same args, same data flow, same constants → extract to base/shared module.
+- **Shape-similarity** — different mappers / topics / source-data types that just *look* alike → leave it; report "shape-similar only, not extracting" with the divergence list.
+
+Don't auto-apply extract findings without that classification. A 2-call-site abstraction over genuinely different signatures is thin and awkward; revisit when a third lands.
+</duplication_classification>

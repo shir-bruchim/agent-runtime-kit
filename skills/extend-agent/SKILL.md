@@ -291,10 +291,24 @@ Always launch independent agents in parallel when possible.
 | `workflows/create-subagent.md` | Build a specialist agent for Claude Code or Cursor |
 </workflows_index>
 
+<scanner_skill_pattern>
+When designing a skill that scans across many targets (skills, files, PRs, test failures, comments, ...) and proposes per-target actions, the skill body MUST:
+
+1. Enumerate ALL candidates first — never short-circuit on the first match.
+2. Sort the candidates by a clear priority signal (usage count, severity, recency).
+3. Present each as a numbered list `[i/N]` with rationale and proposed action.
+4. Ask for per-candidate confirmation, with `skip-skill` / `apply all` shortcuts for batch decisions.
+
+Anti-pattern: returning one match with "I found this" — the user can't see what you skipped, can't redirect priority, and trusts a partial scan as complete.
+
+Repeat-use as a smell: if the user invokes the same skill 3+ times within one session/task, the skill body is probably under-specified. Make sure new scanner skills produce a complete pass per invocation; one call should fully discharge the user's intent.
+</scanner_skill_pattern>
+
 <success_criteria>
 - Valid YAML frontmatter for the target platform
 - XML-structured body (no markdown headings in body)
 - Description specific enough to trigger at the right time
 - Installed in the correct location for the platform
 - Tested with a representative user request
+- For scanner-type skills: produces a complete enumerated, prioritized list per invocation (no short-circuit, no repeat-use needed)
 </success_criteria>
