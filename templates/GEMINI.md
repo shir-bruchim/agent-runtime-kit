@@ -17,7 +17,7 @@ Framework: [your framework]
 
 ## Coding Standards
 
-- Follow conventions in `.claude/rules/` or `.cursor/rules/`
+- Follow conventions in `.claude/rules/`, `.cursor/rules/`, or `.kiro/steering/`
 - Names reflect purpose: `getUserByEmail()` not `getUser()`
 - Functions do one thing; return early on validation failure
 - No magic numbers — use named constants

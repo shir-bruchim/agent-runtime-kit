@@ -67,10 +67,17 @@ Determine which AI platform you are running on.
 - Configuration lives in `~/.cursor/rules/` (user-level) or `.cursor/rules/` (project)
 - Rules are `.mdc` files with frontmatter (`description`, `globs`, `alwaysApply`)
 
+### You are Kiro if:
+- You are running inside the Kiro IDE (VS Code-based)
+- Configuration lives in `.kiro/steering/` (project-level) or `~/.kiro/steering/` (user-level)
+- Steering files are `.md` files with optional frontmatter (`inclusion`, `fileMatchPattern`)
+- MCP config lives in `.kiro/settings/mcp.json` (project) or `~/.kiro/settings/mcp.json` (user)
+
 ### Detection logic:
 ```
 IF Task tool available AND can write to ~/.claude/ → Claude Code
 IF .cursor/ directory exists OR running in Cursor workspace → Cursor
+IF .kiro/ directory exists OR running in Kiro workspace → Kiro
 IF both available → both
 IF neither → default to Claude Code
 ```
@@ -173,16 +180,16 @@ Proceed with install?
 
 **What gets installed where:**
 
-| Item | Claude Code (global) | Cursor (global) |
-|------|---------------------|-----------------|
-| Skills | `~/.claude/skills/` | `~/.cursor/rules/skill-*.mdc` |
-| Subagents | `~/.claude/agents/` | (same format, `.claude/agents/`) |
-| Commands | `~/.claude/commands/` | (Cursor reads as on-demand rules) |
-| Rules | `.claude/rules/` (project) | `~/.cursor/rules/*.mdc` |
-| Security hooks | `~/.claude/hooks/` | N/A (use alwaysApply rules) |
-| Language conventions | `.claude/rules/` (project) | `.cursor/rules/` (project) |
-| AGENTS.md | Project root | Project root |
-| GEMINI.md | Project root | Project root |
+| Item | Claude Code (global) | Cursor (global) | Kiro (project) |
+|------|---------------------|-----------------|----------------|
+| Skills | `~/.claude/skills/` | `~/.cursor/rules/skill-*.mdc` | `.kiro/steering/skill-*.md` |
+| Subagents | `~/.claude/agents/` | (same format, `.claude/agents/`) | N/A (use Kiro's built-in sub-agents) |
+| Commands | `~/.claude/commands/` | (Cursor reads as on-demand rules) | N/A (use Kiro chat) |
+| Rules | `.claude/rules/` (project) | `~/.cursor/rules/*.mdc` | `.kiro/steering/*.md` |
+| Security hooks | `~/.claude/hooks/` | N/A (use alwaysApply rules) | `.kiro/hooks/*.json` (Kiro agent hooks) |
+| Language conventions | `.claude/rules/` (project) | `.cursor/rules/` (project) | `.kiro/steering/` (project) |
+| AGENTS.md | Project root | Project root | Project root |
+| GEMINI.md | Project root | Project root | Project root |
 
 ---
 
@@ -264,6 +271,12 @@ ls ~/.claude/hooks/      # Should contain: block-dangerous-commands.sh block-dan
 ls ~/.cursor/rules/      # Should contain: skill-*.mdc, base-conventions.mdc, security.mdc, testing.mdc
 ```
 
+### Kiro:
+```bash
+ls .kiro/steering/       # Should contain: conventions.md, base-conventions.md, security.md, testing.md
+ls .kiro/hooks/          # Should contain agent hook JSON files (if opted in)
+```
+
 ---
 
 ## Step 7: Cleanup and Report
@@ -278,7 +291,7 @@ Then report to the user:
 ```
 ✅ Agent Runtime Kit installed successfully.
 
-Platform: [Claude Code / Cursor / both]
+Platform: [Claude Code / Cursor / Kiro / both]
 Profile: CORE (or FULL)
 Project language: [detected language]
 
@@ -328,6 +341,58 @@ For each `skills/*/SKILL.md` → `.cursor/rules/skill-<name>.mdc`:
 
 For `rules/*.md` → `.cursor/rules/<name>.mdc`:
 - Same transform, but set `alwaysApply: true` for CORE rules (base-conventions, security, testing)
+
+---
+
+## Manual Kiro Install (Fallback)
+
+If the install script is unavailable and you are running in Kiro:
+
+**Rules → Steering files (`.kiro/steering/*.md`):**
+1. Copy `rules/*.md` directly — Kiro steering files are standard Markdown
+2. Add frontmatter for inclusion control:
+   ```yaml
+   ---
+   inclusion: auto
+   ---
+   ```
+3. CORE rules (base-conventions, security, testing) should use `inclusion: auto`
+4. FULL rules can use `inclusion: manual` so users opt in via `#` context key
+
+**Skills → Steering files (`.kiro/steering/skill-*.md`):**
+1. Remove SKILL.md YAML frontmatter
+2. Add Kiro frontmatter:
+   ```yaml
+   ---
+   inclusion: manual
+   ---
+   ```
+3. Keep all XML tags and content
+
+**Language conventions → Steering files:**
+1. Copy `languages/<lang>/*.md` to `.kiro/steering/`
+2. Use `inclusion: fileMatch` with appropriate `fileMatchPattern`:
+   ```yaml
+   ---
+   inclusion: fileMatch
+   fileMatchPattern: "**/*.py"
+   ---
+   ```
+
+**MCP servers → `.kiro/settings/mcp.json`:**
+```json
+{
+  "mcpServers": {
+    "server-name": {
+      "command": "...",
+      "args": ["..."]
+    }
+  }
+}
+```
+
+**Agent hooks → `.kiro/hooks/*.json`:**
+Kiro hooks use a JSON format with `when`/`then` structure. See Kiro docs for the hook schema.
 
 ---
 
@@ -437,5 +502,6 @@ languages/java/             conventions
 ```
 templates/AGENTS.md                     Copilot + Gemini context
 templates/GEMINI.md                     Gemini CLI context
+templates/kiro-steering-conventions.md  Kiro steering file
 templates/.github/copilot-instructions.md   GitHub Copilot customization
 ```

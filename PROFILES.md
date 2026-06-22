@@ -116,7 +116,7 @@ Add with `--tags python,stack` during install. These are independent of CORE/FUL
 
 ## Precedence Rules
 
-1. **Project-level overrides global.** Files in `.claude/rules/` or `.cursor/rules/` take precedence over `~/.claude/` equivalents on name collision.
+1. **Project-level overrides global.** Files in `.claude/rules/`, `.cursor/rules/`, or `.kiro/steering/` take precedence over `~/.claude/` equivalents on name collision.
 2. **Specific overrides generic.** A project's `typescript-conventions.md` beats a global one.
 3. **No duplication.** If a convention is in `CLAUDE.md` or `.cursorrules`, do NOT also install it as a rule file. Rule files are for content not already in the main config.
 4. **Skills are routers; workflows hold detail.** Keep `SKILL.md` lean — detailed steps belong in `workflows/` subdirectories.
