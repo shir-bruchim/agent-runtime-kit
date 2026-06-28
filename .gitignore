@@ -3,3 +3,9 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Never commit the live Claude settings — only the *.example variant.
+settings.json
+settings.local.json
+.claude.json
+*-cache.json

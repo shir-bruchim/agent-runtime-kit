@@ -1,0 +1,127 @@
+{
+  "awsAuthRefresh": "aws sso login --profile claude-code",
+  "env": {
+    "AWS_PROFILE": "claude-code",
+    "AWS_REGION": "us-west-2",
+    "CLAUDE_CODE_USE_BEDROCK": "1",
+    "ENABLE_TOOL_SEARCH": "true",
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+  },
+  "permissions": {
+    "allow": [
+      "mcp__github__get_file_contents",
+      "Bash(gh repo:*)",
+      "Bash(gh api:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)",
+      "Bash(rm -rf /tmp/agent-runtime-kit)",
+      "Bash(git clone:*)",
+      "Bash(pytest:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python3 -m pytest:*)",
+      "mcp__atlassian__getAccessibleAtlassianResources",
+      "mcp__atlassian__getVisibleJiraProjects",
+      "mcp__atlassian__searchJiraIssuesUsingJql",
+      "mcp__atlassian__getJiraIssue",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "mcp__groundcover__query_logs",
+      "mcp__groundcover__query_monitors",
+      "WebFetch(domain:demomark.axiscare.com)",
+      "Read(//usr/bin/**)",
+      "Bash(/usr/bin/curl --version)",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "WebFetch(domain:www.fifa.com)",
+      "WebFetch(domain:www.bbc.com)",
+      "WebFetch(domain:www.oddschecker.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.espn.com)",
+      "WebFetch(domain:www.reuters.com)",
+      "WebFetch(domain:www.theguardian.com)",
+      "WebFetch(domain:theanalyst.com)",
+      "WebFetch(domain:www.skysports.com)",
+      "WebFetch(domain:www.sportingnews.com)",
+      "WebFetch(domain:www.cbssports.com)",
+      "WebFetch(domain:www.foxsports.com)",
+      "WebFetch(domain:www.goal.com)",
+      "WebFetch(domain:www.actionnetwork.com)",
+      "WebFetch(domain:www.sportsbookreview.com)",
+      "WebFetch(domain:www.si.com)",
+      "WebFetch(domain:www.nytimes.com)",
+      "WebFetch(domain:www.bovada.lv)"
+    ]
+  },
+  "model": "us.anthropic.claude-opus-4-7[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/block-dangerous-commands.sh",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/pre-push-checks.sh",
+            "if": "Bash(git push*)",
+            "timeout": 120
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/block-dangerous-read.sh",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/protect-files.sh",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "Task|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/pre-commit-pytest.sh",
+            "timeout": 120000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "wellsky-scrapper",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[Ongoing Debug Session] Groundcover workflow Slack integration. Run /groundcover-debug to load full context.'"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/scripts/statusline.sh",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "slack@claude-plugins-official": true
+  }
+}
