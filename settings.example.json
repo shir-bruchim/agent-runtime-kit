@@ -8,7 +8,11 @@
     "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
   },
   "permissions": {
+    "additionalDirectories": [
+      "${HOME}/shirbruchim-github/agent-runtime-kit"
+    ],
     "allow": [
+      "Bash(ls -1 ~/.claude/skills/*)",
       "mcp__github__get_file_contents",
       "Bash(gh repo:*)",
       "Bash(gh api:*)",
