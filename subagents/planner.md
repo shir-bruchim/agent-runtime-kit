@@ -2,7 +2,6 @@
 name: planner
 description: Expert planning specialist for features, refactors, and project phases. Use proactively when implementing complex features, architectural changes, or multi-step work. Creates actionable implementation plans with specific file paths, dependencies, and verification criteria. For full project planning with briefs and roadmaps, use the planning skill.
 tools: Read, Grep, Glob
-model: opus
 ---
 
 <role>

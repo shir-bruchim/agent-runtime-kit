@@ -2,7 +2,6 @@
 name: ralph-tester
 description: Writes tests and runs verification for a Ralph user story that has already been implemented by ralph-coder. Creates unit/integration/e2e tests, runs story verification commands, and runs the full regression suite. Used by ralph-orchestrator as the second phase of story execution.
 tools: Read, Bash, Write, Edit, Grep, Glob
-model: claude-opus-4-7
 ---
 
 <role>

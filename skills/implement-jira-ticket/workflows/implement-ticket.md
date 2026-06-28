@@ -89,6 +89,21 @@ Before writing ANY code:
    - Response building
 
 **Follow these patterns exactly in your implementation.**
+
+**If the ticket references a sister service** (e.g., "see ams-api-service"), grep that repo for:
+- Header declarations (`Annotated[..., Field(...)] = Header(None, ...)`)
+- Search-via-POST routes and `*SearchFilter` / `*Page` schemas
+- Repository query logging (`log_query` with `compile_kwargs={"literal_binds": True}`)
+- `local_stack/conftest.py` schema initialization (often via a dedicated DB schema package like `ams-db-schema`)
+- `docker-compose.yml` services and ECR image refs
+- `Dockerfile` base images and apt deps
+
+Match these exactly. Differences here are debt — your service should look like the sister service's siblings, not its outlier.
+
+**Naming guard:** before you create files, sanity-check names against `references/coding-conventions.md`:
+- If the module is already context-scoped (`crud_customers_device.py`), don't repeat the context in method/class names.
+- If the ticket uses a descriptive word ("flat object"), don't put it in code.
+- If a canonical header (`X-Context-Id`) already exists, don't introduce a competing name.
 </step>
 
 <step number="6">
@@ -267,6 +282,17 @@ Follow the approved plan exactly:
 - Use dict filters for search functions (like existing code)
 - Don't over-engineer or add unrequested features
 - Goal: make the failing tests PASS
+
+**Implementation hot-checks** (apply by default, deviate only with explicit reason):
+
+- **All env vars go through `app/core/config.py`** in `UPPER_SNAKE_CASE`. Don't `os.environ.get(...)` directly. For multi-DB libraries, use `client_name` (e.g., `sensi_postgres.PostgresSessionMaker(client_name="CUSTOMERS")`) — don't manually mirror env vars.
+- **Test env vars go in `pytest.ini`**, never in test files.
+- **`testpaths = ./tests`** (folder), not enumerated files.
+- **SQL query logging** in every new CRUD method (compiled with `literal_binds=True`, DEBUG level).
+- **Reusable pagination/filter helpers** when adding a search endpoint — extract `BaseFilterPager` and a `resolve_search_filter` helper into a `pagination.py` so future search endpoints reuse it. `sort_by` is Optional in the schema; endpoint-level validation rejects when neither token nor sort_by is provided.
+- **Single middleware per concern.** If you find yourself duplicating logging or context-setting across two middlewares, consolidate. Skip-paths in a module-level `SET` (`SKIP_LOG_PATHS = {'/health', '/metrics'}`), reused everywhere.
+- **Customer/tenant scoping in the repo** — server always adds the scope filter to the WHERE; never trust the client to pass it through filters (IDOR guard).
+- **Naming** — no redundant qualifiers, no ticket-only descriptors, drop ORM-alias qualifiers in already-context-scoped modules (use `Device as DeviceOrm`, not `Device as CustomersDeviceOrm` inside `crud_customers_device.py`).
 </step>
 
 <step number="14">
@@ -362,12 +388,16 @@ Remove any found.
 </step>
 
 <step number="20">
-**Update README if needed:**
+**Update README and project docs (in the same PR, not a follow-up):**
 
-If implementation adds significant new behavior:
-- Update README with new functionality
-- Document any new configuration
-- Update architecture section if needed
+If the implementation adds a new endpoint, env var, middleware behavior, or anything externally visible, update **all** of these in the same PR:
+
+- `README.md` — endpoint tables (split by version if multi-version), env var reference, quick-start examples.
+- `CLAUDE.md` — architecture map, env var section, key design decisions, internal libraries, container-image notes if you switched bases.
+- `docs/api.md` — full reference for new endpoints (request contract, body shape, response shape with all columns, status codes, header meanings).
+- `docs/architecture.md` — component layout (annotate v1/v2 if relevant), data flow, middleware stack, internal dependencies, container images.
+
+Use ECR image references (e.g., `443793523615.dkr.ecr.eu-west-1.amazonaws.com/...`) when the project convention uses them — call this out in CLAUDE.md and architecture.md so onboarding engineers know they need ECR auth.
 </step>
 
 ## Phase 8: Complete

@@ -2,7 +2,6 @@
 name: k8s-specialist
 description: Kubernetes specialist. Deployments, Services, Helm charts, HPA, probes, RBAC, and troubleshooting. Use when writing K8s manifests, setting up Helm charts, configuring autoscaling, debugging pod issues, or designing cluster architecture.
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: sonnet
 ---
 
 <role>

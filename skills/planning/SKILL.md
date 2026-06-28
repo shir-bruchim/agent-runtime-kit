@@ -69,6 +69,31 @@ Plans are guides, not straitjackets. During execution:
 Only rule 4 requires user input. Everything else flows automatically.
 </principle>
 
+<principle name="qa_section_required">
+Every PLAN.md must include a `## QA / Verification` section enumerating HOW the plan's work gets validated end-to-end. Not optional. Without it, "done" means "code compiles" instead of "code is production-ready" — and the user re-reviews everything you should have reviewed yourself.
+
+Required sub-items in the QA section:
+
+1. **Skills to invoke** — list the relevant skills (e.g., `testing`, `tdd-guide`, `pr-review`, `security`, `verification-loop`, `debugging`). Plans that touch test code should ALWAYS list `testing`. Plans that ship to production should ALWAYS list `security` and `pr-review`.
+2. **Subagent fan-out** — for any plan with ≥3 independent modules, list the parallel subagent invocations (e.g., `tester` per module, `reviewer` on the diff, `security` audit, `web-research` on idioms). Default to spawning these in one message so they run concurrently.
+3. **Per-module unit tests** — one line per new module/script: test file path + key behaviors covered. "Module exists" doesn't satisfy this; "what does it do?" → "test it."
+4. **Smoke run** — the exact command that proves end-to-end wiring (e.g., `make load-test ENV=local`, `pytest tests/ -q`, `docker compose --profile X up`). If no such command exists, propose adding one.
+5. **Pre-commit gates** — what runs locally before commit (pytest, flake8, the project's pr-review skill, etc.).
+6. **CI-coverage check** — for every new test file: confirm it actually runs in CI. If the service Dockerfile `--ignore`s it, the plan must add a compensating GHA step.
+
+Before declaring the plan "complete" or marking phase-tasks done, the plan author re-reads the QA section and only marks complete what was actually executed. Subagents are part of the plan's execution surface, not an afterthought.
+</principle>
+
+<principle name="planning_folder_hygiene">
+`.planning/` is the user's primary durable context source — loaded into every future session via CLAUDE.md / MEMORY. Two rules:
+
+1. **Always update `.planning/` before/during related work.** When a phase ships, when a decision lands, when scope changes — reflect it in the relevant `PLAN.md` / `ROADMAP.md` / `SUMMARY.md` *before* the conversation ends. The user (or future-you in a new session) expects to come back later and find an accurate picture.
+
+2. **Prune done phases — but only after verifying done.** When a phase's deliverable has merged (or rolled into a later phase), it's fine to delete or archive that phase folder. NEVER delete based on assumption — verify via `git log` / PR status / on-disk artifacts. Don't prune just because something LOOKS old. If unsure, archive to `.planning/archive/` instead of deleting.
+
+`.planning/` is usually gitignored. That's intentional — it's local-only context, not a deliverable. Code that needs to be tracked lives outside `.planning/`. Don't put committable code there.
+</principle>
+
 </essential_principles>
 
 <context_scan>

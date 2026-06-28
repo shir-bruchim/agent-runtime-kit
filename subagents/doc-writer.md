@@ -2,7 +2,6 @@
 name: doc-writer
 description: Documentation specialist. Use when writing or updating README files, API documentation, code comments, architectural decision records (ADRs), or any project documentation. Creates clear, accurate, useful documentation.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
 ---
 
 <role>

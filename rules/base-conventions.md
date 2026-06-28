@@ -9,6 +9,7 @@ Universal coding standards that apply regardless of language or framework.
 - **Early returns reduce nesting**: Return early on error/validation before the happy path
 - **No magic numbers**: `const MAX_RETRIES = 3` not `if (count > 3)`
 - **Avoid abbreviations**: `userId` not `uid`, `configuration` not `cfg`
+- **Never reach for `hasattr` / `getattr` / reflection when you know the type.** You wrote the function signature, you know what object you pass and accept — so you know whether the attribute exists. Just access `obj.attribute` directly. Same applies to `dict.get(key, default)` when you know the key is always present (use `obj["key"]`). Reflection is for genuinely-dynamic dispatch (plugin loaders, ORM column iteration); it's NOT for "I'm too lazy to track which fields a dataclass has." Bad code: `getattr(resources, attr_name).extend(ids)`. Good code: `getattr` is fine for SAFETY against a not-yet-set attribute on a *third-party* object you don't control, but inside your own modules where you wrote the dataclass — use a `dict[str, list]` keyed by name, or explicit per-attribute assignment.
 
 ## Function Design
 

@@ -2,7 +2,6 @@
 name: reviewer
 description: Expert code reviewer for quality, security, and best practices. Use proactively after code changes, before PRs, or when asked to review code. Reviews across 5 dimensions with severity ratings. Works for any language.
 tools: Read, Grep, Glob, Bash
-model: sonnet
 memory: user
 skills:
   - pr-review

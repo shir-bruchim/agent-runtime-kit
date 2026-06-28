@@ -2,7 +2,6 @@
 name: aws-specialist
 description: AWS infrastructure specialist. Lambda, SQS, S3, RDS, IAM, and serverless patterns. Use when designing AWS architecture, writing Lambda functions, configuring queues, setting up databases, or managing IAM policies.
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: sonnet
 ---
 
 <role>

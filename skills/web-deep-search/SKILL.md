@@ -15,6 +15,10 @@ Multi-source web research with three depth levels using Claude Code's built-in `
 - Fact-checking before making architectural decisions
 </when_to_activate>
 
+<prior_session_input>
+When the user references a prior session, transcript, or "previous research," READ IT FIRST before doing fresh searches. Extract concrete artifacts (predictions, findings, decisions) and use them as inputs — do not redo the work from scratch. Path is usually under `~/.claude/projects/<project>/` as a `.jsonl` file. Check the `subagents/` subdir too. (from session feedback: "did you use the context and preview session that i gave you to compare?")
+</prior_session_input>
+
 <modes>
 
 | Mode | Approach | Best For |
@@ -47,6 +51,14 @@ Multi-source web research with three depth levels using Claude Code's built-in `
 5. Produce structured report: findings, evidence, contradictions, citations.
 6. For very deep research, prefer the `deep-research` slash command which orchestrates a multi-agent harness.
 
+### research mode (calibration variant)
+When the task is a forecast and prior predictions exist:
+1. Extract prior predictions (match-by-match if possible).
+2. Score each against the actual outcome: exact / right-result-wrong-score / wrong.
+3. Identify systematic biases (e.g. "underestimates blowouts", "over-rates favorites").
+4. Re-predict future events with the bias correction explicitly applied.
+Skip step 4's reasoning if the user only wants the delta. (from session feedback: "guss vs actuall -> apply on the future possible?")
+
 </workflow>
 
 <source_quality>
@@ -75,6 +87,7 @@ For version-specific questions, always verify the date — favor results from th
 | No relevant results | Refine query (more specific terms, add domain filter) |
 | Stale information | Add year to query, prefer official changelogs/release notes |
 | Paywall on key source | Search for the same content on the publisher's preview, or accept the limitation and cite the abstract |
+| WebFetch returns empty body or "unable to fetch" | Fall back to the Playwright MCP plugin: `browser_navigate` then `browser_evaluate` to extract the rendered DOM. Common for FIFA.com, BBC, JS-heavy SPAs. (from session feedback: "use playwrute mcp plugine if wesearch does not work") |
 </error_handling>
 
 <success_criteria>

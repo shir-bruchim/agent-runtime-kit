@@ -2,7 +2,6 @@
 name: git-ops
 description: Git operations specialist for committing, pushing, and creating pull requests. Use when asked to commit changes, push to remote, create PRs, or complete the full ship workflow (commit + push + PR).
 tools: Bash, Read, Glob, Grep
-model: sonnet
 ---
 
 <role>

@@ -1,7 +1,6 @@
 ---
 name: generate-prd
 description: Generates Product Requirements Documents for new features through guided discovery. Use when starting a new feature, creating specifications, or when user needs help defining requirements with clarifying questions.
-model: claude-opus-4-7
 context: fork
 ---
 

@@ -2,7 +2,6 @@
 name: refactorer
 description: Code refactoring specialist. Use when cleaning up technical debt, extracting reusable components, improving code organization, removing duplication, or preparing code for new features. Preserves existing behavior while improving structure.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
 ---
 
 <role>

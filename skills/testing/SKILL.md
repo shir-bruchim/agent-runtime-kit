@@ -42,11 +42,13 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 - No fake tests — every assertion must test real behavior (invariants, boundaries, error semantics)
 - Mock ONLY at system boundaries: DB, external HTTP, filesystem, clock. Never mock internal logic
 - **Real objects for domain types** — instantiate real pydantic schemas, ORM rows, internal models with real values. `MagicMock` for a domain object silently accepts any attribute access and lets schema breaks pass — production-only failure mode. Mocks remain ok for system boundaries (DB session, HTTP client, scraper, logger).
-- **Test factories live in conftest** — when a test needs a real model/schema/ORM object, add a `make_*` factory fixture to `tests/conftest.py`, not a private `_make_*` helper inside a single test file. Use via dependency injection: `def test_x(make_thing): ...`. The factory takes `**overrides` so each test can customize.
+- **Test factories live in conftest** — when a test needs a real model/schema/ORM object, add a `make_*` factory fixture to `tests/conftest.py`, not a private `_make_*` helper inside a single test file. Use via dependency injection: `def test_x(make_main_table_client): ...`. The factory takes `**overrides` so each test can customize.
+- **One test file per production module** — mirror the production layout. Prefer `tests/test_<module>.py` covering everything in `app/.../<module>.py` over splitting by concern (e.g. `test_<module>_report.py` + `test_<module>_schedules.py`). Split files drift apart, duplicate helpers, and hide shared fixtures. Consolidate before adding new tests when a module already has multiple test files.
 - **Imports at the top of the file** — never `from foo import Bar` inside a test body.
 - Use existing fixtures from `conftest.py` before creating new ones
 - When fixing failing tests: fix test inputs/data to match real behavior — do not add more mocks
 - Delete flaky tests outright — do not weaken assertions to make them pass
+- **HTTP response tests assert status code AND headers, not just body.** When testing a route, assert `response.status_code` AND any contract-meaningful headers (`X-Cache`, `Retry-After`, `WWW-Authenticate`, content-type, etc.) — not just the body shape. Weak assertions like `status != 200` or `X-Cache != "HIT"` miss real bugs (e.g. a `201` flattened to `200` on cache replay, or a header silently dropped). Pin the exact value.
 
 </pytest_principles>
 

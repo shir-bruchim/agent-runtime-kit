@@ -1,7 +1,6 @@
 ---
 name: ralph-orchestrator
 description: Orchestrates the full Ralph autonomous agent pipeline from requirements gathering to execution. Use when building new features, platforms, or complex tasks that need structured development through spec-interview, PRD generation, and autonomous implementation.
-model: claude-opus-4-7
 ---
 
 <objective>

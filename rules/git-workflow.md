@@ -4,7 +4,7 @@
 
 ```
 main          → Always deployable, protected
-feat/*        → New features
+feature/*     → New features
 fix/*         → Bug fixes
 refactor/*    → Refactoring without behavior changes
 chore/*       → Dependency updates, CI changes

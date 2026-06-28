@@ -2,7 +2,6 @@
 name: tester
 description: Testing specialist for writing and reviewing tests. Use when creating test suites, writing tests for new code, reviewing test quality, setting up test infrastructure, or ensuring adequate coverage.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
 memory: user
 skills:
   - testing

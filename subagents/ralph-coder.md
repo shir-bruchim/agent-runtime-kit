@@ -2,7 +2,6 @@
 name: ralph-coder
 description: Implements code for a single Ralph user story. Writes production code and documentation only — does NOT write tests. Used by ralph-orchestrator as the first phase of story execution.
 tools: Read, Bash, Write, Edit, Grep, Glob
-model: claude-opus-4-7
 ---
 
 <role>

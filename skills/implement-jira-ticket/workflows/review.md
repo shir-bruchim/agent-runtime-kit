@@ -26,12 +26,37 @@ Read through every file you changed:
 - [ ] No dead code paths
 - [ ] Error handling is consistent with existing patterns
 - [ ] Comments explain WHY, not WHAT
+- [ ] Every new CRUD method logs the compiled SQL at DEBUG (`literal_binds=True`)
 
 **Architecture checks:**
 - [ ] Single responsibility: each DB repository handles exactly one table
 - [ ] No cross-table logic in a repository that belongs in the service/logic layer
-- [ ] Existing naming conventions followed exactly
+- [ ] Existing naming conventions followed exactly — no redundant qualifiers in already-context-scoped modules, no ticket-only descriptors in code
 - [ ] No feature flags or backwards-compatibility hacks unless the ticket requires them
+- [ ] Customer/tenant scoping enforced server-side in repos (IDOR guard)
+- [ ] Pagination/filter resolution extracted into reusable helper (when adding search endpoints)
+- [ ] Single middleware per concern — no duplicate context-setting / logging middlewares
+- [ ] Skip-path lists are module-level constants reused everywhere
+
+**Configuration checks:**
+- [ ] Every new env var lives in `app/core/config.py` `Settings` in UPPER_SNAKE_CASE
+- [ ] Test env vars are in `pytest.ini` (NOT in test files)
+- [ ] `testpaths = ./tests` (folder, not enumerated files)
+- [ ] Multi-DB libraries use `client_name`, not manual env-var mirroring
+
+**Integration infrastructure checks (if API changed):**
+- [ ] New compose service added if a new DB is involved
+- [ ] Env vars wired on BOTH `web` and `test` services
+- [ ] `local_stack/conftest.py` initializes schema (often via a schema package)
+- [ ] Seed data lives in a separate `*_fill_tables.sql`, not embedded in conftest
+- [ ] `Dockerfile-test` copies the new test files, conftest, and seed SQL
+- [ ] Docker compose `command:` includes the new test file
+
+**Documentation checks:**
+- [ ] `README.md` updated with new endpoints/env vars
+- [ ] `CLAUDE.md` updated with architecture, env vars, design decisions
+- [ ] `docs/api.md` updated with full request/response contracts
+- [ ] `docs/architecture.md` updated with component layout + middleware stack
 
 ## Step 3: Check for Leftover Artifacts
 

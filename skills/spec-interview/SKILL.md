@@ -1,7 +1,6 @@
 ---
 name: spec-interview
 description: Interviews users to build comprehensive project specifications. Use when starting a new project, feature, or when user needs help defining requirements through guided discovery.
-model: claude-opus-4-7
 context: fork
 ---
 

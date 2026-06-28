@@ -11,6 +11,8 @@ Methodical debugging using scientific method: gather evidence, form hypotheses, 
 VERIFY, DON'T ASSUME. Every hypothesis must be tested. Every fix must be validated. No solutions without evidence.
 
 Code you designed or wrote is guilty until proven innocent. Your intent doesn't matter — only the code's actual behavior.
+
+**This rule applies symmetrically to defensive code.** When the user asks "is this even needed?" or "doesn't the library already do that?", run the underlying library/tool with the bad-input case BEFORE explaining why your code defends against it. Often the library already raises the exact exception you're catching — making your validation dead code. Concrete example: redis-py's `RedisCluster(load_balancing_strategy="typo")` accepts the bad string at construction and only raises on first read. A wrapper-level enum lookup that "fails loudly at startup" sounds defensible — until empirical test shows the wrapper isn't actually fast-failing earlier than the library would in practice. Run it before defending it.
 </core_principle>
 
 <context_scan>
@@ -78,6 +80,9 @@ Only after confirming root cause:
 3. COMPLETE READS: Don't skim code. Read entire relevant files.
 4. CHASE DEPENDENCIES: If libraries/configs/external systems are involved, investigate those too
 5. QUESTION PREVIOUS WORK: Maybe the earlier "fix" was wrong. Re-examine with fresh eyes
+6. DON'T RAISE TO ROUTE: If a code path is unsafe in some contexts (wrong thread, missing dep, wrong env), split the call sites so the unsafe path is unreachable — don't `raise` and lean on a framework retry / failure-list to recover. Raise-as-control-flow is a band-aid: it leaks resources, hides intent, and couples your fix to framework internals. The correct fix routes at the call site (separate helpers, separate phases, separate executors).
+7. MIRROR CI's ENV BEFORE GREEN: After any dep bump that may drop a transitive (sensi-* version change, redis-py major, etc.), `pip uninstall -y <orphaned-transitive>` (or `pip install -r requirements.txt --force-reinstall` in a fresh venv) BEFORE running pytest. A green local run in a polluted venv that still has the old transitive doesn't prove anything about CI's clean Docker build. The pre-push hook runs against your venv, not the wheel set requirements.txt produces.
+8. CLEAN STATE BEFORE VERIFYING: Tear down stale containers/volumes/networks/locks before re-running any verification. Don't act-then-think. Common contamination sources: prior `docker compose up` left a partially-formed Redis Cluster `nodes.conf`; previous test run's temp files still on disk; observability query window overlapping with the failed run; local branch behind remote. Before ANY re-run, ask "what state would invalidate this result, and have I cleared it?" If unsure, investigate before running. Trust pushback when a result feels off — contamination is often the cause. When a verification "fails" but the harness output looks correct (table printed, artifact written, but the system-under-test returned 500s), distinguish a HARNESS bug from a SYSTEM bug — re-running won't fix the latter.
 </critical_rules>
 
 <output_format>

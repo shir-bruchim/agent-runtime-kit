@@ -3,6 +3,60 @@ name: extend-agent
 description: Create new skills, commands, hooks, or subagents for your AI agent. Use when you need to add new capabilities to Claude Code or Cursor — any type of extension.
 ---
 
+f<freshness_check>
+
+**MANDATORY first step on every invocation.** Claude Code's extension knobs (skill frontmatter fields, subagent options, hook events, the model lineup, slash-command behavior) change frequently. The tables in this SKILL.md are a SNAPSHOT — they go stale. Verify the LIVE docs FIRST, then design.
+
+### Step 1 — Fetch the current docs
+
+Use WebFetch (preferred over delegating to `web-research` subagent, because WebFetch is often restricted in subagent contexts — the parent loop usually has it). Always go to the live URL first; if the doc has moved (HTTP 301), follow the redirect to the new canonical host.
+
+Verified canonical hosts (as of late 2026):
+1. `https://code.claude.com/docs/en/skills` — Skill frontmatter, invocation control, subagent execution, dynamic context injection
+2. `https://code.claude.com/docs/en/sub-agents` — Subagent frontmatter, model defaults, invocation
+3. `https://code.claude.com/docs/en/hooks` — Hook events (30+), handler types, blocking output JSON
+4. `https://code.claude.com/docs/en/slash-commands` — Custom commands (note: commands are now merged into skills)
+5. `https://code.claude.com/docs/en/agent-teams` and `/agent-view` — Cross-session orchestration
+6. `https://code.claude.com/docs/en/context-window` — Compaction + token-cost visualization
+7. `https://docs.anthropic.com/en/docs/claude-code/*` — fallback URL pattern; redirects to `code.claude.com` since the 2026 doc migration.
+8. The repo's own `~/.claude/skills/extend-agent/SKILL.md` snapshot — fallback only when the live docs are unreachable.
+
+If the WebFetch returns "redirect detected," follow the redirect URL once. If both 404, the doc has moved — search `https://www.anthropic.com/news` for the latest Claude Code post.
+
+### Step 2 — Verify the specific knobs your new extension will use
+
+The fields you'd use change quarterly. Always re-confirm:
+
+- **Skill frontmatter fields** (`name`, `description`, `disable-model-invocation`, `user-invocable`, `context: fork`, `allowed-tools`, plus any new fields). Pay attention to context-cost rules (which fields load `description:` into context, which don't).
+- **Subagent frontmatter** (`model`, `tools`, `memory`, `skills`, `maxTurns`, `isolation`). Default model when none is specified.
+- **Model lineup.** What models can be set as `model: ...`? The lineup churns most often. Check anthropic.com/news for the latest.
+- **Hook events** — verify each event you'll subscribe to is still listed; the event roster has grown to ~30. Verify payload shape for the event you use.
+- **Hook handler types** — `command` / `http` / `mcp_tool` / `prompt` / `agent` (experimental) — verify the type you want exists.
+- **Recommended size caps** — current docs suggest SKILL.md `description:` ≤200 chars; progressive disclosure to `references/` for detail.
+
+### Step 3 — Surface what's NEW since the local snapshot
+
+After verifying knobs the new extension needs, do a second pass: scan the live doc for capabilities NOT YET reflected in this SKILL.md, related skills, or the user's `~/.claude/agents/` / `~/.claude/skills/` configs. Report any "new since snapshot" features as recommendations the user might want to adopt — even if not directly relevant to the current extension. Examples to look for each run:
+
+- New hook events (the `PostToolBatch`, `TaskCreated`, `PostCompact` series didn't exist in the snapshot).
+- New handler types (`prompt`, `agent` hook types — verify which experimental flags are needed).
+- New invocation modes (subagent skills, dynamic context injection, agent teams, background agents).
+- New frontmatter fields (e.g., `metadata.allowed-tools` arrived in the AgentSkills standard).
+- Model-lineup changes (a new haiku tier, opus pricing changes).
+- Doc reorganization (URL migrations, merged docs).
+
+For each gap, report: feature name, doc URL, one-line value-prop, and whether it's worth adopting now or filing as a follow-up. The user decides. The skill author surfaces.
+
+### Step 4 — If a live doc contradicts this SKILL.md, fix the SKILL.md AFTER the user's request lands
+
+Treat the live doc as authoritative. The snapshot is hand-off context, not source of truth. Open a follow-up note (memory or a comment in the SKILL.md) so the next `/strategic-compact` run catches the drift.
+
+### Token budget for the freshness check
+
+3-4 WebFetch calls (~10-30k tokens depending on doc size — they're large pages). It pays for itself by preventing a session-long detour fixing a wrong field name or recommending a removed feature.
+
+</freshness_check>
+
 <essential_principles>
 
 ## Types of Agent Extensions
@@ -259,7 +313,7 @@ See `skills/security/hooks/` for working hook script examples.
 - Invoked automatically (Claude matches `description` field) or explicitly via the Task tool
 - Project subagents (`.claude/agents/`) override user subagents (`~/.claude/agents/`) on name conflict
 - `memory: user` enables persistent learning at `~/.claude/agent-memory/<name>/`
-- `skills:` preloading injects full skill content at startup (no need for inline "read SKILL.md")
+- `skills:` preloading injects full skill content at startup (no need for inline "read skills/X/SKILL.md")
 - For multi-stage orchestration: use the planning skill + Task tool, not a single subagent
 
 **When to use subagents proactively:**
