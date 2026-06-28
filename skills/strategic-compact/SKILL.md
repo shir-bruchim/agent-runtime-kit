@@ -23,7 +23,7 @@ The skill is `disable-model-invocation: true` — zero context cost until the us
 Run at invocation. Output replaces these lines before Claude sees the body.
 
 Skills on disk:
-!`ls ~/.claude/skills/ 2>/dev/null | grep -v "^plugin_" | sort`
+!`ls -1 ~/.claude/skills/ 2>/dev/null`
 
 Today:
 !`date -u +%Y-%m-%dT%H:%M:%SZ`
