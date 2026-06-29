@@ -10,7 +10,7 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 <essential_principles>
 
 **Test Independence**
-- Each test must run in isolation — no shared mutable state
+- Each test must run in isolation — no shared mutable state. Module-level mutable collections (a top-of-file `all_devices = {}` that every test mutates) cause failure cascades: when test K's server-side mutation fails but the local-dict update succeeds, every subsequent test that reads the dict asserts against the wrong expected value, fails with a cryptic mismatch, and masks the root-cause failure (one bug presents as N failures). Use fixture-scoped containers per test, OR a `setup_function` that resets the module-level state before each test. When fixing a flaky test suite, look for module-level dicts/lists FIRST — they're the most common cause of order-dependent failures.
 - Tests must pass in any execution order
 - Use setup/teardown (fixtures) not class-level state
 
@@ -49,6 +49,7 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 - When fixing failing tests: fix test inputs/data to match real behavior — do not add more mocks
 - Delete flaky tests outright — do not weaken assertions to make them pass
 - **HTTP response tests assert status code AND headers, not just body.** When testing a route, assert `response.status_code` AND any contract-meaningful headers (`X-Cache`, `Retry-After`, `WWW-Authenticate`, content-type, etc.) — not just the body shape. Weak assertions like `status != 200` or `X-Cache != "HIT"` miss real bugs (e.g. a `201` flattened to `200` on cache replay, or a header silently dropped). Pin the exact value.
+- **Don't hardcode enum/constant copies in fixtures.** When a fixture needs an enum value (status, role, type code), import it from the schema/model module, OR add a one-line **equality** assertion (`assert set(FIXTURE_STATUSES) == {s.value for s in StatusEnum}`) that fails when the schema drifts EITHER WAY. A subset assertion (`<=`) only catches harness-has-invalid-value drift; it silently passes when the schema adds a value the harness doesn't cover (verified: a schema added `UNPLUGGED=13`, the harness still had `[1..12]`, every subset test stayed green, the harness silently stopped covering one production state). A standalone list of "looks right" values is a silent contract test for a contract that doesn't exist — and pydantic / DB constraints will reject the drift in production while every unit test passes.
 
 </pytest_principles>
 

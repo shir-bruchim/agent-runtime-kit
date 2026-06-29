@@ -172,6 +172,7 @@ The "I'll let pr-review catch it" loop is avoidable churn.
 10. **Reuse.** Is there an existing helper that does this? Check the project, the framework, the stdlib BEFORE writing a new one.
 11. **Project-specific lens pass.** Apply the `<project_specific_lens>` block below to your own diff.
 12. **Senior-reviewer mental check.** If you imagine a senior reviewer reading this, what's the first thing they'd flag? Fix it now.
+13. **Grep sibling call sites of the primitive you just fixed.** When the fix is a pattern (replacing `scalar_one_or_none()` with `.first()`, removing a swallowed `except:`, adding a `customer_id` filter, swapping `.isdigit()` for `.isdecimal()`), the file usually has 2-3 mirror copies of the same broken code. Run `grep -n <primitive> <file>` (or `rg <primitive> app/<module>/`) before declaring done — the same primitive misused once is almost always misused 2-3 times. A pattern fix that ships with only one site updated leaks the regression to the next reviewer pass; calling sites of a bug class are siblings, not strangers.
 </self_review_first>
 
 <duplication_classification>

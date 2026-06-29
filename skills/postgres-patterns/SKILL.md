@@ -74,6 +74,10 @@ WHERE c.contype = 'f' AND NOT EXISTS (
 -- Unused indexes
 SELECT indexrelname, idx_scan FROM pg_stat_user_indexes WHERE idx_scan = 0;
 ```
+
+### ORM query-API selection
+
+- **Match query API to data invariant, not method ergonomics.** "Exactly one" APIs (SQLAlchemy 2.x `scalar_one_or_none`, EF Core `Single()`, Django `.get()`) raise when the result set has 2+ rows — that's correct when uniqueness is enforced at the schema, and the wrong behavior when duplicates are valid data the caller wants any-one-of. Use `.first()` / `LIMIT 1` / `FirstOrDefault()` for the latter. If you're unsure whether duplicates are possible, the schema is your source of truth — check the unique constraints before picking the API. A test against a real DB with duplicates (or a mocked Result that simulates them) catches the wrong choice cheaply.
 </anti_patterns>
 
 <performance>

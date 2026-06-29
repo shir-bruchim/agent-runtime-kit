@@ -54,6 +54,12 @@ jobs:
       - run: ./scripts/deploy.sh
       - run: curl -f https://myapp.com/health || exit 1
 ```
+
+### CI/CD anti-patterns to catch in review
+
+- **Don't pass secrets across job boundaries.** CI systems strip masked values when they cross jobs (GitHub Actions logs `Skip output '<X>' since it may contain secret` and the downstream job receives an empty string with no error). Resolve the secret inside the job that uses it, even if that duplicates a setup step. Cross-job outputs are fine for non-sensitive values only.
+- **Pick the runner that can actually reach the target.** Before writing CI tests against a deployed service, check whether the service has a public ingress. If it doesn't, the runner must live inside the same network (self-hosted, in-cluster, VPC-attached) — the default cloud-vendor runner can't resolve cluster-internal DNS. Don't add a public route just to make CI reachable; move CI to the network instead.
+- **Confirm the deployed image SHA before drawing conclusions from a post-deploy test.** When a workflow runs a load test, perf benchmark, or smoke test after a deploy job in the same pipeline, the deploy rollout may still be in progress when the test starts. The test then runs against the previous image while the artifact is labeled "post-merge" — false confidence that the change had no effect. Before any post-deploy assertion, confirm the rollout is complete: `kubectl rollout status deploy/<name> --timeout=5m`, OR assert that the deployed image tag matches the head SHA (`kubectl get deploy <name> -o jsonpath='{.spec.template.spec.containers[0].image}'`), OR pull the running image from observability (Groundcover/Datadog/k8s API) and assert it matches. Either gate the test on rollout-status or fail the test if the image SHA doesn't match. Skipping the confirmation collapses half the test's value into a meaningless number.
 </github_actions>
 
 <health_checks>
