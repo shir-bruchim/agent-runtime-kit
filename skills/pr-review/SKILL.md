@@ -154,7 +154,7 @@ Before presenting any non-trivial change as "complete", run the project-specific
 
 **Verify reviewer suggestions at the cited lines, don't reason from memory.** Before agreeing OR disagreeing with any reviewer suggestion (Baz, Copilot, human), open the file at the cited lines and read the actual code. For dependency / cross-repo claims, also `grep -rEn '...' ~/PycharmProjects/` neighboring repos — the bot's named file may not be the only relevant one. "Probably looks like X" reasoning produces both false confirmations (apply a fix that wasn't needed) and false denials (dismiss a real bug because the imagined code looked fine).
 
-**Reproduce CI checks locally on CI's runtime version before declaring ready.** Read `.github/workflows/*.yml` for the runtime version (`python-version: 3.11`, etc.) and the install footprint (`requirements.txt`? `tests/requirements.txt`? extras?). Match all of it locally — don't trust the IDE's long-lived venv. Run every CI step (lint + tests + build), not just the one wired in the IDE. The "CI tells me what flake8 could've told me 30s earlier" loop is avoidable.
+**Reproduce CI checks locally on CI's runtime version before declaring ready.** Read `.github/workflows/*.yml` for the runtime version (`python-version: 3.11`, etc.) and the install footprint (`requirements.txt`? `tests/requirements.txt`? extras?). Match all of it locally — don't trust the IDE's long-lived venv. Run every CI step (lint + tests + build), not just the one wired in the IDE. **When CI is delegated to a reusable workflow you don't own** (`uses: <org>/<repo>/.github/workflows/X.yml@<ref>`), the upstream's hard-coded paths/filenames are part of the contract — read the upstream once before renaming or splitting any file it consumes. A locally sensible rename of `tests/requirements.txt` or `pytest.ini` will fail CI in a way that looks unrelated to the rename. The "CI tells me what flake8 could've told me 30s earlier" loop is avoidable.
 
 The "I'll let pr-review catch it" loop is avoidable churn.
 
@@ -168,11 +168,12 @@ The "I'll let pr-review catch it" loop is avoidable churn.
 6. **Try/except.** Catching `Exception:` or bare `except:` → narrow it. Swallowing without logging → don't.
 7. **Comments.** Restates the code? Delete. Explains WHY a non-obvious choice? Keep.
 8. **Tests.** Every public function covered? Edge cases? Empty inputs? Boundary conditions?
-9. **Types.** Public function signatures fully typed? Optional return type pinned?
+9. **Types.** Public function signatures fully typed? Optional return type pinned? Conversely — type aliases earn their weight only when they make a recurring shape readable. A one-use `TypeAlias` over a nested `Callable[..., Callable[..., Awaitable[Any]]]` is harder to parse than the inline annotation it replaces; collapse it to the simpler form (`Optional[Callable]`) unless the precise generic fixes a real ambiguity or reduces duplication.
 10. **Reuse.** Is there an existing helper that does this? Check the project, the framework, the stdlib BEFORE writing a new one.
 11. **Project-specific lens pass.** Apply the `<project_specific_lens>` block below to your own diff.
 12. **Senior-reviewer mental check.** If you imagine a senior reviewer reading this, what's the first thing they'd flag? Fix it now.
 13. **Grep sibling call sites of the primitive you just fixed.** When the fix is a pattern (replacing `scalar_one_or_none()` with `.first()`, removing a swallowed `except:`, adding a `customer_id` filter, swapping `.isdigit()` for `.isdecimal()`), the file usually has 2-3 mirror copies of the same broken code. Run `grep -n <primitive> <file>` (or `rg <primitive> app/<module>/`) before declaring done — the same primitive misused once is almost always misused 2-3 times. A pattern fix that ships with only one site updated leaks the regression to the next reviewer pass; calling sites of a bug class are siblings, not strangers.
+14. **Paired-method symmetry.** If the class exposes paired/parallel methods (`publish` + `publish_batch`, `get` + `list`, `sync` + `async`), check that retries, logging, auth, and metrics apply to BOTH or NEITHER. Asymmetric cross-cutting concerns leak through the un-wrapped path in production — fix the symmetry before declaring done.
 </self_review_first>
 
 <duplication_classification>

@@ -21,17 +21,18 @@ The main loop will:
 
 Run BEFORE step 1. Same pattern as `~/.claude/skills/extend-agent/SKILL.md` `<freshness_check>`.
 
-1. WebFetch `https://code.claude.com/docs/en/skills` to confirm the frontmatter fields snapshot in `references/claude-code-best-practices.md` is still current.
-2. If a candidate touches hooks/subagents: WebFetch the matching doc.
-3. If the live doc contradicts the local snapshot, note it in the session output — fix the snapshot AFTER the user's promotion decisions land.
+1. WebFetch `https://code.claude.com/docs/en/features-overview` FIRST — this is the canonical map of every Claude Code extension type (skills, subagents, hooks, commands, MCP, plugins, agent teams, artifacts, code intelligence, CLAUDE.md/rules). It tells you what categories the audit must cover.
+2. WebFetch `https://code.claude.com/docs/en/skills` to confirm the frontmatter fields snapshot in `references/claude-code-best-practices.md` is still current.
+3. If a candidate touches hooks/subagents/MCP/plugins/agent-teams: WebFetch the matching `/en/<topic>` doc.
+4. If any live doc contradicts the local snapshot, note it in the session output — fix the snapshot AFTER the user's promotion decisions land.
 
-Token budget: ~10-30k. It prevents promoting against a stale doc.
+Token budget: ~15-40k (1-4 WebFetch calls). It prevents promoting against a stale doc AND prevents the SCAN from ignoring an extension category that's grown since the last run.
 
-## Step 1 — Inventory skill universe AND session usage
+## Step 1 — Inventory the FULL extension universe AND session usage
 
-Two scans, both required. They feed different parts of the analysis.
+The audit covers EVERY Claude extension type from `/en/features-overview`, not just skills. This is what makes Gate 4 (sub-brain placement) accurate — without it, every rule looks like a skill rule by default.
 
-(a) **Full universe.** SKILL.md uses dynamic context injection to inline the list (`!`ls ~/.claude/skills/``); when running this workflow in a fresh fork without that injection, run:
+(a) **Skills universe.** SKILL.md uses dynamic context injection to inline the list (`!`ls ~/.claude/skills/``); when running this workflow in a fresh fork without that injection, run:
 ```bash
 ls ~/.claude/skills/
 ```
@@ -45,6 +46,71 @@ Skip plugin skills (read-only) and built-in commands (`/init`, `/commit`, `/push
 - Skills auto-invoked by Claude in response to a user request
 
 Output: `SKILLS_USED = [{name, count}, ...]` sorted by count descending.
+
+## Step 1d — Subagents universe
+
+```bash
+ls ~/.claude/agents/
+```
+
+For each subagent file, Read its frontmatter and capture: `name`, `description`, `model`, `tools`, `skills:` preload list, `memory`, `maxTurns`, `isolation`. Output: `ALL_SUBAGENTS = [{name, model, skills, ...}, ...]`.
+
+Also count subagent invocations in the visible conversation (look for `Agent` tool calls with `subagent_type=<name>`). Output: `SUBAGENTS_USED = [{name, count}, ...]`.
+
+## Step 1e — Hooks universe
+
+```bash
+ls ~/.claude/hooks/ 2>/dev/null
+grep -A1 '"hooks"' ~/.claude/settings.json 2>/dev/null | head -80
+```
+
+For each hook entry in settings.json, capture: event (`PreToolUse`, `PostToolUse`, `SessionStart`, etc.), matcher, type (`command`/`http`/`prompt`/`agent`/`mcp_tool`), command path or prompt body. Output: `ALL_HOOKS = [{event, matcher, type, target}, ...]`.
+
+Cross-reference each `type: command` hook's `command:` field against `ls ~/.claude/hooks/` — flag missing scripts. Cross-reference each event against the current hook-event roster in `references/claude-code-best-practices.md` drift-watch — flag deprecated events.
+
+## Step 1f — Commands universe
+
+```bash
+ls ~/.claude/commands/ 2>/dev/null
+```
+
+Commands and skills both produce `/<name>` invocations. Per `/en/features-overview`, the skill form is preferred for new extensions (richer features: subdirs, dynamic context injection, fork mode, allowed-tools). Output: `ALL_COMMANDS = [{name, has_skill_equivalent}, ...]`.
+
+For each command, check if a skill of the same name exists. Flag any command that:
+- Duplicates a skill (one should be deleted).
+- Has grown beyond ~30 lines (candidate for promotion to skill form with `workflows/` subdir).
+
+## Step 1g — Rules + CLAUDE.md universe
+
+```bash
+ls ~/.claude/rules/ 2>/dev/null
+wc -l ~/.claude/CLAUDE.md 2>/dev/null
+```
+
+Read each rule file's frontmatter (capture `paths:`/`description:`). Read `~/.claude/CLAUDE.md` length — flag if over 200 lines (per `/en/memory` guidance, move reference content to skills/rules).
+
+For project CLAUDE.md (current working directory), also capture and compare against `~/.claude/CLAUDE.md` for duplicated rules.
+
+Output: `ALL_RULES = [{path, paths_glob, length}, ...]`.
+
+## Step 1h — MCP servers universe
+
+```bash
+grep -A1 '"mcpServers"' ~/.claude/settings.json 2>/dev/null
+```
+
+Capture configured server names. Per `/en/mcp`, idle MCP tools cost minimal context (tool names only; full schemas load on demand). Still worth flagging unused servers.
+
+Output: `ALL_MCP = [{name, transport}, ...]`. Optionally prompt the user to paste `/mcp` output if the SCAN can't introspect connection status (forked subagents can't run slash commands).
+
+## Step 1i — Plugins + marketplaces universe
+
+```bash
+grep -A1 '"plugins"\|"marketplaces"' ~/.claude/settings.json 2>/dev/null
+ls ~/.claude/plugins/ 2>/dev/null
+```
+
+Per `/en/plugins`, plugins bundle skills/hooks/subagents/MCP into installable units. If multiple repos need the same kit, recommend packaging as a plugin. Output: `ALL_PLUGINS = [{name, source}, ...]`.
 
 ## Step 1b — Detect repeat-use as under-specification signal
 
@@ -86,31 +152,50 @@ Combine `SESSION_FEEDBACK + MEMORY_FEEDBACK`. If a session rule restates a memor
 
 Also drop anything already on the "Don't re-promote" list in `MEMORY.md` (the index marks promoted entries with ✅ PROMOTED).
 
-## Step 5 — List candidate skills
+## Step 5 — List candidate destinations (skill, subagent, hook, rule)
 
-`CANDIDATE_SKILLS = SKILLS_USED ∪ {natural-home skills for any feedback that didn't fire this session}`. Skills used this session are first-class targets; other user skills only candidates if a feedback rule clearly maps to them.
+`CANDIDATE_DESTINATIONS = (SKILLS_USED ∪ SUBAGENTS_USED ∪ ALL_HOOKS ∪ ALL_RULES)` filtered to entries where at least one feedback rule maps to them. Per Gate 4, a rule belongs in the right TYPE of extension — don't auto-default to a skill.
 
-## Step 6 — Match feedback → skill (many-to-many)
+## Step 6 — Match feedback → extension (many-to-many across all 4 types)
 
-For each rule in `ALL_FEEDBACK`, decide which skill(s) in `CANDIDATE_SKILLS` are the natural home. A single rule can land in multiple skills. Heuristics:
+For each rule in `ALL_FEEDBACK`, decide which extension(s) in `CANDIDATE_DESTINATIONS` are the natural home. A single rule can land in multiple targets. Heuristics:
 
-- Test conventions → `testing`, `implement-jira-ticket`, `tdd-guide`
-- Code-review judgement → `pr-review`, `code-review`
-- Self-review before presenting → `pr-review`, `implement-jira-ticket`
-- Git commit / PR description conventions → `git`, `pr-review`, `commit`, `pr`
-- Naming, layer separation, package-reuse → typically already in `pr-review` lens
+- Test conventions → skill: `testing`, `implement-jira-ticket`, `tdd-guide`
+- Code-review judgement → skill: `pr-review`, `code-review`
+- Self-review before presenting → skill: `pr-review`, `implement-jira-ticket`
+- Git commit / PR description conventions → skill: `git`, `pr-review`, `commit`, `pr`
+- Naming, layer separation, package-reuse → typically already in `pr-review` skill lens
+- Always-on convention ("never commit `.env`") → rule: `~/.claude/CLAUDE.md` or `~/.claude/rules/<topic>.md`
+- Pre/post-tool safety check ("block `rm -rf /`") → hook: `~/.claude/settings.json` `PreToolUse` entry
+- Specialist agent knowledge ("the testing agent must know X") → subagent: edit `~/.claude/agents/<name>.md` body OR add to `skills:` preload list
 - Workflow ordering (project-specific) — leave in project memory
 
-If a feedback rule has no natural skill home, leave it in memory; do NOT create a new skill from a single rule.
+If a feedback rule has no natural extension home, leave it in memory; do NOT create a new skill from a single rule.
 
-Output: `EDITS = [{skill_path, rule, why, source, location_hint}, ...]`. Sort by `usage_count(skill)` descending.
+Output: `EDITS = [{target_path, target_type, rule, why, source, location_hint}, ...]` where `target_type ∈ {skill, subagent, hook, rule, memory}`. Sort by `usage_count(target)` descending.
 
 ## Step 7 — Build a diff per candidate
 
-For each entry in `EDITS`, Read the target SKILL.md and craft a minimal Edit:
+For each entry in `EDITS`, Read the target file and craft a minimal Edit based on `target_type`:
+
+**target_type = skill**
 - Existing `<best_practices>` block — append a new bullet
 - Existing `<when_to_activate>` block — extend triggers
 - New `<lessons_learned>` or `<rules>` block at the bottom — only if no natural section exists
+
+**target_type = subagent** (`~/.claude/agents/<name>.md`)
+- Body has a `<review_checklist>` / `<conventions>` / `<best_practices>` block — append a bullet
+- Or add the rule to the agent's `skills:` preload list (cleaner than restating in the body)
+
+**target_type = hook** (`~/.claude/settings.json`)
+- New entry in the appropriate `hooks.<event>` array
+- For `command` type: path to a script in `~/.claude/hooks/`
+- For `prompt` type: inline LLM-evaluated prompt (use when reasoning is needed)
+
+**target_type = rule** (`~/.claude/CLAUDE.md` or `~/.claude/rules/<topic>.md`)
+- Existing section — append a bullet
+- New rule file — only if no existing rule file covers the topic
+- Add `paths:` frontmatter if the rule is path-scoped (saves context)
 
 Bullet format:
 ```
@@ -141,12 +226,17 @@ Format:
 # Strategic-compact candidates — <timestamp>
 
 ## Self-healing recommendations
-- (informational; not approval-prompted)
+- (informational; not approval-prompted; covers skills, subagents, hooks, rules, MCP, plugins)
+- ...
+
+## Drift-watch (new features since last snapshot)
+- (informational; surfaces capabilities from /en/features-overview not yet adopted locally)
+- Example: "Agent teams (/en/agent-teams) — recommend adopting for parallel review workflows"
 - ...
 
 ## Promotion candidates
 
-[1/N] <skill>/SKILL.md  (used N× this session, gates: all passed)
+[1/N] <target_type>: <target_path>  (used N× this session, gates: all passed)
       Rule: <imperative-voice rule>
       Why:  <one-line reason>
       Source: <session feedback "..." | memory: feedback_X.md>
@@ -156,6 +246,8 @@ Format:
 
 [2/N] ...
 ```
+
+The `target_type` prefix (skill / subagent / hook / rule) tells the APPLY phase which file family to edit and which validation to run.
 
 The main-loop phase reads this, prompts per-candidate, and routes approvals to `workflows/apply-edits.md`.
 

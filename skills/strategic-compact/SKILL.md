@@ -25,6 +25,21 @@ Run at invocation. Output replaces these lines before Claude sees the body.
 Skills on disk:
 !`ls -1 ~/.claude/skills/ 2>/dev/null`
 
+Subagents on disk:
+!`ls -1 ~/.claude/agents/ 2>/dev/null`
+
+Commands on disk:
+!`ls -1 ~/.claude/commands/ 2>/dev/null`
+
+Rules on disk:
+!`ls -1 ~/.claude/rules/ 2>/dev/null`
+
+Hook scripts on disk:
+!`ls -1 ~/.claude/hooks/ 2>/dev/null`
+
+Hooks + MCP + plugins configured in settings.json:
+!`grep -E '"(hooks|mcpServers|plugins|marketplaces|skillOverrides|skillListingBudgetFraction)"' ~/.claude/settings.json 2>/dev/null | head -40`
+
 Today:
 !`date -u +%Y-%m-%dT%H:%M:%SZ`
 </universe>
@@ -32,7 +47,7 @@ Today:
 <architecture>
 The work splits into two phases that have DIFFERENT context requirements:
 
-- **SCAN phase** is a heavy file-read sweep (universe, memory, session feedback, target SKILL.md contents). Delegate to a subagent so the main loop's context stays small.
+- **SCAN phase** is a heavy file-read sweep across ALL Claude-extension types (skills, subagents, hooks, commands, rules, MCP, plugins — see `features-overview` doc). Per `references/claude-code-best-practices.md`, the audit must cover the full extension surface, not just skills. Delegate to a subagent so the main loop's context stays small.
 - **APPLY phase** needs per-candidate `AskUserQuestion` prompts. Forked subagents CANNOT call `AskUserQuestion`. APPLY runs in the main loop.
 
 This skill does NOT use `context: fork` in frontmatter (that would forbid `AskUserQuestion` across the whole run). Instead the body spawns a subagent for SCAN only, then continues in main-loop context for APPLY.
