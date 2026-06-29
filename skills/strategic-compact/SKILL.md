@@ -7,7 +7,7 @@ when_to_use: |
   (PR merged, tests green, plan done) AND main-loop context is >50% full. Runs the
   skill-self-improvement pass against accumulated feedback memory before recommending.
 disable-model-invocation: true
-allowed-tools: Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(find:*), Bash(date:*), Bash(mkdir:*), Read, Write, Edit, WebFetch
+allowed-tools: Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(find:*), Bash(date:*), Bash(mkdir:*), Bash(bash ~/.claude/skills/strategic-compact/scripts/*), Read, Write, Edit, WebFetch
 ---
 
 <objective>
@@ -90,6 +90,19 @@ If the SCAN phase returns an empty candidate list AND the self-healing sweep fou
 | `references/self-healing-checks.md` | During SCAN step 1c (early) and APPLY late-sweep |
 | `references/claude-code-best-practices.md` | Pre-SCAN freshness check + drift-watch surfacing |
 </references_index>
+
+<scripts_index>
+The SCAN agent runs these EVERY invocation. Each replaces a multi-step inline bash block in the workflow doc — one tool call instead of six. Both emit `=== SECTION ===` prefixes for cheap parsing.
+
+| Script | Replaces | Run during |
+|--------|----------|------------|
+| `scripts/scan-inventory.sh` | Steps 1, 1d, 1e, 1f, 1g, 1h, 1i (extension-universe dump) | Step 1 of SCAN |
+| `scripts/self-healing-sweep.sh` | Checks 1, 2, 4, 7 from `references/self-healing-checks.md` (mechanical-only) | Step 1c of SCAN |
+
+`scan-inventory.sh` is also redundant when the SKILL.md `<universe>` block's dynamic context injection already ran — skip it in that case. Useful for fresh-fork invocations.
+
+`self-healing-sweep.sh` honors `SCAN_STRICT_XREF=1` to disable the known-optional-path filter (debugging only). Honors `MEMORY_DIR=<path>` to override project-memory auto-detection.
+</scripts_index>
 
 <success_criteria>
 - [ ] SCAN delegated to a subagent — main-loop context stayed small.

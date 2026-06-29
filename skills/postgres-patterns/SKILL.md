@@ -78,6 +78,14 @@ SELECT indexrelname, idx_scan FROM pg_stat_user_indexes WHERE idx_scan = 0;
 ### ORM query-API selection
 
 - **Match query API to data invariant, not method ergonomics.** "Exactly one" APIs (SQLAlchemy 2.x `scalar_one_or_none`, EF Core `Single()`, Django `.get()`) raise when the result set has 2+ rows — that's correct when uniqueness is enforced at the schema, and the wrong behavior when duplicates are valid data the caller wants any-one-of. Use `.first()` / `LIMIT 1` / `FirstOrDefault()` for the latter. If you're unsure whether duplicates are possible, the schema is your source of truth — check the unique constraints before picking the API. A test against a real DB with duplicates (or a mocked Result that simulates them) catches the wrong choice cheaply.
+
+### ORM-vs-prod-DDL drift
+
+- **The prod DDL is the source of truth; the ORM file is a projection.** When they diverge, the ORM is wrong. Two common drifts that ship silently:
+  - **Missing columns.** The ORM doesn't map `tagging_bookmark TIMESTAMP` that exists in prod → inserts/updates silently drop the value (the column is `None`-defaulted client-side, the DB stores NULL or the column's server default). Reads via `Model.dict()` omit the column entirely. The failure mode is silent data loss until a downstream consumer notices a NULL where they expected a value.
+  - **Missing `nullable=False` on prod NOT NULL columns.** SQLAlchemy emits CREATE TABLE with NULL-permitting columns for the local test stack, so locally the service can write `NULL` and the test stack accepts it. In prod the same write blows up with `IntegrityError: null value in column "X" violates not-null constraint`. Local tests stayed green; prod broke.
+- **Detect by comparing prod DDL to the ORM file column-by-column.** When a column list is handed to you, check name, type, nullability, default. Missing columns get added (`Column(<type>, ...)`); prod NOT NULL columns need `nullable=False` to make the local stack's CREATE TABLE match prod's invariant.
+- **Schemas don't need to expose every column.** If `tagging_bookmark` exists in prod but no API touches it, the ORM still maps it (so reads round-trip and inserts don't drop it), but Pydantic schemas can omit it — silent column drops are different from intentional schema exclusion.
 </anti_patterns>
 
 <performance>

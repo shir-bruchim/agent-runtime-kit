@@ -32,6 +32,8 @@ description: Implements Jira tickets end-to-end with git setup, planning, coding
 Provide a Jira ticket ID (e.g., `PBAT-123`) or paste the ticket details directly.
 
 **Wait for ticket ID before proceeding.**
+
+**Before filing a new ticket under an epic, grep the epic for already-shipped work that matches the description.** When the user says "create a ticket under epic X to do Y", run `searchJiraIssuesUsingJql` with the epic key + a labels/summary filter (`parent = X AND (text ~ "Y" OR labels in ("Y-keyword"))`) and read the matches. If something is already Closed/Done with overlapping scope, surface it BEFORE creating — offer to (a) add a comment to that ticket, (b) re-open it, or (c) create the new one anyway with a clear delta. Recurring failure mode: confidently filing PBAT-NNN-duplicate under the same epic where the work has already shipped; the user pays the cost of catching it. The grep is two tool calls; the duplicate is wasted reviewer attention and a cancelled-ticket trail. Same rule for incident response: if the user asks for a fix ticket, scan the epic's recent Closed work first — the "fix" may already exist and the right action is a comment explaining why it didn't close the incident.
 </intake>
 
 <routing>

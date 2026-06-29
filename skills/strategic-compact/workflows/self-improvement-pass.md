@@ -32,85 +32,35 @@ Token budget: ~15-40k (1-4 WebFetch calls). It prevents promoting against a stal
 
 The audit covers EVERY Claude extension type from `/en/features-overview`, not just skills. This is what makes Gate 4 (sub-brain placement) accurate — without it, every rule looks like a skill rule by default.
 
-(a) **Skills universe.** SKILL.md uses dynamic context injection to inline the list (`!`ls ~/.claude/skills/``); when running this workflow in a fresh fork without that injection, run:
-```bash
-ls ~/.claude/skills/
-```
-Skip plugin skills (read-only) and built-in commands (`/init`, `/commit`, `/push`, `/review`). Output: `ALL_SKILLS = [...]`.
+**Run the inventory script** — one call, structured output covering all extension types:
 
-(b) **Session usage.** Walk the visible conversation top-to-bottom and count skill invocations. Look for:
+```bash
+bash ~/.claude/skills/strategic-compact/scripts/scan-inventory.sh
+```
+
+This emits sections (each prefixed with `=== NAME ===`) for: SKILLS, SUBAGENTS, COMMANDS, RULES (with line counts), CLAUDE_MD (present/absent + line count), HOOK_SCRIPTS, HOOKS_CONFIG (parsed from settings.json: event / matcher / type / target / if-condition), MCP, PLUGINS, SKILL_LENGTHS, TIMESTAMP_UTC. Parse the sections you need; you do NOT need to re-run any of the underlying `ls` / `grep` / `python3` commands.
+
+If the SKILL.md `<universe>` block already inlined these via dynamic context injection, you can SKIP the script call — the inventory is already in your context. The script exists for fresh-fork invocations where that injection didn't run.
+
+**Session usage** (still requires walking the visible conversation — no script can read your context). Count:
 - `<command-name>` tags (e.g., `<command-name>/pr-review</command-name>`)
 - `<command-message>` tags
 - Direct `Skill` tool calls
 - Slash-commands typed in user messages (`/implement-jira-ticket`, `/ship`, `/commit`, `/pr-review`, etc.)
 - Skills auto-invoked by Claude in response to a user request
+- `Agent` tool calls — capture `subagent_type=<name>` for subagent usage counts
 
-Output: `SKILLS_USED = [{name, count}, ...]` sorted by count descending.
+Output: `SKILLS_USED = [{name, count}, ...]` and `SUBAGENTS_USED = [{name, count}, ...]` sorted by count descending.
 
-## Step 1d — Subagents universe
+**Frontmatter reads.** For each subagent, Read its frontmatter and capture: `name`, `description`, `model`, `tools`, `skills:` preload list, `memory`, `maxTurns`, `isolation`. For each rule, capture `paths:`/`description:`. The script gave you the file lists; you do the Read passes.
 
-```bash
-ls ~/.claude/agents/
-```
+**Cross-check hook scripts.** The script's HOOKS_CONFIG section lists every configured hook with its target path. Cross-reference each `type: command` target against HOOK_SCRIPTS (which lists what exists on disk). The `self-healing-sweep.sh` script (run in step 1c) does this check automatically with shell-builtin filtering — you don't need to repeat it manually unless you want the data inline now.
 
-For each subagent file, Read its frontmatter and capture: `name`, `description`, `model`, `tools`, `skills:` preload list, `memory`, `maxTurns`, `isolation`. Output: `ALL_SUBAGENTS = [{name, model, skills, ...}, ...]`.
+**Command-vs-skill duplication.** For each command in the COMMANDS section, check if a skill of the same name exists in SKILLS. Flag duplicates (one should be deleted) and commands > ~30 lines (candidates for promotion to skill form with `workflows/` subdir).
 
-Also count subagent invocations in the visible conversation (look for `Agent` tool calls with `subagent_type=<name>`). Output: `SUBAGENTS_USED = [{name, count}, ...]`.
+**CLAUDE_MD section.** If the script reports `ABSENT`, several self-healing checks have nothing to introspect — note this and proceed. If line count exceeds 200, per `/en/memory` move reference content to skills/rules.
 
-## Step 1e — Hooks universe
-
-```bash
-ls ~/.claude/hooks/ 2>/dev/null
-grep -A1 '"hooks"' ~/.claude/settings.json 2>/dev/null | head -80
-```
-
-For each hook entry in settings.json, capture: event (`PreToolUse`, `PostToolUse`, `SessionStart`, etc.), matcher, type (`command`/`http`/`prompt`/`agent`/`mcp_tool`), command path or prompt body. Output: `ALL_HOOKS = [{event, matcher, type, target}, ...]`.
-
-Cross-reference each `type: command` hook's `command:` field against `ls ~/.claude/hooks/` — flag missing scripts. Cross-reference each event against the current hook-event roster in `references/claude-code-best-practices.md` drift-watch — flag deprecated events.
-
-## Step 1f — Commands universe
-
-```bash
-ls ~/.claude/commands/ 2>/dev/null
-```
-
-Commands and skills both produce `/<name>` invocations. Per `/en/features-overview`, the skill form is preferred for new extensions (richer features: subdirs, dynamic context injection, fork mode, allowed-tools). Output: `ALL_COMMANDS = [{name, has_skill_equivalent}, ...]`.
-
-For each command, check if a skill of the same name exists. Flag any command that:
-- Duplicates a skill (one should be deleted).
-- Has grown beyond ~30 lines (candidate for promotion to skill form with `workflows/` subdir).
-
-## Step 1g — Rules + CLAUDE.md universe
-
-```bash
-ls ~/.claude/rules/ 2>/dev/null
-wc -l ~/.claude/CLAUDE.md 2>/dev/null
-```
-
-Read each rule file's frontmatter (capture `paths:`/`description:`). Read `~/.claude/CLAUDE.md` length — flag if over 200 lines (per `/en/memory` guidance, move reference content to skills/rules).
-
-For project CLAUDE.md (current working directory), also capture and compare against `~/.claude/CLAUDE.md` for duplicated rules.
-
-Output: `ALL_RULES = [{path, paths_glob, length}, ...]`.
-
-## Step 1h — MCP servers universe
-
-```bash
-grep -A1 '"mcpServers"' ~/.claude/settings.json 2>/dev/null
-```
-
-Capture configured server names. Per `/en/mcp`, idle MCP tools cost minimal context (tool names only; full schemas load on demand). Still worth flagging unused servers.
-
-Output: `ALL_MCP = [{name, transport}, ...]`. Optionally prompt the user to paste `/mcp` output if the SCAN can't introspect connection status (forked subagents can't run slash commands).
-
-## Step 1i — Plugins + marketplaces universe
-
-```bash
-grep -A1 '"plugins"\|"marketplaces"' ~/.claude/settings.json 2>/dev/null
-ls ~/.claude/plugins/ 2>/dev/null
-```
-
-Per `/en/plugins`, plugins bundle skills/hooks/subagents/MCP into installable units. If multiple repos need the same kit, recommend packaging as a plugin. Output: `ALL_PLUGINS = [{name, source}, ...]`.
+**MCP and plugins.** If the MCP section reports `(none in settings.json — may be configured at plugin/project scope)`, your visible context's tool list is the only authoritative source — prompt the user to paste `/mcp` output if you need connection status (forked subagents can't run slash commands).
 
 ## Step 1b — Detect repeat-use as under-specification signal
 
@@ -125,7 +75,17 @@ For each repeat-used skill, Read its `SKILL.md` and form a hypothesis: *what is 
 
 ## Step 1c — Run self-healing sweep EARLY
 
-Run `references/self-healing-checks.md` BEFORE feedback inventory. If duplicate-drift or cross-reference rot exists, the user needs to see it before picking candidates in step 8 — they might pick differently or skip a duplicate.
+Run the mechanical checks via the script:
+
+```bash
+bash ~/.claude/skills/strategic-compact/scripts/self-healing-sweep.sh
+```
+
+Output covers the four mechanical checks: XREF_ROT (broken `~/.claude/<x>/<y>` links across skills/agents/rules/commands, with known-optional paths filtered — `SCAN_STRICT_XREF=1` to see suppressed entries), STALE_PROMOTIONS (every `feedback-*.md` stub marked promoted, with its skill-pointer resolution status), DESC_LENGTH (SKILL.md descriptions over the 120-char target), HOOK_EXISTENCE (missing hook scripts, with shell-builtin awareness).
+
+The remaining checks from `references/self-healing-checks.md` require LLM reasoning and stay manual: Check 3 (duplication drift — semantic, not lexical), Check 5 (repeat-use signal recurrence — needs the per-run log), Check 6 (subagent freshness — frontmatter judgment), Check 8 (rule duplication across CLAUDE.md / rules / skills — semantic), Check 9 (MCP server health — needs user-pasted `/mcp` output), Check 10 (plugin / marketplace cohesion). Read `references/self-healing-checks.md` for the criteria; the script handled the bash.
+
+If duplicate-drift or cross-reference rot exists, the user needs to see it before picking candidates in step 8 — they might pick differently or skip a duplicate.
 
 Findings go into the candidate list output as a top section: "Self-healing recommendations" — not promotion candidates, but informational entries for the user.
 

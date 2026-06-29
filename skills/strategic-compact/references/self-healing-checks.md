@@ -6,6 +6,8 @@ These are MAINTENANCE checks; they DON'T block compaction. Note any findings as 
 
 **Coverage.** Checks span every extension type from `/en/features-overview`: skills, subagents, hooks, commands, rules, MCP, plugins. Each check below specifies which directories it grep/reads.
 
+**Mechanical checks are scripted.** Checks 1 (cross-reference rot), 2 (stale promotions), 4 (description-field health, partial), and 7 (hook script existence) are bundled in `scripts/self-healing-sweep.sh`. Run that ONCE up front instead of the per-check bash blocks below — the inline blocks are kept for documentation of intent, but the script is the source of truth (it filters known-optional paths, handles shell builtins, and parses YAML frontmatter correctly). The remaining checks (3, 5, 6, 8, 9, 10) need LLM reasoning and stay manual.
+
 ## Check 1 — Cross-reference rot (across all extension dirs)
 
 For every extension file that links to another file (`See: ~/.claude/skills/X/SKILL.md §Y`, or `~/.claude/agents/`, `~/.claude/rules/`, etc.), confirm the target still exists.

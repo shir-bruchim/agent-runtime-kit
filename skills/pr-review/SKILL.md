@@ -20,7 +20,7 @@ Fetch a PR diff via `gh`, analyze it across 5 generic dimensions AND across proj
 
 If the user's request includes BOTH unresolved bot/reviewer comments AND a CI run, address comments FIRST, then check CI:
 
-1. Fetch and address unresolved bot/baz/copilot comments via `gh api repos/<o>/<r>/pulls/<n>/comments`. Reply per-thread with rationale (apply / declined-with-reason / false-positive).
+1. Fetch and address unresolved bot/baz/copilot comments via the review platform's per-thread comments API (`gh api repos/<o>/<r>/pulls/<n>/comments` on GitHub). Triage into FIX / WONT_FIX / ALREADY_FIXED, batch all FIX edits into one focused commit, then reply per-thread linking the resolving SHA: FIX → `Addressed in <short-sha> — <one-line of what changed>`; WONT_FIX → lead with `Won't fix` and give the reasoning (cost/benefit, abstraction threshold, breaks shared pattern), don't be apologetic — a reasoned no closes the thread better than a defensive yes; ALREADY_FIXED → `Addressed in <prior-sha> — <pointer>`. Don't extract a dedup abstraction on review feedback alone if only two callers share the pattern; the abstraction threshold is three. Don't reply to spec-reviewer "met" items unless the user asks — those are informational.
 2. THEN inspect CI failure logs.
 
 Bot comments often explain or contextualize the CI failure. Reading CI first risks fixing a symptom that the bot already proposed a different fix for.
@@ -283,6 +283,7 @@ Re-implementing what these provide is a CHANGES_REQUESTED. ("highly recommend to
 - Don't extract a helper for 2 call sites with subtly different logic — comment why and skip.
 - A shared abstraction at 2 callers is thin and awkward; "revisit when a third lands."
 - **No speculative code.** Don't add branches, helpers, Settings fields, or storage envelopes for callers that don't exist. Examples: an `isinstance(result, Response)` check when no handler returns Response; a Settings field that's never read (only projected back to env via setdefault); base64-wrapping JSON bytes "in case we need non-JSON later". Each speculative branch costs latency on every request and is dead code until a real caller appears. Revisit when one does.
+- **No speculative recommendations.** A "could it be X?" is a question; a recommendation requires evidence. Before recommending a change to "improve" something measurable (hit-rate, latency, cost, error rate), either (a) pull the data and prove the upside, or (b) ask one clarifying question to bound the hypothesis. Speculation framed as a finding is a credibility hit — and the "fix" often does nothing or introduces risk (e.g., dropping a cache-key field whose variance is zero ships a cross-tenant leak for zero gain). When a hypothesis depends on a fact about the system ("the bearer is per-caller"), verify it from code/config — don't pattern-match from generic experience.
 - Splitting a long function into clearly-named helpers (`handle_unknown_emails`, `send_slack_replay_for_invalid_agency_status`) is encouraged for readability.
 - Generic `try/except` blocks that wrap a long function should usually be split — error handling per case is more specific.
 - Circular imports → pass the resolved object as a param instead of importing the resolver inside the client.

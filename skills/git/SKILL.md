@@ -18,6 +18,11 @@ description: Git operations for committing, pushing, and opening PRs. Includes s
 - `git log --oneline -5` for commit style
 - Check remote tracking before push
 
+**`git worktree remove` is destructive — sweep first.** Before removing ANY worktree, in EACH worktree run:
+- `git status --short` — surface uncommitted edits (modified, untracked, staged)
+- `git log --oneline <upstream>..HEAD` — surface unpushed commits
+- If either is non-empty, STOP. Ask the user explicitly: (a) commit + push it now, (b) save as a patch (`git diff > /tmp/<name>.patch`) for later, or (c) discard. Don't assume "the work is mirrored elsewhere" — the whole reason worktrees exist is to hold work that isn't yet on the canonical branch. Surfacing the diff one-line-per-file BEFORE the user makes the call is the right move; running `git worktree remove --force` to bypass a "worktree contains modified files" warning is the wrong one. Also delete stale local branch labels (`git branch -D <name>`) AFTER worktree removal if the label points at a commit the user has confirmed they're done with.
+
 **Branch naming:**
 - Features: `feat/description`
 - Fixes: `fix/description`

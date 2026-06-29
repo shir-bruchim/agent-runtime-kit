@@ -59,6 +59,8 @@ Treat the live doc as authoritative. The snapshot is hand-off context, not sourc
 
 <essential_principles>
 
+- **Skill bodies must be project-agnostic.** A skill body loads into every future session regardless of repo. Before writing a new bullet, ask "would this make sense in a Go service / Rust CLI / TypeScript Next.js app?" If no, rewrite. No service names, file paths, ticket prefixes, or framework class names in the rule body — those belong in the "Why:" line or in a clearly-marked example block. See `~/.claude/skills/strategic-compact/references/promotion-quality-gates.md` §Gate 1 for the full 5-criterion checklist.
+
 ## Types of Agent Extensions
 
 | Type | Claude Code | Cursor | Gemini CLI | Copilot | Purpose |
