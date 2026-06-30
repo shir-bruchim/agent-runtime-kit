@@ -117,18 +117,18 @@ Invoke with `/name` or `/name argument`.
 
 ## Overriding Language Conventions
 
-To customize conventions for your project, edit the installed rule files directly:
+To customize conventions for your project, edit the installed rule files directly. Each kit rule lives in a folder under `.claude/rules/<name>/`, with `RULE.md` as the entry point and an optional `references/` directory beside it.
 
 ```bash
 # Edit the installed Python conventions
 nano .claude/rules/python-conventions.md
 ```
 
-Or create a project-specific override file that takes precedence:
+Or create a project-specific override that takes precedence — same folder shape as kit rules:
 
 ```bash
-# .claude/rules/project-conventions.md
-# Add project-specific overrides here
+mkdir -p .claude/rules/project-conventions
+# Then author .claude/rules/project-conventions/RULE.md with overrides
 ```
 
 ---
@@ -215,7 +215,7 @@ You don't have to install everything. Pick what's relevant:
 
 **Just git conventions:**
 ```bash
-cp rules/git-workflow.md .claude/rules/
+cp -r rules/git-workflow .claude/rules/
 cp commands/commit.md ~/.claude/commands/
 cp commands/push.md ~/.claude/commands/
 cp commands/pr.md ~/.claude/commands/

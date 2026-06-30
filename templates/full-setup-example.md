@@ -80,7 +80,7 @@ For a Python FastAPI project, CLAUDE.md would look like:
 - Docker for containerization
 
 ## Key Conventions
-[Content assembled from rules/base-conventions.md]
+[Content assembled from rules/base-conventions/RULE.md]
 [Content assembled from languages/python/conventions.md]
 
 ## Skills Available

@@ -62,7 +62,7 @@ Today, installation is manual: a developer pastes the GitHub URL into Claude Cod
     "version": "v3.3.0",
     "overrides": {
       "skip": ["skills/ralph-orchestrator"],
-      "extra_rules": [".claude/rules/project-specific.md"]
+      "extra_rules": [".claude/rules/project-specific/RULE.md"]
     }
   }
   ```

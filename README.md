@@ -131,14 +131,14 @@ agent-runtime-kit/
 │   ├── ship.md             # /ship (commit + push + PR + auto-review)          [CORE]
 │   └── test.md             # /test                                             [CORE]
 │
-├── rules/                  # Project-level conventions
-│   ├── base-conventions.md                                                     [CORE]
-│   ├── security.md                                                             [CORE]
-│   ├── testing.md          # Path-scoped to test/ directories                 [CORE]
-│   ├── git-workflow.md                                                         [FULL]
-│   ├── performance.md      # Path-scoped                                      [FULL]
-│   ├── infrastructure.md   # Path-scoped                                      [FULL]
-│   └── patterns.md         # Path-scoped, common design patterns               [FULL]
+├── rules/                  # Project-level conventions (each a folder with RULE.md + optional references/)
+│   ├── base-conventions/RULE.md                                                [CORE]
+│   ├── security/RULE.md                                                        [CORE]
+│   ├── testing/RULE.md     # Path-scoped to test/ directories                  [CORE]
+│   ├── git-workflow/RULE.md                                                    [FULL]
+│   ├── performance/RULE.md     # Path-scoped                                   [FULL]
+│   ├── infrastructure/RULE.md  # Path-scoped                                   [FULL]
+│   └── patterns/RULE.md        # Path-scoped, common design patterns           [FULL]
 │
 ├── templates/              # Source templates for AI agent generation
 │   ├── AGENTS.md           # Copilot + Gemini context file template
@@ -193,9 +193,9 @@ cp subagents/reviewer.md subagents/tester.md subagents/git-ops.md subagents/secu
 cp commands/commit.md commands/push.md commands/pr.md commands/ship.md \
    commands/build-fix.md commands/test.md ~/.claude/commands/
 
-# Project-level rules (CORE)
+# Project-level rules (CORE) — each rule is now a folder with a RULE.md
 mkdir -p .claude/rules
-cp rules/base-conventions.md rules/security.md rules/testing.md .claude/rules/
+cp -r rules/base-conventions rules/security rules/testing .claude/rules/
 cp languages/python/*.md .claude/rules/  # or typescript, nodejs, go, etc.
 ```
 

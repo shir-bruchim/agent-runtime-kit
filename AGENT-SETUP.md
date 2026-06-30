@@ -339,7 +339,8 @@ Or install manually:
 
 ### Minimal (rules only):
 ```bash
-cp rules/base-conventions.md .claude/rules/
+# Rules are now folders, each containing a RULE.md + optional references/
+cp -r rules/base-conventions .claude/rules/
 cp languages/<your-lang>/conventions.md .claude/rules/
 ```
 
@@ -417,10 +418,12 @@ commands/test.md        /test
 ```
 
 ### Rules (project-level)
+
+Each rule is a folder with a `RULE.md` (+ optional `references/`):
 ```
-rules/base-conventions.md   Code style, naming, structure
-rules/security.md           Security practices
-rules/testing.md            Test standards
+rules/base-conventions/RULE.md   Code style, naming, structure
+rules/security/RULE.md           Security practices
+rules/testing/RULE.md            Test standards
 ```
 
 ### Languages (project-level — detected automatically)
