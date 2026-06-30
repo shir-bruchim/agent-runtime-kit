@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Comprehensive testing guidance for writing maintainable, effective tests. Covers pytest (Python), Jest/Vitest (JavaScript/TypeScript), Go testing, and general TDD patterns. Use when writing tests, setting up test infrastructure, reviewing test quality, or improving test coverage.
+description: Testing guidance for pytest, Jest/Vitest, Go, and TDD. Use when writing tests or improving coverage.
 ---
 
 <objective>
@@ -8,32 +8,7 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 </objective>
 
 <essential_principles>
-
-**Test Independence**
-- Each test must run in isolation — no shared mutable state. Module-level mutable collections (a top-of-file `all_devices = {}` that every test mutates) cause failure cascades: when test K's server-side mutation fails but the local-dict update succeeds, every subsequent test that reads the dict asserts against the wrong expected value, fails with a cryptic mismatch, and masks the root-cause failure (one bug presents as N failures). Use fixture-scoped containers per test, OR a `setup_function` that resets the module-level state before each test. When fixing a flaky test suite, look for module-level dicts/lists FIRST — they're the most common cause of order-dependent failures.
-- Tests must pass in any execution order
-- Use setup/teardown (fixtures) not class-level state
-
-**Naming Conventions**
-- Name tests after what they test: `test_user_cannot_login_with_wrong_password`
-- Test files co-located or in `tests/` directory
-- One logical assertion per test when practical
-
-**Test Pyramid**
-- Many unit tests (fast, isolated)
-- Some integration tests (services working together)
-- Few E2E tests (full user flows, expensive)
-
-**Test Behavior, Not Implementation**
-- Test what the code does, not how it does it
-- Test public APIs, not private implementation details
-- If refactoring breaks tests without changing behavior: tests are testing implementation
-
-**Coverage as a Tool, Not a Goal**
-- 80% coverage is a reasonable default
-- 100% coverage with meaningless tests is worse than 70% with meaningful ones
-- Coverage shows untested paths — not that tests are good
-
+Universal test foundations — test pyramid, AAA structure, naming-as-behavior-sentence, ~80% coverage default, test independence, behavior-not-implementation — live in `~/.claude/rules/testing/RULE.md` (with deep-dives in `~/.claude/rules/testing/references/`). Read those first; the pytest-specific add-ons (real objects for domain types, factories in conftest, headers-asserted-too, module-level mutable state) live in `<pytest_principles>` below.
 </essential_principles>
 
 <pytest_principles>

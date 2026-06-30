@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: Deep analysis debugging mode for complex issues. Activates methodical investigation with evidence gathering, hypothesis testing, and rigorous verification. Use when standard troubleshooting fails or issues require systematic root cause analysis.
+description: Methodical debugging with evidence and hypothesis testing. Use when troubleshooting fails or root cause is unclear.
 ---
 
 <objective>

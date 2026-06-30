@@ -1,5 +1,6 @@
 ---
-paths: ["**/test_*", "**/*.test.*", "**/*.spec.*", "**/conftest.py"]
+name: testing
+description: Universal testing standards — what to test, naming, AAA structure, three-level pyramid, edge-case coverage, and the 80% coverage default.
 ---
 
 # Testing Standards
@@ -9,21 +10,13 @@ paths: ["**/test_*", "**/*.test.*", "**/*.spec.*", "**/conftest.py"]
 Test: business logic, edge cases, error conditions, integration points
 Don't test: getters/setters, framework code, language built-ins, generated code
 
-## Three-Level Strategy
+## Test Pyramid (Summary)
 
-**Unit tests** (most): Test individual functions/methods in isolation
-- Fast (< 1ms each)
-- No external dependencies (mock them)
-- Test one scenario per test
+- **Unit tests** (most): fast, isolated, one scenario each
+- **Integration tests** (some): real DB, mocked external APIs
+- **E2E tests** (few): real browser, real services — critical paths only
 
-**Integration tests** (some): Test services working together
-- Real database (test instance), mocked external APIs
-- Test the interactions between components
-- Slower, but catch issues unit tests miss
-
-**E2E tests** (few): Test full user workflows
-- Real browser, real services
-- Expensive and slow — use for critical paths only
+For details on each level, see [references/three-level-strategy.md](references/three-level-strategy.md).
 
 ## Test Naming
 
@@ -46,21 +39,17 @@ def test_email():
 def test_apply_discount_reduces_total():
     # Arrange: set up the scenario
     cart = Cart([Item(price=100), Item(price=50)])
-    
+
     # Act: perform the action
     cart.apply_discount(percent=10)
-    
+
     # Assert: verify the outcome
     assert cart.total == 135.0  # 150 * 0.90
 ```
 
-## Edge Cases to Always Test
+## Edge Cases
 
-- Empty inputs (empty string, empty list, None)
-- Boundary values (min, max, just over/under limits)
-- Invalid types or formats
-- Concurrent access (if relevant)
-- Already-in-end-state (idempotency)
+Always consider: empty inputs, boundary values, invalid types, concurrent access, idempotency. For the full list with examples, see [references/edge-cases.md](references/edge-cases.md).
 
 ## Test Coverage
 

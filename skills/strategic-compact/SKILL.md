@@ -1,6 +1,6 @@
 ---
 name: strategic-compact
-description: Promotes recurring feedback into the right skill, then guides /compact at phase boundaries. User-invoked maintenance + checkpoint.
+description: Promotes recurring feedback into the right skill, then guides /compact at phase boundaries.
 when_to_use: |
   Activate when the user types /strategic-compact, says "compact", "let's compact",
   "we've finished phase X what's next", or when at a clear phase boundary

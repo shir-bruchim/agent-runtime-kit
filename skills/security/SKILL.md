@@ -1,6 +1,6 @@
 ---
 name: security
-description: Security review and safe operation patterns. Includes code vulnerability review, dangerous operation blocking patterns, and protected file configuration. Use when reviewing code for security issues, setting up safety hooks, or configuring file protections.
+description: Security review and safe-op patterns. Use when reviewing for vulnerabilities, setting up hooks, or protecting files.
 ---
 
 <objective>
@@ -30,17 +30,7 @@ What would you like to do?
 <code_review_workflow>
 When reviewing code for security:
 
-**Scan for OWASP Top 10:**
-1. Injection (SQL, NoSQL, OS, LDAP)
-2. Broken Authentication
-3. Sensitive Data Exposure
-4. XML External Entities (XXE)
-5. Broken Access Control
-6. Security Misconfiguration
-7. XSS (Cross-Site Scripting)
-8. Insecure Deserialization
-9. Using Components with Known Vulnerabilities
-10. Insufficient Logging & Monitoring
+**Scan for OWASP Top 10.** Reference the canonical checklist in `~/.claude/rules/security/references/owasp-checklist.md` (the entry pointer lives at `~/.claude/rules/security/RULE.md` §"OWASP / Common Vulnerability Checklist"). Don't re-list categories here; for each match, capture `file:line + severity + remediation` per the per-finding format below.
 
 **For each finding:**
 - File path and line number

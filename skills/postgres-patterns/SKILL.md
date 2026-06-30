@@ -1,6 +1,6 @@
 ---
 name: postgres-patterns
-description: "PostgreSQL database patterns for query optimization, schema design, indexing, and security. Use when designing a database schema, writing SQL queries, optimizing slow queries, adding indexes, or asking about database security and migrations."
+description: "PostgreSQL patterns for queries, schema, indexing, security. Use when writing SQL, designing schema, or adding indexes."
 ---
 
 <objective>
@@ -89,11 +89,7 @@ SELECT indexrelname, idx_scan FROM pg_stat_user_indexes WHERE idx_scan = 0;
 </anti_patterns>
 
 <performance>
-- Always `EXPLAIN ANALYZE` before and after optimization
-- Index foreign keys (most common miss)
-- Use connection pooling in production (PgBouncer)
-- Avoid `SELECT *` — specify columns
-- Use `LIMIT` on user-facing queries
+Universal DB performance rules (EXPLAIN ANALYZE, index FKs, connection pooling, avoid `SELECT *`, LIMIT on user-facing queries) live in `~/.claude/rules/performance/references/db-performance.md` (summary in `~/.claude/rules/performance/RULE.md`). PostgreSQL-specific patterns (GIN/BRIN, RLS, FOR UPDATE SKIP LOCKED) below.
 </performance>
 
 <success_criteria>

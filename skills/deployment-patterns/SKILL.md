@@ -1,10 +1,10 @@
 ---
 name: deployment-patterns
-description: "Deployment workflows, CI/CD pipeline patterns, health checks, rollback strategies, and production readiness checklists. Use when deploying an application, setting up CI/CD, writing GitHub Actions, or asking about rollback strategies."
+description: "CI/CD, health checks, and rollback patterns. Use when deploying, setting up CI/CD, or writing GitHub Actions."
 ---
 
 <objective>
-Production deployment best practices: strategies, CI/CD pipelines, health checks, rollback, and readiness checklists. References `rules/infrastructure.md` for Docker and environment conventions.
+Production deployment best practices: strategies, CI/CD pipelines, health checks, rollback, and readiness checklists. References `~/.claude/rules/infrastructure/RULE.md` for Docker and environment conventions.
 </objective>
 
 <when_to_activate>
@@ -104,20 +104,7 @@ docker compose up -d --no-deps app       # Redeploy previous image
 </rollback>
 
 <production_readiness>
-Before deploying to production:
-
-**Application:**
-- [ ] All tests pass (unit + integration)
-- [ ] No hardcoded credentials
-- [ ] Health check endpoints responding
-- [ ] Structured logging configured (JSON)
-- [ ] Error monitoring set up (Sentry)
-
-**Infrastructure:**
-- [ ] Environment variables configured
-- [ ] Database migrations run (separate from deploy)
-- [ ] Connection pooling enabled
-- [ ] SSL/TLS configured
+Universal Application + Infrastructure readiness items live in `~/.claude/rules/infrastructure/references/deployment-checklist.md` (entry: `~/.claude/rules/infrastructure/RULE.md` §"Deployment — Core Rules"). Operations items kept here because they're org-process, not infra-pattern:
 
 **Operations:**
 - [ ] Rollback plan documented

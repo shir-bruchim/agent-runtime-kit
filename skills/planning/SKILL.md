@@ -1,6 +1,6 @@
 ---
 name: planning
-description: Create hierarchical project plans for agentic development. Produces actionable, phase-based plans with specific file paths, dependencies, and verification criteria. Use when planning features, refactors, new projects, or complex multi-step implementations. Merged from create-plans skill + planner agent best practices.
+description: Create phase-based plans with file paths and verification. Use for features, refactors, or multi-step work.
 ---
 
 <essential_principles>

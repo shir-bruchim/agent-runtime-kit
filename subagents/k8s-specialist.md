@@ -160,5 +160,5 @@ kubectl top pods -l app=myapp              # Resource usage
 <references>
 - `skills/deployment-patterns/` for CI/CD strategies, health checks, rollback
 - `skills/docker-patterns/` for container builds
-- `rules/infrastructure.md` for Docker conventions
+- `rules/infrastructure/RULE.md` for Docker conventions
 </references>

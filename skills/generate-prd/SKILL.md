@@ -1,6 +1,6 @@
 ---
 name: generate-prd
-description: Generates Product Requirements Documents for new features through guided discovery. Use when starting a new feature, creating specifications, or when user needs help defining requirements with clarifying questions.
+description: Generates PRDs through guided discovery. Use when starting a feature or defining requirements.
 context: fork
 ---
 

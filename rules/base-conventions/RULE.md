@@ -1,3 +1,8 @@
+---
+name: base-conventions
+description: Universal coding standards (naming, function design, error handling, comments, file organization) that apply regardless of language or framework.
+---
+
 # Base Coding Conventions
 
 Universal coding standards that apply regardless of language or framework.

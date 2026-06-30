@@ -1,6 +1,6 @@
 ---
 name: spec-interview
-description: Interviews users to build comprehensive project specifications. Use when starting a new project, feature, or when user needs help defining requirements through guided discovery.
+description: Interviews users to build project specs through guided discovery. Use when starting a new project or feature.
 context: fork
 ---
 

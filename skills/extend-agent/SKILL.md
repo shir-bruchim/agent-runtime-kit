@@ -1,9 +1,9 @@
 ---
 name: extend-agent
-description: Create new skills, commands, hooks, or subagents for your AI agent. Use when you need to add new capabilities to Claude Code or Cursor — any type of extension.
+description: Create new skills, commands, hooks, or subagents. Use when adding capabilities to Claude Code or Cursor.
 ---
 
-f<freshness_check>
+<freshness_check>
 
 **MANDATORY first step on every invocation.** Claude Code's extension knobs (skill frontmatter fields, subagent options, hook events, the model lineup, slash-command behavior) change frequently. The tables in this SKILL.md are a SNAPSHOT — they go stale. Verify the LIVE docs FIRST, then design.
 

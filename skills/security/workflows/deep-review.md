@@ -1,11 +1,12 @@
 # Deep Security Review
 
-Comprehensive security review across 10 dimensions. Goes deeper than `rules/security.md` (which defines conventions) — this workflow provides checklists, verification steps, and code-level patterns for active security review.
+Comprehensive security review across 10 dimensions. Goes deeper than `~/.claude/rules/security/RULE.md` (which defines conventions) — this workflow provides checklists, verification steps, and code-level patterns for active security review.
 
 ## Relationship to Rules
 
-This workflow EXTENDS `rules/security.md` — it does not replace it.
-- `rules/security.md` = always-loaded conventions (input validation, secrets, auth basics)
+This workflow EXTENDS `~/.claude/rules/security/RULE.md` — it does not replace it.
+- `~/.claude/rules/security/RULE.md` = always-loaded conventions (input validation, secrets, auth basics)
+- `~/.claude/rules/security/references/owasp-checklist.md` = canonical vulnerability checklist
 - This workflow = on-demand deep review with checklists and verification steps
 
 Load this workflow when actively reviewing security, not for general coding.
@@ -122,4 +123,4 @@ Before ANY production deployment, verify all 10 dimensions above. Flag items as:
 - [ ] All 10 security dimensions checked
 - [ ] Every finding has severity + specific file:line + remediation
 - [ ] No CRITICAL issues remain unaddressed
-- [ ] Review references `rules/security.md` for project conventions
+- [ ] Review references `~/.claude/rules/security/RULE.md` for project conventions

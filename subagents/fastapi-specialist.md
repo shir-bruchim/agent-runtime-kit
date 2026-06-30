@@ -112,6 +112,6 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
 
 <references>
 - `skills/api-design/` for REST conventions
-- `rules/security.md` for auth patterns
+- `rules/security/RULE.md` for auth patterns
 - `languages/python/skills/async-python-patterns/` for async guidance
 </references>

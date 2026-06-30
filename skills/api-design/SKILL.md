@@ -1,6 +1,6 @@
 ---
 name: api-design
-description: REST API design principles and patterns. Use when designing new API endpoints, reviewing API structure, defining request/response schemas, handling errors consistently, or establishing API conventions for a project.
+description: REST API design patterns. Use when designing endpoints, defining schemas, or establishing API conventions.
 ---
 
 <objective>

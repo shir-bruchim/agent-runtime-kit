@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-description: "A comprehensive verification system for Claude Code sessions. Use when verifying an implementation is complete, validating code correctness, running a final check before committing, or asking to verify all requirements are met."
+description: "Verification system for Claude Code. Use when verifying an implementation or running a final check before commit."
 ---
 
 <objective>

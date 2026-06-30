@@ -1,6 +1,6 @@
 ---
 name: web-deep-search
-description: "Deep web research using built-in WebSearch + WebFetch. Three modes: search (quick facts), reason (multi-source analysis), research (in-depth report with citations). No external API key required."
+description: "Deep web research via WebSearch + WebFetch. Modes: search, reason, research. Use for facts or cited reports."
 ---
 
 <objective>

@@ -1,3 +1,8 @@
+---
+name: security
+description: Security best practices — input validation, secrets management, authN/authZ, sensitive data handling, dependency hygiene, and the OWASP checklist.
+---
+
 # Security Best Practices
 
 ## Input Validation
@@ -78,12 +83,6 @@ async def get_profile(user_id: int, current_user: User = Depends(get_current_use
 - Don't use abandoned packages
 - Review transitive dependencies for critical packages
 
-## Common Vulnerability Checklist
+## OWASP / Common Vulnerability Checklist
 
-- [ ] SQL injection: parameterized queries everywhere
-- [ ] XSS: HTML-encode user output, Content-Security-Policy header
-- [ ] CSRF: tokens on state-changing requests (or SameSite cookies)
-- [ ] Auth bypass: authorization checked on every protected route
-- [ ] Sensitive data: passwords hashed, secrets in env vars
-- [ ] Error messages: no stack traces or internal details in production
-- [ ] Dependencies: no critical CVEs in direct or transitive deps
+The canonical "Common Vulnerability Checklist" lives at [references/owasp-checklist.md](references/owasp-checklist.md). Reference it during security reviews; do not duplicate the items in other skills.

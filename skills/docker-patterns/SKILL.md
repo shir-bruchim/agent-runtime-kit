@@ -1,6 +1,6 @@
 ---
 name: docker-patterns
-description: "Docker and Docker Compose patterns for local development, container security, networking, volume strategies, and multi-service orchestration. Use when writing a Dockerfile, setting up docker-compose, containerizing an app, or asking about container security."
+description: "Docker + Compose patterns for dev, security, networking, volumes. Use when writing a Dockerfile or docker-compose."
 ---
 
 <objective>
@@ -88,12 +88,7 @@ volumes:
 </compose_dev>
 
 <security>
-- Pin base image versions (not `latest`)
-- Run as non-root user (`USER node` / `USER nobody`)
-- Use `.dockerignore` (exclude .env, .git, node_modules)
-- One process per container
-- No secrets in image layers (use runtime env vars)
-- Scan images: `docker scout cves <image>`
+Universal Docker security rules (pin base, non-root, no secrets in image, .dockerignore, minimal base, drop capabilities) live in `~/.claude/rules/infrastructure/RULE.md` §"Docker — Core Rules" (with examples in `~/.claude/rules/infrastructure/references/docker.md`). Compose-specific operational guidance is in `<compose_dev>` / `<volume_strategies>` below.
 </security>
 
 <volume_strategies>
@@ -107,12 +102,7 @@ volumes:
 </volume_strategies>
 
 <anti_patterns>
-- Using `latest` tag in production
-- Running as root
-- Copying `.env` files into image
-- Installing dev dependencies in production image
-- Not using health checks
-- Large images (use `-alpine` or `-slim`)
+See `~/.claude/rules/infrastructure/references/docker.md` for the canonical anti-patterns list (and `~/.claude/rules/infrastructure/RULE.md` §"Docker — Core Rules" for the summary).
 </anti_patterns>
 
 <success_criteria>

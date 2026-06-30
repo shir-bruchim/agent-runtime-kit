@@ -1,6 +1,6 @@
 ---
 name: implement-jira-ticket
-description: Implements Jira tickets end-to-end with git setup, planning, coding, and testing. Use when given a Jira ticket ID (e.g., PBAT-123) or when asked to implement a ticket/feature/bug from Jira.
+description: Implements Jira tickets end-to-end (git + plan + code + test). Use when given a Jira ticket ID (e.g., PBAT-123).
 ---
 
 <essential_principles>

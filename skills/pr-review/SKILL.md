@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: "Reviews a GitHub pull request diff and produces a structured report covering correctness, security, best practices, test coverage, and project-specific architectural concerns (layer separation, real-object tests, sensi-pkg reuse, mapper/DB/handler/service boundaries, migration safety, env-var hygiene, dead/redundant code). Use when asked to review a PR, check a pull request, analyze a diff, or validate code before merging."
+description: "Reviews a GitHub PR diff for correctness, security, tests, architecture. Use when asked to review a PR or pull request."
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
@@ -163,7 +163,7 @@ The "I'll let pr-review catch it" loop is avoidable churn.
 1. **Dead code.** Anything declared but never imported / called? Delete it.
 2. **Module size + responsibility.** Any file > 200 lines doing more than one thing? Split it.
 3. **Magic numbers + duplication.** Same constant in 2+ places → hoist to shared config. Same logic in 2 functions → extract.
-4. **Reflection.** `getattr` / `hasattr` / `setattr` on your own types is a smell. Direct access if you know the type; explicit map if dispatching.
+4. **Reflection.** See `~/.claude/rules/base-conventions/RULE.md` §"Code Clarity" (the `getattr`/`hasattr` bullet) — no `getattr`/`hasattr`/`setattr` on types you wrote.
 5. **Complexity.** Any nested loop scaling with input that a dict makes O(1)? Any list-of-strings scan that should be a set? Never accept O(n²) silently.
 6. **Try/except.** Catching `Exception:` or bare `except:` → narrow it. Swallowing without logging → don't.
 7. **Comments.** Restates the code? Delete. Explains WHY a non-obvious choice? Keep.
@@ -198,7 +198,7 @@ api → logic/handler → mapper → db. Each layer has a single responsibility:
 Flag any layer leak — including: API calling DB directly, logic calling DB without going through repo, mapper containing logic, repo accepting/returning api schema objects.
 
 ### B. Tests use real objects; mock only external resources
-`MagicMock` for domain objects (DB rows, pydantic models, ORM instances, internal data) is wrong. Mock the boundary: DB session, HTTP client, S3, Kafka, Redis. Always flag `MagicMock(id=..., ams_id=...)` style mocks for domain types as CHANGES_REQUESTED. ("use only real object and not MagicMock — in all tests" / "Always use real objects, mock only external resources (db, clients etc)")
+See the canonical rule in `~/.claude/skills/testing/SKILL.md` `<pytest_principles>` "Real objects for domain types". Project quote: "use only real object and not MagicMock — in all tests" / "Always use real objects, mock only external resources (db, clients etc)". Flag `MagicMock(id=..., ams_id=...)` style mocks for domain types as CHANGES_REQUESTED.
 
 Other testing rules:
 - Logic changed → tests must be added/updated. No tests = CHANGES_REQUESTED.
@@ -254,7 +254,7 @@ Re-implementing what these provide is a CHANGES_REQUESTED. ("highly recommend to
 - `shift` ≠ `visit`; visit can exist without shift. Don't conflate.
 - `schedule` ≠ `clock` — schedule data and time-tracking data are different concepts.
 - When you only return an id, name the field `*_id` (e.g., `category_id`, not `category`).
-- ORM property is known on the type → call it directly (`obj.qualifications`), don't `getattr(obj, "qualifications", [])` or `isinstance(..., list)`. The `getattr` dance is for base classes that may legitimately lack the attribute, not for known properties.
+- ORM/known-type property → call it directly. See `~/.claude/rules/base-conventions/RULE.md` §"Code Clarity" for the canonical no-reflection rule.
 - Field names in pydantic should reflect the real value semantics; if the column is `bo_id` but the value is a customer id, use a pydantic alias and name the field `customer_id`.
 
 ### I. Pydantic and validation

@@ -1,6 +1,6 @@
 ---
 name: git
-description: Git operations for committing, pushing, and opening PRs. Includes safety rules to prevent destructive operations. Use when performing any version control tasks — commit, push, PR, or full ship workflow.
+description: Git operations for commit, push, PR, and ship workflows with safety rules. Use for any version control task.
 ---
 
 <essential_principles>
@@ -23,10 +23,7 @@ description: Git operations for committing, pushing, and opening PRs. Includes s
 - `git log --oneline <upstream>..HEAD` — surface unpushed commits
 - If either is non-empty, STOP. Ask the user explicitly: (a) commit + push it now, (b) save as a patch (`git diff > /tmp/<name>.patch`) for later, or (c) discard. Don't assume "the work is mirrored elsewhere" — the whole reason worktrees exist is to hold work that isn't yet on the canonical branch. Surfacing the diff one-line-per-file BEFORE the user makes the call is the right move; running `git worktree remove --force` to bypass a "worktree contains modified files" warning is the wrong one. Also delete stale local branch labels (`git branch -D <name>`) AFTER worktree removal if the label points at a commit the user has confirmed they're done with.
 
-**Branch naming:**
-- Features: `feat/description`
-- Fixes: `fix/description`
-- Chores: `chore/description`
+**Branch naming:** See `~/.claude/rules/git-workflow/RULE.md` §"Branch Strategy".
 </git_safety>
 
 <commit_format>
@@ -40,7 +37,7 @@ type(scope): short description
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`
+Types: see `~/.claude/rules/git-workflow/RULE.md` §"Commit Messages (Conventional Commits)" for the canonical type list.
 
 Use HEREDOC for multi-line messages:
 ```bash

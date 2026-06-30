@@ -1,3 +1,8 @@
+---
+name: git-workflow
+description: Git branching strategy, conventional commit messages, PR conventions, rebase vs merge guidance, and protected files list.
+---
+
 # Git Workflow Conventions
 
 ## Branch Strategy

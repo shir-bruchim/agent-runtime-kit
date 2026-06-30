@@ -94,6 +94,6 @@ def handler(event, context):
 
 <references>
 - `skills/deployment-patterns/` for CI/CD and rollback
-- `rules/security.md` for credential management
-- `rules/infrastructure.md` for Docker and environment conventions
+- `rules/security/RULE.md` for credential management
+- `rules/infrastructure/RULE.md` for Docker and environment conventions
 </references>
