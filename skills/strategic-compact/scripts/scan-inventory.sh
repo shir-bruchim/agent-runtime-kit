@@ -42,10 +42,28 @@ section COMMANDS
 ls -1 ~/.claude/commands/ 2>/dev/null
 
 section RULES
+# Rules tree is folder-per-rule (`~/.claude/rules/<name>/RULE.md`) since the
+# 2026-06-29 restructure, with optional `references/*.md` deep-dives. Old
+# flat `*.md` glob returned EMPTY against the new layout.
 if [ -d ~/.claude/rules ]; then
-  for f in ~/.claude/rules/*.md; do
+  for f in ~/.claude/rules/*/RULE.md; do
     [ -e "$f" ] || continue
-    printf '%s\t%s lines\n' "$(basename "$f")" "$(wc -l < "$f" | tr -d ' ')"
+    name="$(basename "$(dirname "$f")")"
+    main_lines="$(wc -l < "$f" | tr -d ' ')"
+    ref_lines=0
+    ref_count=0
+    if [ -d "$(dirname "$f")/references" ]; then
+      for r in "$(dirname "$f")"/references/*.md; do
+        [ -e "$r" ] || continue
+        ref_count=$((ref_count + 1))
+        ref_lines=$((ref_lines + $(wc -l < "$r" | tr -d ' ')))
+      done
+    fi
+    if [ "$ref_count" -gt 0 ]; then
+      printf '%s\t%s lines (+%s refs, %s lines)\n' "$name" "$main_lines" "$ref_count" "$ref_lines"
+    else
+      printf '%s\t%s lines\n' "$name" "$main_lines"
+    fi
   done
 fi
 

@@ -59,6 +59,33 @@ WITH next_job AS (
 UPDATE jobs SET status = 'processing' WHERE id = (SELECT id FROM next_job)
 RETURNING *;
 ```
+
+### Error translation at the logic-layer boundary
+
+Storage-layer exceptions (`IntegrityError`, `DataError`, deadlock, serialization failures) get translated to domain-appropriate errors at the LOGIC layer — not inside CRUD helpers (transaction hasn't committed) and not inside route handlers (workers need the same mapping). Every entry point — API routes, SQS consumers, cron jobs, batch scripts — wraps its unit of work in one shared helper:
+
+```python
+# app/logic/util.py
+async def with_integrity_translation(work, *, context: str):
+    try:
+        return await work()
+    except IntegrityError as exc:
+        code = getattr(exc.orig, "pgcode", None)
+        if code == "23505":  # unique_violation
+            raise HTTPConflict(f"{context}: unique constraint violation") from exc
+        if code == "23503":  # foreign_key_violation
+            raise HTTPUnprocessable(f"{context}: referenced entity missing") from exc
+        if code == "23502":  # not_null_violation
+            raise HTTPUnprocessable(f"{context}: required field missing") from exc
+        raise
+```
+
+Why here and not elsewhere:
+- **Not in CRUD** — the transaction hasn't committed yet; CRUD helpers should stay session-agnostic and let integrity errors bubble.
+- **Not in routes** — a new consumer (SQS worker, backfill script, cron job) would silently miss the mapping. Logic owns transaction boundaries → logic owns error translation.
+- **Not repeated per entry point** — every fresh call site would drift. One helper, `pgcode`-driven mapping, every entry point wraps.
+
+Route handlers only translate HTTP-specific concerns (auth, rate limits); domain errors bubble up already-shaped.
 </common_patterns>
 
 <anti_patterns>

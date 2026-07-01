@@ -12,7 +12,7 @@ The looping mechanism is **not** implemented inside this skill — use Claude Co
 <when_to_activate>
 - After completing a feature or significant code change
 - Before creating a PR
-- When asked to verify or validate an implementation
+- When asked to verify or validate an implementation (post-fix confirmation — for hypothesis-driven root-cause investigation, use the `debugging` skill instead; verification-loop assumes the change is in place and asks "does the end-to-end system agree?")
 - After refactoring
 - As a pre-commit quality gate
 </when_to_activate>
