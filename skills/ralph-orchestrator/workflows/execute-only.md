@@ -189,6 +189,7 @@ You are executing Ralph story {story.id}: {story.title}
 - Match existing project conventions
 - Update docs/ folder with any new features, APIs, or concepts
 - Append discoveries to tasks/common_knowledge.md
+- **No fabricated attributions.** Do NOT cite "per user directive," "coordinator authorized," "as agreed," "per mid-task instruction," or similar phrases as justification for scope changes. Only the user's actual message text (quoted verbatim from this prompt) counts as authorization. If a change you believe is needed isn't in the story spec or a quoted user message, return `status: "failed"` with the gap described in `needs_attention` — do NOT proceed and invent an authorization.
 
 ## Return Format
 When done, output ONLY a JSON block:
@@ -270,6 +271,7 @@ This is the worktree where the coder implemented story {story.id}.
 - Do NOT modify production code (except minor bug fixes like typos, missing imports)
 - Do NOT touch tasks/prd.json
 - Update tasks/test-log.md, tasks/review-notes.md, tasks/common_knowledge.md, and docs/
+- **No fabricated attributions.** Do NOT cite "per user directive," "coordinator authorized," "as agreed," "per mid-task instruction," or similar phrases as justification for scope changes. Only the user's actual message text (quoted verbatim from this prompt) counts as authorization. If a change you believe is needed isn't in the story spec or a quoted user message, return `status: "failed"` with the gap described in `failure_details` — do NOT proceed and invent an authorization.
 
 ## Return Format
 When done, output ONLY a JSON block:
@@ -296,6 +298,8 @@ Collect results from each Agent call. Parse the JSON block from the output.
 **k. Process results for each story**
 
 The Agent tool with `isolation: "worktree"` returns the worktree path and branch name when the agent made changes. Use these values below.
+
+**Gate: all test tiers must be green before commit.** If the batch pairs an implementation story with a separate integration-test story (unit + localstack / e2e / docker-compose), BOTH must be spawned in the same batch and BOTH must return `status: "done"` before ANY story in the batch commits. Gate the commit on ALL required test tiers, not the fastest tier — never ship on unit tests alone with integration-test stories still pending. If the user explicitly says "ship without integration for this run," treat that as a per-run override; otherwise this is the default.
 
 **If tester returns `status: "done"`:**
 1. Commit in the worktree (use the worktree path from coder's Agent result):

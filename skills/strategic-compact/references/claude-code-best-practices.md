@@ -138,6 +138,8 @@ For each item below, ask: is this reflected in `~/.claude/skills/extend-agent/SK
 - `skillListingBudgetFraction` — raises/lowers the 1% default listing budget.
 - `skillOverrides` — per-skill name-only / disabled overrides without editing the skill file.
 - `permissions` — auto-allow / auto-deny lists for tool calls.
+  - Prefix syntax is `Bash(cmd:*)` (colon-star), NOT `Bash(cmd *)` (space). The `:` separates the command from its arg-glob; `*` matches the trailing argv. Exact matches drop the `:*`.
+  - Pipelines are classified per-stage. `Bash(grep:*)` alone does not cover `grep ... | head` — the tail after `|` gets its own classification. If the pipeline is common, either allow each stage or wrap it in a script and allow the script name.
 - `env` — environment variables exposed to hooks and tool runs.
 - `mcpServers` — MCP server configs (transport, command, env).
 - `hooks` — event → matcher → handler config.

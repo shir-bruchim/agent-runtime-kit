@@ -121,14 +121,32 @@ if [ -n "$MEM_DIR" ] && [ -d "$MEM_DIR" ]; then
   for f in "$MEM_DIR"/feedback-*.md; do
     [ -e "$f" ] || continue
     if grep -l -i "promoted" "$f" >/dev/null 2>&1; then
-      # Extract the first ~/.claude/skills pointer (if any) and verify it exists
-      pointer=$(grep -oE '~/\.claude/skills/[A-Za-z0-9_./-]+' "$f" | head -1)
+      # Extract the first promotion pointer (skills / rules / CLAUDE.md) and verify it exists.
+      # Match order matters: try ~/.claude/... absolute first, then bare rules/X or
+      # skills/X or CLAUDE.md references (which sit at the repo root or ~/.claude/).
+      pointer=$(grep -oE '~/\.claude/(skills|rules|agents)/[A-Za-z0-9_./-]+|(rules|skills)/[A-Za-z0-9_./-]+/(RULE|SKILL)\.md|CLAUDE\.md' "$f" | head -1)
       if [ -n "$pointer" ]; then
-        expanded=$(eval echo "$pointer")
+        # Normalize bare paths to ~/.claude/... — otherwise ~/.claude/rules doesn't
+        # exist on some setups (rules can live in agent-runtime-kit repo). We try
+        # ~/.claude/ first, then fall back to matching in the user's shirbruchim-github
+        # kit, then bare.
+        case "$pointer" in
+          ~/*) expanded=$(eval echo "$pointer") ;;
+          CLAUDE.md) expanded="$HOME/.claude/CLAUDE.md" ;;
+          rules/*|skills/*) expanded="$HOME/.claude/$pointer" ;;
+          *) expanded="$pointer" ;;
+        esac
         if [ -e "$expanded" ]; then
           status="OK"
         else
-          status="MISSING_TARGET"
+          # Try the agent-runtime-kit fallback for rules
+          case "$pointer" in
+            rules/*)
+              alt="$HOME/shirbruchim-github/agent-runtime-kit/$pointer"
+              if [ -e "$alt" ]; then status="OK"; expanded="$alt"; else status="MISSING_TARGET"; fi
+              ;;
+            *) status="MISSING_TARGET" ;;
+          esac
         fi
         printf '%s\t%s\t%s\n' "$(basename "$f")" "$status" "$pointer"
       else

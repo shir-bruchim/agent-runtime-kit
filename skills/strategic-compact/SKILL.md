@@ -38,7 +38,7 @@ Hook scripts on disk:
 !`ls -1 ~/.claude/hooks/ 2>/dev/null`
 
 Hooks + MCP + plugins configured in settings.json:
-!`grep -E '"(hooks|mcpServers|plugins|marketplaces|skillOverrides|skillListingBudgetFraction)"' ~/.claude/settings.json 2>/dev/null | head -40`
+!`bash ~/.claude/skills/strategic-compact/scripts/settings-features.sh`
 
 Today:
 !`date -u +%Y-%m-%dT%H:%M:%SZ`

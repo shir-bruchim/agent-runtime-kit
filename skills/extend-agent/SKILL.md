@@ -174,6 +174,11 @@ What would you like to create?
 description: What this command does (appears in /help)
 argument-hint: [optional-arg]
 allowed-tools: Bash(git add:*), Bash(git commit:*)  # Optional
+# Note: allowed-tools matches per-pipeline-stage. `Bash(grep:*)` does NOT
+# cover `grep ... | head` — the `head` tail is classified separately.
+# Enumerate every stage or wrap the pipeline in a script. See
+# `~/.claude/skills/strategic-compact/references/claude-code-best-practices.md`
+# §Settings keys for full rationale.
 ---
 
 <objective>
@@ -308,6 +313,7 @@ See `skills/security/hooks/` for working hook script examples.
 - Keep SKILL.md under 500 lines — move detailed content to `references/` subdirectory
 - Description is critical — Claude uses it to decide when to invoke. Be specific about triggers.
 - Use progressive disclosure: lean SKILL.md routes to detailed workflow/reference files
+- **Dynamic-context injection (`` !`cmd` ``) runs under the invocation's working-directory sandbox.** Direct reads of files outside the current project (`grep ~/.claude/settings.json`, `cat ~/.claude/some-file`) are BLOCKED at every invocation — the sandbox rejects the read before the skill body loads, breaking the skill in every session. Safe: `ls ~/.claude/<subdir>/` (directory listing, no file content), `date`, `git status`. Unsafe: any `grep`/`cat`/`find` targeting a specific file under `$HOME` outside the working project. Fix: move the read into a script under `~/.claude/skills/<name>/scripts/*` and pre-approve the scripts dir via `allowed-tools: Bash(bash ~/.claude/skills/<name>/scripts/*)`. That single allow-tool grants the script's own read access without triggering the grep sandbox.
 
 **Subagent execution model — critical constraints:**
 - Subagents **cannot** use `AskUserQuestion` or wait for user input

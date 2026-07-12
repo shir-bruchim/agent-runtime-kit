@@ -16,6 +16,7 @@ Universal coding standards that apply regardless of language or framework.
 - **Avoid abbreviations**: `userId` not `uid`, `configuration` not `cfg`
 - **Never reach for `hasattr` / `getattr` / reflection when you know the type.** You wrote the function signature, you know what object you pass and accept — so you know whether the attribute exists. Just access `obj.attribute` directly. Same applies to `dict.get(key, default)` when you know the key is always present (use `obj["key"]`). Reflection is for genuinely-dynamic dispatch (plugin loaders, ORM column iteration); it's NOT for "I'm too lazy to track which fields a dataclass has." Bad code: `getattr(resources, attr_name).extend(ids)`. Good code: `getattr` is fine for SAFETY against a not-yet-set attribute on a *third-party* object you don't control, but inside your own modules where you wrote the dataclass — use a `dict[str, list]` keyed by name, or explicit per-attribute assignment.
 - **Never mutate source files via `python -c`, `sed -i`, `awk -i inplace`, or heredoc redirection.** Use `Read` → `Edit` (or `Write`) exclusively for any file tracked in git — including tests, Dockerfiles, CI configs, Terraform, migrations. Inline shell mutation bypasses the diff preview and any protect-files hooks, and mangles multi-line content silently. `Edit` also requires a prior `Read`, so it fails loudly when you didn't inspect the file first. Bash is fine for the file's *content* being read into a variable or piped elsewhere — it's the WRITE path that must go through the tool.
+- **Write to the project's linter on the first pass.** Before writing style-sensitive code (column-aligned dicts, wide tables, long import blocks), check the project's lint config (`.flake8`, `.eslintrc`, `pyproject.toml`, `tsconfig.json`, etc.) for the constraints — line length, alignment rules (e.g., flake8 E241 forbids multiple spaces after `:`), unused-import rules, trailing-newline rules. Write to the config from the start; don't ship pretty-but-lint-failing code planning to fix in a formatter pass. Pre-commit / pre-push hooks reject the push and force an amend cycle. Alignment for readability belongs in a comment header (`# col1  col2  col3`) — never inside the code the linter parses.
 
 ## Function Design
 
@@ -79,6 +80,8 @@ MAX_RETRIES = 3
 ```
 
 Write comments for: complex algorithms, non-obvious business rules, workarounds for external constraints.
+
+**Default is NO comment.** Add one only when a naive reader would ask "why this weird construction?" and the answer is a specific past bug or a subtle invariant — kept to ONE line. When editing code that already has a comment block, trim it, don't extend it. Rationale citing PR history, options-not-taken, or restating what the code obviously does — delete before showing the edit. Terse over verbose; well-named identifiers already explain WHAT.
 
 ## File Organization
 

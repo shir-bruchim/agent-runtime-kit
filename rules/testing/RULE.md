@@ -10,6 +10,17 @@ description: Universal testing standards — what to test, naming, AAA structure
 Test: business logic, edge cases, error conditions, integration points
 Don't test: getters/setters, framework code, language built-ins, generated code
 
+## Ordering: Test-First for Non-Trivial Changes
+
+For any change with real logic, write the failing test before the implementation and run it to confirm it fails (red). Then write the minimum production code to make it pass (green). Refactor with the test as safety net. The red step is non-optional — a test that passes before you write the code is testing the wrong thing.
+
+Exceptions worth naming out loud (say so before skipping the red step):
+- Pure config or dependency bumps with no behavior change.
+- Trivial one-line fixes where the failure mode is caught by the existing suite.
+- Exploratory spikes that you'll throw away before shipping.
+
+For the full red-green-refactor loop see `~/.claude/skills/testing/workflows/tdd.md`.
+
 ## Test Pyramid (Summary)
 
 - **Unit tests** (most): fast, isolated, one scenario each

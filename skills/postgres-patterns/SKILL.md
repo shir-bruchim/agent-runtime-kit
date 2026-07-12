@@ -70,7 +70,11 @@ async def with_integrity_translation(work, *, context: str):
     try:
         return await work()
     except IntegrityError as exc:
-        code = getattr(exc.orig, "pgcode", None)
+        # Async ORM drivers wrap the driver exception in their own dbapi shim;
+        # the real driver exception is at `.orig.__cause__`, not `.orig`.
+        # For sync drivers `.__cause__` is None → falls back to `.orig`.
+        driver_exc = getattr(exc.orig, "__cause__", None) or exc.orig
+        code = getattr(driver_exc, "pgcode", None)
         if code == "23505":  # unique_violation
             raise HTTPConflict(f"{context}: unique constraint violation") from exc
         if code == "23503":  # foreign_key_violation
@@ -79,6 +83,8 @@ async def with_integrity_translation(work, *, context: str):
             raise HTTPUnprocessable(f"{context}: required field missing") from exc
         raise
 ```
+
+**Driver-wrapping trap.** Async engines (SQLAlchemy `postgresql+asyncpg`, and equivalents in other stacks) route every raw driver exception through the ORM's own dbapi shim (`raise translated_error from error`), so `exc.orig` is the shim and the real exception is at `exc.orig.__cause__`. A `getattr(exc.orig, "pgcode", …)` typed-dispatch that works on the sync driver returns `None` on async and every branch falls through. Diagnostic tell: the response payload contains `<class 'asyncpg.exceptions.XxxError'>: <message>` — that's the shim's `"%s: %s" % (type, error)` format. Unit-test fakes must mirror the wrapping shape (`dbapi_exc.__cause__ = real_driver_exc`), or CI catches what local tests miss.
 
 Why here and not elsewhere:
 - **Not in CRUD** — the transaction hasn't committed yet; CRUD helpers should stay session-agnostic and let integrity errors bubble.

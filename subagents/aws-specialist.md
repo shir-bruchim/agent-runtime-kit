@@ -66,6 +66,7 @@ def handler(event, context):
 - Lifecycle rules: transition to IA after 30d, Glacier after 90d
 - Block public access at account level, grant explicitly per bucket
 - Use S3 event notifications for processing pipelines
+- **Async Python + AWS:** use `boto3` + `asyncio.to_thread` (or `run_in_executor`), not `aioboto3` / `aiobotocore` / community async S3 clients, unless the team has vetted the alternative. Rationale in `~/.claude/rules/patterns/RULE.md` §Official SDK by Default.
 </s3_patterns>
 
 <rds_patterns>
