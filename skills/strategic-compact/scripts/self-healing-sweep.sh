@@ -130,8 +130,11 @@ if [ -n "$MEM_DIR" ] && [ -d "$MEM_DIR" ]; then
         # exist on some setups (rules can live in agent-runtime-kit repo). We try
         # ~/.claude/ first, then fall back to matching in the user's shirbruchim-github
         # kit, then bare.
+        # `~/*` in a case-pattern is a glob, NOT tilde expansion — bash won't
+        # match a literal-string `~/foo/bar` against it. Match `\~*` (escaped
+        # tilde, treated as literal) and expand via $HOME manually.
         case "$pointer" in
-          ~/*) expanded=$(eval echo "$pointer") ;;
+          \~/*) expanded="$HOME/${pointer#\~/}" ;;
           CLAUDE.md) expanded="$HOME/.claude/CLAUDE.md" ;;
           rules/*|skills/*) expanded="$HOME/.claude/$pointer" ;;
           *) expanded="$pointer" ;;
