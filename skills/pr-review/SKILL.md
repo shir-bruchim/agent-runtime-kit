@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: "Reviews a GitHub PR diff for correctness, security, tests, architecture. Use when asked to review a PR or pull request."
+description: Structured GitHub PR/diff review across correctness, security, tests, and architecture with severity ratings. Use to review a PR or pull request. (Built-in /code-review for a quick working-tree diff; this is the full multi-dimension PR pass.)
 allowed-tools: Bash, Read, Grep, Glob
 ---
 

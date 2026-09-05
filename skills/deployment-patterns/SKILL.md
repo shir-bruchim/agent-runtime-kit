@@ -105,7 +105,7 @@ docker compose up -d --no-deps app       # Redeploy previous image
 </rollback>
 
 <production_readiness>
-Universal Application + Infrastructure readiness items live in `~/.claude/rules/infrastructure/references/deployment-checklist.md` (entry: `~/.claude/rules/infrastructure/RULE.md` §"Deployment — Core Rules"). Operations items kept here because they're org-process, not infra-pattern:
+Universal application + infrastructure deployment guardrails (tests pass, migrations before app deploy, health check, rollback) live in `~/.claude/rules/infrastructure/RULE.md`. Operations items kept here because they're org-process, not infra-pattern:
 
 **Operations:**
 - [ ] Rollback plan documented

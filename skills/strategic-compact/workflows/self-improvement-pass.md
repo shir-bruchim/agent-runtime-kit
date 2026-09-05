@@ -130,7 +130,7 @@ Also drop anything already on the "Don't re-promote" list in `MEMORY.md` (the in
 
 For each rule in `ALL_FEEDBACK`, decide which extension(s) in `CANDIDATE_DESTINATIONS` are the natural home. A single rule can land in multiple targets. Heuristics:
 
-- Test conventions → skill: `testing`, `implement-jira-ticket`, `tdd-guide`
+- Test conventions → skill: `testing`, `implement-jira-ticket`
 - Code-review judgement → skill: `pr-review`, `code-review`
 - Self-review before presenting → skill: `pr-review`, `implement-jira-ticket`
 - Git commit / PR description conventions → skill: `git`, `pr-review`, `commit`, `pr`

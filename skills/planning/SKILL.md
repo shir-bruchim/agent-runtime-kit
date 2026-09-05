@@ -1,6 +1,6 @@
 ---
 name: planning
-description: Create phase-based plans with file paths and verification. Use for features, refactors, or multi-step work.
+description: Phase-based implementation plans with explicit file paths and per-phase verification. Use for multi-step features/refactors after scoping. (superpowers:brainstorming/writing-plans own upstream ideation; this adds file-level detail.)
 ---
 
 <essential_principles>
@@ -74,7 +74,7 @@ Every PLAN.md must include a `## QA / Verification` section enumerating HOW the 
 
 Required sub-items in the QA section:
 
-1. **Skills to invoke** — list the relevant skills (e.g., `testing`, `tdd-guide`, `pr-review`, `security`, `verification-loop`, `debugging`). Plans that touch test code should ALWAYS list `testing`. Plans that ship to production should ALWAYS list `security` and `pr-review`.
+1. **Skills to invoke** — list the relevant skills (e.g., `testing`, `pr-review`, `security`, `verification-loop`, `debugging`). Plans that touch test code should ALWAYS list `testing`. Plans that ship to production should ALWAYS list `security` and `pr-review`.
 2. **Subagent fan-out** — for any plan with ≥3 independent modules, list the parallel subagent invocations (e.g., `tester` per module, `reviewer` on the diff, `security` audit, `web-research` on idioms). Default to spawning these in one message so they run concurrently.
 3. **Per-module unit tests** — one line per new module/script: test file path + key behaviors covered. "Module exists" doesn't satisfy this; "what does it do?" → "test it."
 4. **Smoke run** — the exact command that proves end-to-end wiring (e.g., `make load-test ENV=local`, `pytest tests/ -q`, `docker compose --profile X up`). If no such command exists, propose adding one.

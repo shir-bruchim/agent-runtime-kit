@@ -2,6 +2,7 @@
   "_comment": "Skill routing rules. Used by scripts/compile-claude-routing.py to generate a compact routing block. OPT-IN — not installed by default.",
   "_usage": "Run: python3 scripts/compile-claude-routing.py --dry-run  to preview output.",
   "_format": "Each skill entry supports: name, description, keywords, intentPatterns, filePaths (auto-trigger globs), agentMapping (subagent to invoke alongside), priority (high|medium|low), profile (core|full).",
+  "_ownership": "Workflow order: brainstorm/scope → plan → implement → verify → review → ship. The superpowers plugin OWNS generic process (brainstorming, systematic-debugging, TDD red-green loop, writing/executing-plans, verification-before-completion, code-review). Kit skills own stack execution (testing/postgres/api-design/docker/deployment), integrations (implement-jira-ticket, git), and autonomous orchestration (ralph-*). When both could match, defer generic process to superpowers and use the kit skill for the stack/integration specifics. Native description-based auto-triggering handles this — do NOT compile this block into CLAUDE.md (it adds always-on tokens).",
 
   "skills": [
     {
@@ -80,9 +81,9 @@
       "profile": "full"
     },
     {
-      "name": "design-doc-mermaid",
-      "description": "Create Mermaid diagrams and design documents from text or code.",
-      "keywords": ["diagram", "mermaid", "architecture diagram", "sequence diagram", "design doc"],
+      "name": "design-doc-diagrams",
+      "description": "Write design docs, READMEs, Jira tickets, RFCs, with optional draw.io diagrams.",
+      "keywords": ["diagram", "draw.io", "architecture diagram", "sequence diagram", "design doc", "RFC"],
       "intentPatterns": ["create.*diagram", "generate.*mermaid", "document.*architecture", "code.*diagram"],
       "agentMapping": "architect",
       "priority": "medium",

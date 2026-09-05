@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-description: Verification driven by built-in /loop. Use when verifying an implementation or running a final check before commit.
+description: Final pre-commit gate via built-in /loop — runs build, types, lint, tests, security, diff review. Use as the last check before commit/PR. (superpowers:verification-before-completion owns the evidence-before-claims principle.)
 ---
 
 <objective>

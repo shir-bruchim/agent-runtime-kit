@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Testing guidance for pytest, Jest/Vitest, Go, and TDD. Use when writing tests or improving coverage.
+description: Stack-specific test patterns — pytest (asyncio_mode=auto), Jest/Vitest, Go — fixtures, mocking, coverage. Use when writing or improving tests. (superpowers:test-driven-development owns the red-green loop.)
 ---
 
 <objective>
@@ -8,7 +8,7 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 </objective>
 
 <essential_principles>
-Universal test foundations — test pyramid, AAA structure, naming-as-behavior-sentence, ~80% coverage default, test independence, behavior-not-implementation — live in `~/.claude/rules/testing/RULE.md` (with deep-dives in `~/.claude/rules/testing/references/`). Read those first; the pytest-specific add-ons (real objects for domain types, factories in conftest, headers-asserted-too, module-level mutable state) live in `<pytest_principles>` below.
+Universal test foundations — test pyramid, AAA structure, naming-as-behavior-sentence, ~80% coverage default, edge cases, behavior-not-implementation — live in `~/.claude/rules/testing/RULE.md`. Read that first; the pytest-specific add-ons (real objects for domain types, factories in conftest, headers-asserted-too, module-level mutable state) live in `<pytest_principles>` below.
 </essential_principles>
 
 <pytest_principles>

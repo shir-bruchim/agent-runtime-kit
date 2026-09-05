@@ -3,75 +3,13 @@ name: git-workflow
 description: Git branching strategy, conventional commit messages, PR conventions, rebase vs merge guidance, and protected files list.
 ---
 
-# Git Workflow Conventions
+# Git Workflow
 
-## Branch Strategy
+- **Never commit directly to `main`** — always branch: `feat/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*`.
+- **Conventional commits:** `type(scope): summary` (≤50 chars). Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`. Body explains WHY, not WHAT. Footer `Closes #142` to auto-close.
+- **PRs:** one concern each; self-review your diff first; description says what/why/how-to-test; don't merge your own PR.
+- **Rebase** feature branches onto main before merging (linear history); **never rebase pushed commits**.
+- **Splitting a big PR that shares a schema/deps change:** a slice can't be both independent-off-main AND individually integration-green. Either **stack** the slices, or land the shared **schema+deps as one foundational PR first**, then cut independent slices off it.
 
-```
-main          → Always deployable, protected
-feature/*     → New features
-fix/*         → Bug fixes
-refactor/*    → Refactoring without behavior changes
-chore/*       → Dependency updates, CI changes
-docs/*        → Documentation only
-```
-
-**Never commit directly to main.** Always work in a branch.
-
-## Commit Messages (Conventional Commits)
-
-```
-type(scope): short description (50 chars max)
-
-Optional body explaining WHY, not WHAT (72 chars per line)
-
-Optional footers
-```
-
-**Types:**
-- `feat` — New feature visible to users
-- `fix` — Bug fix
-- `refactor` — Code change with no behavior change
-- `test` — Adding or updating tests
-- `docs` — Documentation only
-- `chore` — Build, CI, dependency updates
-- `perf` — Performance improvements
-
-**Good commit messages:**
-```
-feat(auth): add JWT refresh token rotation
-
-Refresh tokens now rotate on every use to prevent replay attacks.
-The old token is invalidated immediately after issuing a new one.
-
-Closes #142
-```
-
-**Bad commit messages:**
-```
-fix bug
-WIP
-updates
-```
-
-## Pull Request Conventions
-
-- **Small PRs**: One concern per PR. Large PRs get poor reviews.
-- **Self-review first**: Read your own diff before requesting review
-- **Description required**: What, why, how to test
-- **Link issues**: "Closes #42" in description auto-closes the issue
-- **Don't merge your own PRs**: Get at least one review
-- **Splitting one big PR that shares a foundational schema/deps change**: slices can't be BOTH independent-off-main AND individually integration-green — a slice that installs the new dependency/model but lacks the matching schema (or vice-versa) fails integration in isolation. Either **stack** the slices (each builds on the prior) or land the shared **schema+deps as one foundational PR first**, then cut the independent code slices off it. Unit tests can stay green per-slice; integration only goes green once the shared prerequisite is present.
-
-## Rebasing vs Merging
-
-- **Rebase** feature branches onto main before merging (clean linear history)
-- **Merge** when merging feature to main (preserves the branch structure)
-- **Never rebase** pushed commits (rewrites shared history)
-
-## Protected Files (Never Commit)
-
-- `.env*` files (use `.env.example` with placeholder values)
-- `*.pem`, `*.key`, credential files
-- Editor config files (`.idea/`, `.vscode/` — add to `.gitignore`)
-- Build artifacts (`dist/`, `build/`, `__pycache__/`)
+## Never commit
+`.env*` (commit `.env.example` with placeholders), `*.pem`/`*.key`/credentials, editor config (`.idea/`, `.vscode/`), build artifacts (`dist/`, `build/`, `__pycache__/`).

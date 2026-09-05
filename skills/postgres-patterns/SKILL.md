@@ -169,7 +169,7 @@ SELECT indexrelname, idx_scan FROM pg_stat_user_indexes WHERE idx_scan = 0;
 </anti_patterns>
 
 <performance>
-Universal DB performance rules (EXPLAIN ANALYZE, index FKs, connection pooling, avoid `SELECT *`, LIMIT on user-facing queries) live in `~/.claude/rules/performance/references/db-performance.md` (summary in `~/.claude/rules/performance/RULE.md`). PostgreSQL-specific patterns (GIN/BRIN, RLS, FOR UPDATE SKIP LOCKED) below.
+Universal DB performance guardrails (EXPLAIN ANALYZE, index FKs, connection pooling, no N+1) live in `~/.claude/rules/performance/RULE.md`. PostgreSQL-specific patterns (GIN/BRIN, RLS, FOR UPDATE SKIP LOCKED, avoid `SELECT *`, LIMIT user-facing queries) below.
 </performance>
 
 <success_criteria>

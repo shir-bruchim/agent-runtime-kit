@@ -94,7 +94,7 @@ Compose derives its **project name from the working directory**. Two concurrent 
 </concurrent_runs>
 
 <security>
-Universal Docker security rules (pin base, non-root, no secrets in image, .dockerignore, minimal base, drop capabilities) live in `~/.claude/rules/infrastructure/RULE.md` §"Docker — Core Rules" (with examples in `~/.claude/rules/infrastructure/references/docker.md`). Compose-specific operational guidance is in `<compose_dev>` / `<volume_strategies>` below.
+Universal Docker security guardrails (pin base, non-root, no secrets in image, .dockerignore, minimal base, drop capabilities) live in `~/.claude/rules/infrastructure/RULE.md`. Multi-stage build examples and Compose-specific operational guidance are in `<compose_dev>` / `<volume_strategies>` below.
 </security>
 
 <volume_strategies>
@@ -108,7 +108,7 @@ Universal Docker security rules (pin base, non-root, no secrets in image, .docke
 </volume_strategies>
 
 <anti_patterns>
-See `~/.claude/rules/infrastructure/references/docker.md` for the canonical anti-patterns list (and `~/.claude/rules/infrastructure/RULE.md` §"Docker — Core Rules" for the summary).
+Core Docker guardrails live in `~/.claude/rules/infrastructure/RULE.md`; the Compose/dev anti-patterns specific to this skill are covered in the sections above.
 </anti_patterns>
 
 <success_criteria>

@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: Methodical debugging with evidence and hypothesis testing. Use when troubleshooting fails or root cause is unclear.
+description: Stack-specific debugging (Python/async/pdb, logs, stack traces) when root cause is unclear. superpowers:systematic-debugging owns the core hypothesis loop; escalate isolated hard bugs to the python-debugger subagent.
 ---
 
 <objective>
