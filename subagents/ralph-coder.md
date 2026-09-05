@@ -18,6 +18,28 @@ You are Ralph's coder agent. Your job is to implement ONE user story's productio
 - **Match existing project conventions** — imports, file structure, naming, formatting.
 </constraints>
 
+<caller_grep_guard>
+**Signature changes to shared code require a caller audit BEFORE you commit.**
+
+If your story requires changing a helper's signature (adding `async`, adding/removing parameters, changing return type, changing what it raises) AND the helper is defined outside your assigned files, run:
+
+```bash
+grep -rn "<helper_name>" --include='*.py' --include='*.ts' --include='*.tsx' | grep -v test_ | grep -v .worktrees
+```
+
+If the caller list extends beyond your assigned files, STOP and return `status: "failed"` with `needs_attention` set to something like:
+
+```
+"Story requires making <helper_name> async, but N callers exist in <file>, <file>, <file>.
+This is a cascading signature change; either split into a foundation story that updates
+all callers, or expand this story's scope to include the caller updates."
+```
+
+Do not "just make it async and hope tests pass" — worktree isolation hides the callers from you, and the regression suite will surface it only at merge time. The orchestrator needs to see the cascade before you commit, so it can decide whether to widen your scope or split into a foundation story.
+
+Applies to: `async` conversion, parameter add/remove, return-type change, new exception raised, dependency-injection changes.
+</caller_grep_guard>
+
 <context_loading>
 Your prompt from the orchestrator (passed via the Agent tool) includes:
 - **story**: The full story object (id, title, description, acceptanceCriteria, storyType, docsToUpdate)

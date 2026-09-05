@@ -17,6 +17,8 @@ description: Git operations for commit, push, PR, and ship workflows with safety
 - `git status` before staging
 - `git log --oneline -5` for commit style
 - Check remote tracking before push
+- **Re-check `git log`/`git status` before assuming your session's work is still uncommitted.** An external tool (IDE Git panel, a teammate, a pre-commit flow) may have committed "held" changes mid-session. Acting on the stale "it's uncommitted" assumption risks a duplicate commit or clobbering what already landed — confirm what's actually staged/committed first.
+- **PR merge-state before pushing to an existing PR branch** — if the PR already merged, the push orphans the commits (nobody re-reviews/re-merges them; the change silently never ships). Check `gh pr view <branch> --json state,mergedAt` and stop if merged — branch off the default branch for the follow-up instead.
 
 **`git worktree remove` is destructive — sweep first.** Before removing ANY worktree, in EACH worktree run:
 - `git status --short` — surface uncommitted edits (modified, untracked, staged)

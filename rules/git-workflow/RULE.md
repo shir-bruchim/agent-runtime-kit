@@ -61,6 +61,7 @@ updates
 - **Description required**: What, why, how to test
 - **Link issues**: "Closes #42" in description auto-closes the issue
 - **Don't merge your own PRs**: Get at least one review
+- **Splitting one big PR that shares a foundational schema/deps change**: slices can't be BOTH independent-off-main AND individually integration-green — a slice that installs the new dependency/model but lacks the matching schema (or vice-versa) fails integration in isolation. Either **stack** the slices (each builds on the prior) or land the shared **schema+deps as one foundational PR first**, then cut the independent code slices off it. Unit tests can stay green per-slice; integration only goes green once the shared prerequisite is present.
 
 ## Rebasing vs Merging
 

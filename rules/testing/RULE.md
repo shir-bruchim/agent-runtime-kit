@@ -58,6 +58,8 @@ def test_apply_discount_reduces_total():
     assert cart.total == 135.0  # 150 * 0.90
 ```
 
+**Share setup, don't copy it.** Extract repeated arrange-phase construction into reusable fixtures or factory helpers (e.g. `conftest.py` fixtures taking `**overrides`) so each test declares only what's unique to its scenario. Copy-pasted arrange blocks drift apart and hide what each test actually varies.
+
 ## Edge Cases
 
 Always consider: empty inputs, boundary values, invalid types, concurrent access, idempotency. For the full list with examples, see [references/edge-cases.md](references/edge-cases.md).

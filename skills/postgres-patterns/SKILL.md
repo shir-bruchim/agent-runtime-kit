@@ -37,6 +37,11 @@ INSERT INTO users (email, name) VALUES ($1, $2)
 ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, updated_at = NOW();
 ```
 
+**Prefer UPSERT over get-before-insert** for idempotent writes: one round-trip, race-free (no TOCTOU gap that a concurrent/redelivered write slips through). Requires a unique **index** (or PK) on the conflict target — `ON CONFLICT (cols)` (and SQLAlchemy `index_elements=[...]`) **infers any** unique index on those columns; you only reference a name with `ON CONFLICT ON CONSTRAINT <name>`. So the uniqueness can be a plain `CREATE UNIQUE INDEX` — including an online `CREATE UNIQUE INDEX CONCURRENTLY` (see partitioned-tables below) instead of a blocking `ADD CONSTRAINT ... UNIQUE`; the upsert works identically. Pick the clause by what you need back:
+- `ON CONFLICT DO NOTHING` returns **no row on conflict** → `RETURNING id` yields nothing when the row already existed; add a SELECT-by-natural-key fallback (or `DO UPDATE SET id = id RETURNING id`) when the caller needs the id.
+- `ON CONFLICT ... DO UPDATE ... RETURNING` always returns the row but **rewrites** it (bumps `updated_at`, fires triggers, WAL/bloat) even on a no-op — use only when you actually want the write.
+- Pre-PG15, `NULL`s are **distinct** in a unique index (rows with a NULL key never conflict); use `NULLS NOT DISTINCT` (PG15+) if a NULL should collide.
+
 ### Cursor Pagination (better than OFFSET)
 ```sql
 SELECT * FROM posts WHERE created_at < $1 ORDER BY created_at DESC LIMIT 20;
@@ -58,6 +63,42 @@ WITH next_job AS (
 )
 UPDATE jobs SET status = 'processing' WHERE id = (SELECT id FROM next_job)
 RETURNING *;
+```
+
+### Partitioned tables — FKs and concurrent index builds
+
+- **No single-column FK to a partitioned parent with a composite PK.** A partitioned table's unique constraint/PK must include the partition key, so `REFERENCES parent(id)` (id alone) is not creatable — Postgres rejects it. Model the relation with an app-level link table (no DB FK) and enforce integrity in the application.
+- **`CREATE INDEX CONCURRENTLY` can't run in a transaction and isn't supported on a partitioned parent.** Build it online per-partition: `CREATE INDEX ... ON ONLY <parent>` (catalog-only, INVALID) → `CREATE INDEX CONCURRENTLY` on each existing partition (generate via psql `\gexec`) → `ALTER INDEX <parent> ATTACH PARTITION <child>` (parent auto-validates once all children attach). Diagnostic: the parent index's `indisvalid = false` (relkind `I`) means a partition is still unattached — check `count(pg_inherits WHERE inhparent = '<parent_index>'::regclass)` equals the partition count.
+- **Dropping on a partitioned table:** you canNOT `DROP INDEX CONCURRENTLY` a partitioned (parent) index — use a plain `DROP INDEX <parent>` (it cascades to the attached child indexes). A backing index of a UNIQUE **constraint** can't be dropped directly (`ERROR: cannot drop index ... because constraint ... requires it`) — drop the constraint with `ALTER TABLE ... DROP CONSTRAINT`. On dev, the simplest rebuild of a partitioned unique index is one blocking `CREATE UNIQUE INDEX <parent> (cols)` (no `ON ONLY`) — it recursively builds + attaches every child in one statement.
+- **`\gexec` (and every psql `\`-meta-command: `\copy`, `\set`) run ONLY under `psql`.** A migration that generates DDL via `\gexec` and is executed through a non-psql client (JDBC, DataGrip, DBeaver, an ORM driver) silently runs just the plain SQL and skips the generated statements — e.g. it creates the `ON ONLY` parent index but attaches **zero** partitions, leaving it INVALID. Migrations using `\gexec`/`\copy` MUST run via `psql -f`; confirm the deploy runner uses psql (not a driver).
+
+### Async SQLAlchemy 2.x — multi-entity selects preserve Row tuples
+
+`select(A, B)` returns Row objects. Calling `.scalars()` on the result unpacks only the FIRST entity — the rest silently disappear. Pick the API by shape, not by habit:
+
+```python
+# Single-entity select → .scalars() collapses Row → entity
+rows = (await session.execute(select(A))).scalars().all()
+# → list[A]
+
+# Multi-entity select → .all() preserves Row tuples
+rows = (await session.execute(select(A, B))).all()
+# → list[Row]; unpack: for a, b in rows: ...
+
+# Aggregate/column select → .all() returns Row of scalars
+rows = (await session.execute(select(func.count(A.id), A.status))).all()
+# → list[Row]; unpack: for count, status in rows: ...
+```
+
+**Base-class helper trap.** A generic `execute_row_list_query` that always calls `.scalars().all()` breaks multi-entity callers silently — `select(A, B)` returns `list[A]` with `B` gone. Either name the helpers by shape (`execute_entity_list_query` vs `execute_row_list_query`) or pass a `mode: Literal["scalars", "rows"]` argument.
+
+**AsyncMock test trap.** When mocking `session.execute`, `.scalars().all()` and `.all()` must both return correct shapes. A test that only sets `.scalars.return_value.all.return_value = [...]` passes even when prod is calling `.all()` and getting a MagicMock back. Fixture recipe:
+
+```python
+result = MagicMock()
+result.scalars.return_value.all.return_value = entity_list  # for single-entity
+result.all.return_value = row_tuples                        # for multi-entity
+session.execute = AsyncMock(return_value=result)
 ```
 
 ### Error translation at the logic-layer boundary
@@ -92,6 +133,12 @@ Why here and not elsewhere:
 - **Not repeated per entry point** — every fresh call site would drift. One helper, `pgcode`-driven mapping, every entry point wraps.
 
 Route handlers only translate HTTP-specific concerns (auth, rate limits); domain errors bubble up already-shaped.
+
+### Two-tier session split — only when composed cross-module
+
+The pattern `foo_in_session(db, ...)` (accepts an existing transaction) + `foo(...)` (opens a session and delegates) is useful when a second logic module wants to call `foo` inside its own transaction. It is NOT useful as a default: adding the split everywhere doubles the module surface, forces callers to pick the right variant, and slows every future rename.
+
+Rule: add the `_in_session` variant only after grepping and confirming an actual cross-module caller needs to compose the work inside its own transaction. Without a caller, keep one function that opens the session. Verified failure mode: adding variants speculatively to N modules forces a full reversal pass when the split turns out unused; the graph of "who needs to reuse whose session" is easier to read from grep than from anticipation.
 </common_patterns>
 
 <anti_patterns>
