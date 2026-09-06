@@ -1,9 +1,11 @@
-# GEMINI.md — Project Context for Gemini CLI
-
-> This file provides project context to Gemini CLI (gemini --context GEMINI.md).
-> Edit it to match your project's actual setup.
-
 ---
+inclusion: auto
+---
+
+# Project Conventions — Agent Runtime Kit
+
+> This steering file is auto-included in all Kiro conversations.
+> Edit it to match your project's actual setup.
 
 ## Project Context
 
@@ -13,17 +15,12 @@ This is a [describe your project here].
 Primary language: **TypeScript** (or Python / Go / etc.)
 Framework: [your framework]
 
----
-
 ## Coding Standards
 
-- Follow conventions in `.claude/rules/`, `.cursor/rules/`, or `.kiro/steering/`
 - Names reflect purpose: `getUserByEmail()` not `getUser()`
 - Functions do one thing; return early on validation failure
 - No magic numbers — use named constants
 - Comments explain **why**, not **what**
-
----
 
 ## Test Command
 
@@ -35,8 +32,6 @@ npm test
 npm test -- path/to/test.spec.ts
 ```
 
----
-
 ## Build / Dev
 
 ```bash
@@ -47,8 +42,6 @@ npm run dev
 npm run build
 ```
 
----
-
 ## Safety Rules
 
 - Never commit `.env` files or secrets
@@ -56,18 +49,14 @@ npm run build
 - Validate at system boundaries (user input, external APIs)
 - No debug `console.log` in committed code
 
----
+## Where Overrides Live
 
-## Key Files
+| Platform | Project overrides |
+|----------|------------------|
+| Kiro | `.kiro/steering/*.md` |
+| Claude Code | `.claude/rules/*.md` |
+| Cursor | `.cursor/rules/*.mdc` |
+| All agents | `AGENTS.md` |
 
-<!-- List important files Gemini should know about -->
-- `src/` — application source
-- `tests/` — test files
-- `.env.example` — required environment variables (copy to `.env`)
-
----
-
-## Installed from Agent Runtime Kit
-
+Installed from [Agent Runtime Kit](https://github.com/shir-bruchim/agent-runtime-kit).
 Profiles: CORE (default) / FULL — see `PROFILES.md`.
-Full kit docs: https://github.com/shir-bruchim/agent-runtime-kit

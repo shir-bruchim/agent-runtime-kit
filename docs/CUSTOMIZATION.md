@@ -209,6 +209,73 @@ Use Mapped[type] annotations for all columns.
 
 ---
 
+## Kiro-Specific Customization
+
+For Kiro, customization uses steering files in `.kiro/steering/` and hooks in `.kiro/hooks/`.
+
+**Create an always-on steering file:**
+```markdown
+---
+inclusion: auto
+---
+
+Always use tabs for indentation in this project.
+Never use console.log in production code.
+```
+
+**Create a file-triggered steering file:**
+```markdown
+---
+inclusion: fileMatch
+fileMatchPattern: "**/models/*.py"
+---
+
+All models must inherit from Base.
+Use Mapped[type] annotations for all columns.
+```
+
+**Create a manual (opt-in) steering file:**
+```markdown
+---
+inclusion: manual
+---
+
+Advanced deployment checklist...
+```
+Users include manual steering files via the `#` context key in Kiro chat.
+
+**Add an agent hook (`.kiro/hooks/lint-on-save.json`):**
+```json
+{
+  "name": "Lint on Save",
+  "version": "1.0.0",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["*.ts", "*.tsx"]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm run lint"
+  }
+}
+```
+
+**MCP servers (`.kiro/settings/mcp.json`):**
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
+               "ghcr.io/github/github-mcp-server"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_yourtoken" }
+    }
+  }
+}
+```
+
+---
+
 ## Selective Installation
 
 You don't have to install everything. Pick what's relevant:

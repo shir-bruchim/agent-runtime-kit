@@ -14,6 +14,8 @@ MCP (Model Context Protocol) servers extend your AI agent with external tool acc
 | Claude Code | Project-only | `.claude/settings.json` |
 | Cursor | Global (all projects) | `~/.cursor/mcp.json` |
 | Cursor | Project-only | `.cursor/mcp.json` |
+| Kiro | Global (all projects) | `~/.kiro/settings/mcp.json` |
+| Kiro | Project-only | `.kiro/settings/mcp.json` |
 
 Add your chosen servers under `"mcpServers"`:
 
@@ -25,7 +27,7 @@ Add your chosen servers under `"mcpServers"`:
 }
 ```
 
-After editing, restart Claude Code / Cursor to reload. Check with `claude mcp list` (Claude Code).
+After editing, restart Claude Code / Cursor / Kiro to reload. Check with `claude mcp list` (Claude Code).
 
 ---
 
@@ -171,6 +173,43 @@ Enables: APM, logs, metrics from groundcover's cloud-native observability platfo
 ```
 
 **Docs**: https://docs.groundcover.com/docs/mcp
+
+---
+
+### Context7 (Library Documentation)
+
+Enables: Up-to-date, version-specific library documentation and code examples fetched directly into agent context. Prevents hallucinated APIs and outdated code patterns.
+
+**Option A — Local (stdio, recommended):**
+```json
+"context7": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@upstash/context7-mcp"]
+}
+```
+
+**Option B — Remote (no local install):**
+```json
+"context7": {
+  "url": "https://mcp.context7.com/mcp"
+}
+```
+
+**With API key** (optional, for higher rate limits):
+```json
+"context7": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@upstash/context7-mcp", "--api-key", "YOUR_API_KEY"]
+}
+```
+
+Get a key: https://context7.com/dashboard (free tier available, key is optional)
+
+**Tip**: Add a rule so your agent auto-invokes Context7 without needing `use context7` in every prompt.
+
+**Docs**: https://github.com/upstash/context7
 
 ---
 

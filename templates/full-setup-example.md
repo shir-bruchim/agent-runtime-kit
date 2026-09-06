@@ -63,6 +63,23 @@ your-project/
 │   └── mcp.json                       # MCP server config
 ```
 
+### For Kiro, the agent creates:
+
+```
+your-project/
+├── .kiro/
+│   ├── steering/
+│   │   ├── conventions.md             # inclusion: auto — project conventions
+│   │   ├── base-conventions.md        # inclusion: auto — code style rules
+│   │   ├── security.md                # inclusion: auto — security practices
+│   │   ├── testing.md                 # inclusion: auto — test standards
+│   │   └── python-conventions.md      # inclusion: fileMatch, fileMatchPattern: "**/*.py"
+│   ├── hooks/
+│   │   └── lint-on-save.json          # Agent hook (optional)
+│   └── settings/
+│       └── mcp.json                   # MCP server config (optional)
+```
+
 ## Step 3: The CLAUDE.md Structure
 
 For a Python FastAPI project, CLAUDE.md would look like:
