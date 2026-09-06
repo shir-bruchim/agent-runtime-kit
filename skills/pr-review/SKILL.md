@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: "Reviews a GitHub PR diff for correctness, security, tests, architecture. Use when asked to review a PR or pull request."
+description: Structured GitHub PR/diff review across correctness, security, tests, and architecture with severity ratings. Use to review a PR or pull request. (Built-in /code-review for a quick working-tree diff; this is the full multi-dimension PR pass.)
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
@@ -26,6 +26,8 @@ If the user's request includes BOTH unresolved bot/reviewer comments AND a CI ru
 Bot comments often explain or contextualize the CI failure. Reading CI first risks fixing a symptom that the bot already proposed a different fix for.
 
 **Always fetch the canonical comment text before reasoning about it.** When the user pastes a bot comment excerpt and asks to address it, run `gh api repos/<o>/<r>/pulls/<n>/comments` and read the full body — user-pasted excerpts truncate. Arguing against a "fabricated" file reference that turns out to be in the part you didn't see is a self-inflicted credibility hit. Same applies symmetrically: bot comments can be wrong, but the burden of proof is "I read the source comment AND the relevant code, here's the disagreement," not "the user's paraphrase didn't include this so the bot must be hallucinating."
+
+**Don't conclude "0 unresolved comments" from a GraphQL `reviewThreads(isResolved:false)` filter alone.** It omits bot **suggestion** comments (Baz "Before applying, verify this suggestion…" entries and similar) — they don't carry the same resolution state, so the filter under-reports and yields a false empty queue. Cross-check with the REST `gh api repos/<o>/<r>/pulls/<n>/comments` list and read the bodies before telling the user a PR is comment-clean; a "0 unresolved" claim that the user then refutes with pasted open comments is an avoidable credibility hit.
 
 ### Step 1 — Fetch PR Diff
 ```bash

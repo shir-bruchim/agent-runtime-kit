@@ -1,88 +1,14 @@
 ---
 name: security
-description: Security best practices — input validation, secrets management, authN/authZ, sensitive data handling, dependency hygiene, and the OWASP checklist.
+description: Security best practices — input validation, secrets management, authN/authZ, sensitive data handling, dependency hygiene.
 ---
 
-# Security Best Practices
+# Security Guardrails
 
-## Input Validation
+- **Input:** validate type/length/format/range at boundaries; parameterized queries only (never f-string SQL); allow-lists over deny-lists; reject with 400, don't silently sanitize; server-side (client validation is UX only).
+- **Secrets:** never commit/log/return them; env vars only; hash passwords with bcrypt/argon2/scrypt (never MD5/SHA1).
+- **AuthN ≠ AuthZ:** check both server-side on every protected route. Guard against IDOR — a user changing `user_id=1` to `=2` must be rejected; rate-limit auth endpoints.
+- **Sensitive data:** HTTPS always; encrypt PII/payment at rest; don't log passwords/tokens/PII; collect the minimum.
+- **Deps:** keep updated; audit (`pip-audit`, `npm audit`); no abandoned packages.
 
-Validate ALL user input at system boundaries:
-
-```python
-# Bad: trusting user input
-query = f"SELECT * FROM users WHERE id = {user_id}"
-
-# Good: parameterized query
-query = "SELECT * FROM users WHERE id = %s"
-cursor.execute(query, (user_id,))
-```
-
-**Validation rules:**
-- Validate type, length, format, range
-- Reject and return 400 for invalid input (don't sanitize silently)
-- Use allow-lists over deny-lists (specify valid values, not invalid ones)
-- Validate server-side — client-side validation is UX only
-
-## Secrets Management
-
-**Never:**
-- Commit secrets (API keys, passwords, tokens) to git
-- Log secrets
-- Return secrets in API responses
-- Store plaintext passwords in database
-
-**Always:**
-- Use environment variables for secrets
-- Hash passwords with bcrypt/argon2/scrypt (never MD5/SHA1)
-- Rotate credentials when team members leave
-- Use least-privilege service accounts
-
-```python
-# Bad: hardcoded secret
-STRIPE_KEY = "sk_live_abc123..."
-
-# Good: from environment
-STRIPE_KEY = os.environ["STRIPE_SECRET_KEY"]
-```
-
-## Authentication & Authorization
-
-- **Authentication** = who are you? (identity)
-- **Authorization** = what can you do? (permissions)
-
-Both must be checked server-side on every request:
-
-```python
-# Check auth on every protected endpoint
-@router.get("/users/{user_id}/profile")
-async def get_profile(user_id: int, current_user: User = Depends(get_current_user)):
-    # Authorization: user can only see their own profile
-    if current_user.id != user_id and not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Access denied")
-    ...
-```
-
-**Common auth mistakes:**
-- Missing authorization check (authenticated ≠ authorized)
-- Client-controlled user IDs ("give me user 99 data" — check they own that resource)
-- Insecure direct object reference (IDOR) — user changes `user_id=1` to `user_id=2`
-- Missing rate limiting on auth endpoints (brute force)
-
-## Sensitive Data
-
-- Encrypt sensitive fields at rest (PII, payment info)
-- Use HTTPS always (no HTTP in production)
-- Don't log sensitive data (passwords, full tokens, PII)
-- Minimum necessary data collection
-
-## Dependency Security
-
-- Keep dependencies updated (security patches)
-- Audit dependencies: `npm audit`, `pip-audit`, `cargo audit`
-- Don't use abandoned packages
-- Review transitive dependencies for critical packages
-
-## OWASP / Common Vulnerability Checklist
-
-The canonical "Common Vulnerability Checklist" lives at [references/owasp-checklist.md](references/owasp-checklist.md). Reference it during security reviews; do not duplicate the items in other skills.
+Full OWASP Top-10 review checklist and safe-op patterns live in the lazy `security` skill — invoke it for reviews.

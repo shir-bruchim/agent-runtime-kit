@@ -1,41 +1,12 @@
 ---
 name: infrastructure
-description: Infrastructure and deployment conventions covering Docker, env management, deployment checklists, and CI/CD patterns.
+description: Infrastructure and deployment guardrails — env management, Docker, and deployment ordering.
 ---
 
-# Infrastructure & Deployment
+# Infrastructure Guardrails
 
-Core principles for containerization, environment management, and CI/CD. Deep-dives moved to `references/`.
+- **Env:** commit `.env.example` (placeholders only); `.env` / `.env.production` never committed (secrets manager); `.env.test` OK if secret-free.
+- **Docker:** pin base image versions (not `latest`); non-root user in prod; `.dockerignore` (node_modules/.env/.git); one process per container; health checks; multi-stage (builder → runtime).
+- **Deploy:** never deploy without passing tests; small reversible changes; DB migrations as a separate step BEFORE app deploy; health check must respond before shifting traffic; automated rollback on failure; blue-green/canary for zero-downtime.
 
-## Environment Management
-
-```
-.env.example    → Committed: shows required variables with placeholder values
-.env            → Never committed: actual values
-.env.test       → Test environment (safe to commit if no secrets)
-.env.production → Never committed, managed via secrets manager
-```
-
-## Docker — Core Rules
-
-- Pin base image versions (not `latest`)
-- Non-root user for production
-- `.dockerignore` to exclude node_modules, .env, .git
-- One process per container
-- Health checks defined
-- Multi-stage builds: separate builder from runtime image
-
-For Dockerfile + Compose examples, see [references/docker.md](references/docker.md).
-
-## Deployment — Core Rules
-
-- Never deploy without passing tests
-- Deploy frequently (small, reversible changes)
-- Automated rollback on health check failure
-- Blue-green or canary for zero-downtime deploys
-- Database migrations run as a separate step BEFORE app deploy
-- Health check endpoint must respond before traffic is shifted
-
-For the full pre-deploy checklist, see [references/deployment-checklist.md](references/deployment-checklist.md).
-
-For the canonical CI pipeline shape, see [references/github-actions.md](references/github-actions.md).
+Dockerfile/Compose examples and CI pipeline shapes live in the lazy `docker-patterns` and `deployment-patterns` skills.

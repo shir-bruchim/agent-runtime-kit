@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Testing guidance for pytest, Jest/Vitest, Go, and TDD. Use when writing tests or improving coverage.
+description: Stack-specific test patterns — pytest (asyncio_mode=auto), Jest/Vitest, Go — fixtures, mocking, coverage. Use when writing or improving tests. (superpowers:test-driven-development owns the red-green loop.)
 ---
 
 <objective>
@@ -8,7 +8,7 @@ Testing guidance for multiple languages and frameworks. Core principles apply un
 </objective>
 
 <essential_principles>
-Universal test foundations — test pyramid, AAA structure, naming-as-behavior-sentence, ~80% coverage default, test independence, behavior-not-implementation — live in `~/.claude/rules/testing/RULE.md` (with deep-dives in `~/.claude/rules/testing/references/`). Read those first; the pytest-specific add-ons (real objects for domain types, factories in conftest, headers-asserted-too, module-level mutable state) live in `<pytest_principles>` below.
+Universal test foundations — test pyramid, AAA structure, naming-as-behavior-sentence, ~80% coverage default, edge cases, behavior-not-implementation — live in `~/.claude/rules/testing/RULE.md`. Read that first; the pytest-specific add-ons (real objects for domain types, factories in conftest, headers-asserted-too, module-level mutable state) live in `<pytest_principles>` below.
 </essential_principles>
 
 <pytest_principles>
@@ -27,6 +27,7 @@ Universal test foundations — test pyramid, AAA structure, naming-as-behavior-s
 - **Don't hardcode enum/constant copies in fixtures.** When a fixture needs an enum value (status, role, type code), import it from the schema/model module, OR add a one-line **equality** assertion (`assert set(FIXTURE_STATUSES) == {s.value for s in StatusEnum}`) that fails when the schema drifts EITHER WAY. A subset assertion (`<=`) only catches harness-has-invalid-value drift; it silently passes when the schema adds a value the harness doesn't cover (verified: a schema added `UNPLUGGED=13`, the harness still had `[1..12]`, every subset test stayed green, the harness silently stopped covering one production state). A standalone list of "looks right" values is a silent contract test for a contract that doesn't exist — and pydantic / DB constraints will reject the drift in production while every unit test passes.
 - **Assert every field on the returned contract, not a spot-check subset.** When a test inspects a returned object (mapper output, service return, response body, cached envelope), assert EVERY field on the return schema with an explicit value+type assertion — for the happy-path fixture and for every meaningful variant. Nested objects (embedded relations, status-history rows) get the same treatment recursively. Pair the per-field asserts with a one-line field-set-equality guard: `assert set(response.keys()) == set(Schema.__fields__.keys())`. Column-iteration drift-guard loops (`for col in __table__.columns: assert getattr(row, col.name) is not None`) are additive — they catch newly-added fields being dropped, but they silently pass when TWO fields swap mappings because both still hold *some* value. Three complementary layers: per-field pins the intended value, set-equality catches additions, the drift loop catches removals. Any partial spot-check ships the wrong-value bug to prod.
 - **Match `event_loop` fixture scope to your async singletons' lifetime.** If the suite touches any process-cached async resource — a SQLAlchemy async engine per `client_name`, a pooled HTTP client, a kafka producer, a redis client — override pytest-asyncio's default `function`-scoped `event_loop` with a `session`-scoped fixture in `conftest.py` (and set `asyncio_default_fixture_loop_scope = session` in `pytest.ini` for pytest-asyncio ≥ 0.24). Otherwise pytest-asyncio spins up a new loop per test, the singleton stays attached to the FIRST loop, and later tests blow up with `RuntimeError: got Future <...> attached to a different loop` — a lifecycle mismatch that looks like a race or flake. Rule of thumb: fixture scope must be ≥ the resource's cache scope. If the singleton is torn down between tests (via a fresh-per-function fixture), `function` scope is fine — the mismatch, not either scope, is the bug.
+- **Tapping/seeding a queue shared with a live consumer: account for delivery semantics.** When an integration/E2E test reads (or asserts on) a message queue that a running service also consumes, the transport's delivery model decides whether your tap is even possible — a single-delivery queue (SQS) hands each message to exactly ONE reader, so a naive tap races the real consumer and one of them loses the message. See `references/localstack-integration.md` §"Tapping a queue shared with a live consumer" for the patterns (non-destructive SQS peek, pause-the-consumer, Kafka unique-group fan-out, purge-stale-then-poll-full-timeout for windowed producers).
 
 </pytest_principles>
 

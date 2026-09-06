@@ -30,10 +30,10 @@ Everything in CORE, plus:
 
 | Category | Added |
 |----------|-------|
-| **Skills** | `planning`, `api-design`, `implement-jira-ticket`, `design-doc-mermaid`, `web-deep-search`, `verification-loop`, `pr-review` |
+| **Skills** | `planning`, `api-design`, `implement-jira-ticket`, `design-doc-diagrams`, `web-deep-search`, `verification-loop`, `pr-review` |
 | **Rules** | `git-workflow`, `performance` (path-scoped), `infrastructure` (path-scoped), `patterns` (path-scoped) |
 | **Commands** | None — all commands now in CORE |
-| **Subagents** | `architect`, `planner`, `db-expert`, `doc-writer`, `refactorer`, `tdd-guide`, `web-research` |
+| **Subagents** | `architect`, `planner`, `db-expert`, `doc-writer`, `refactorer`, `web-research` |
 
 ### [ADVANCED] — Autonomous Agent Pipeline
 

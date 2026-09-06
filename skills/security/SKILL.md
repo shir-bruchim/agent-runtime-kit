@@ -30,7 +30,15 @@ What would you like to do?
 <code_review_workflow>
 When reviewing code for security:
 
-**Scan for OWASP Top 10.** Reference the canonical checklist in `~/.claude/rules/security/references/owasp-checklist.md` (the entry pointer lives at `~/.claude/rules/security/RULE.md` §"OWASP / Common Vulnerability Checklist"). Don't re-list categories here; for each match, capture `file:line + severity + remediation` per the per-finding format below.
+**Scan for OWASP Top 10** against this canonical checklist; for each match capture `file:line + severity + remediation` per the per-finding format below.
+
+- [ ] **SQL injection:** parameterized queries everywhere (never f-string SQL)
+- [ ] **XSS:** HTML-encode user output; Content-Security-Policy header
+- [ ] **CSRF:** tokens on state-changing requests (or SameSite cookies)
+- [ ] **Auth bypass:** authorization checked on every protected route (IDOR)
+- [ ] **Sensitive data:** passwords hashed (bcrypt/argon2/scrypt), secrets in env vars
+- [ ] **Error messages:** no stack traces or internal details in production
+- [ ] **Dependencies:** no critical CVEs in direct or transitive deps
 
 **For each finding:**
 - File path and line number

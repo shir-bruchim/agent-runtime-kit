@@ -1,21 +1,14 @@
 ---
 name: performance
-description: Performance principles — measure-first profiling, DB query/index rules, caching strategy, async vs CPU-bound work, and frontend perf.
+description: Performance principles — measure-first profiling, DB query/index rules, caching, async vs CPU-bound work.
 ---
 
-# Performance Guidelines
+# Performance Guardrails
 
-## Measure First, Optimize Second
+- **Measure first.** Never optimize without evidence — profile with `cProfile`/`py-spy`, `EXPLAIN ANALYZE`, or DevTools before changing anything.
+- **DB:** no N+1 (eager-load); index FKs and WHERE/ORDER BY/JOIN columns; use connection pooling.
+- **Caching:** cache what's expensive + read-often + changes-rarely; prefer TTL and cache-aside.
+- **Async is for I/O-bound work, not CPU-bound** (use processes for CPU). Loop-cached clients (aiokafka, httpx.AsyncClient, async SQLAlchemy engines) must live on ONE loop for the worker's lifetime — boot the loop once at `main()`, bridge to sync SDKs with `asyncio.to_thread(...)`, never `asyncio.run()` per work-item.
+- **Frontend:** minimize bundle (code-split, tree-shake); memoize only when profiling shows need.
 
-**Never optimize without evidence.** Profile before optimizing:
-- `cProfile` / `py-spy` (Python)
-- `perf` / `flamegraph` (system)
-- Browser DevTools Performance tab (frontend)
-- `EXPLAIN ANALYZE` (PostgreSQL)
-
-## Core Rules at a Glance
-
-- **Database:** No N+1; index FKs and WHERE/ORDER BY/JOIN columns; use connection pooling. See [references/db-performance.md](references/db-performance.md).
-- **Caching:** Cache things that are expensive, read-often, change-rarely. Prefer TTL; pick cache-aside by default. See [references/caching.md](references/caching.md).
-- **Async:** Async is for I/O-bound work, not CPU-bound. See [references/async.md](references/async.md).
-- **Frontend:** Minimize bundle size; avoid layout thrashing; memoize only when profiling shows need. See [references/frontend.md](references/frontend.md).
+Deep-dives (DB, caching, async, frontend) live in the lazy `postgres-patterns` and language skills.

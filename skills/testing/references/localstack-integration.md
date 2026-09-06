@@ -221,3 +221,14 @@ def test_action_modifies_db(db_session):
 - Ensure all required env vars are set in CI
 - Use unique identifiers to avoid parallel test conflicts
 - Optimize resource usage for CI resource limits
+
+## Tapping a queue shared with a live consumer
+
+When an integration/E2E test reads or asserts on a message queue/topic that a running service ALSO consumes, the transport's delivery model decides whether the tap is even possible:
+
+- **SQS is single-delivery.** Each message goes to exactly ONE reader. A naive test `receive_message` competes with the real consumer — whoever polls first gets it, so the assertion is racy and flaky (one run captures it, the next sees nothing). Options:
+  - **Non-destructive peek:** `receive_message(VisibilityTimeout=0)` so a read leaves the message immediately visible for the real consumer, and de-duplicate captured messages by `MessageId` (a `VT=0` read re-returns the same message every poll). The peek is best-effort — it still loses the race if the consumer receives first (its own visibility timeout then hides the message until it deletes it).
+  - **Pause the consumer (deterministic):** `docker pause test-<consumer>` around inject+assert so the produced message stays in the queue for the tap, then `docker unpause` so it still flows to the next stage. The test never *steals* the hand-off; it just holds the consumer briefly. This is the reliable pattern when the output edge has a live consumer.
+- **Kafka fans out by consumer group.** A tap using a UNIQUE `group_id` + `auto.offset.reset=earliest` reads its own copy without disturbing the real consumer's offsets — no race. Prefer asserting a hand-off on its Kafka edge (or a downstream DB row) over tapping a consumed SQS queue.
+- **Windowed / late producers** (aggregators that emit after a time window, ML inference): the output queue often holds STALE messages from earlier runs. **Purge the output queue first**, then **poll the FULL timeout** — don't stop the instant the pre-existing backlog drains, or you'll return old messages and miss the new one. Match by a unique per-test marker (device id, job uuid, event id) rather than "any message".
+- **Assert by side-effect when the queue can't be tapped cleanly:** the downstream service's Kafka output, a persisted DB row, or the terminal queue (which has no competing consumer) are reliable observables that leave the in-flight message untouched.

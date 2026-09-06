@@ -91,14 +91,24 @@ Findings go into the candidate list output as a top section: "Self-healing recom
 
 ## Step 2 — Inventory session feedback
 
-Re-read user messages in the visible conversation. Extract every directive, correction, non-obvious preference:
+Two sub-sources — read both, merge into one list.
+
+**2a. Visible conversation.** Re-read user messages. Extract every directive, correction, non-obvious preference:
 
 - **Corrections** — "no, do X instead", "stop doing Y", "that's wrong because…"
 - **Preferences expressed once** — "use real objects, never MagicMock for models"
 - **Confirmations of non-obvious choices** — "yes that was the right call"
 - **Reasoning the user provided** — "X depends on Y, so the order matters" (often become `Why:` lines)
 
-Output: `SESSION_FEEDBACK = [{rule, why, how_to_apply, source_quote}, ...]`. Include the source quote verbatim.
+**2b. Invoker prompt narrative.** The `/strategic-compact` prompt itself often contains a session debrief — "here are the 5 mistake classes from this run" or "user pushed back on X three times." Treat this as *first-class feedback evidence*. Read the invoker prompt end-to-end. Extract:
+
+- **Enumerated mistake patterns** (labeled "1.", "2.", "Pattern #N", "we hit X problem")
+- **Operator-preference signals** ("user strongly favors X", "reminded me N times to do Y")
+- **Explicit promotion candidates** ("this should live in skill/rule Z")
+
+Both sources feed `SESSION_FEEDBACK`. Do NOT wait for the visible-conversation source alone — if the invoker prompt is rich and the visible conversation is thin (common when `/strategic-compact` runs right after `/compact`), the invoker prompt IS the session evidence. Failing to mine it produces the "no candidates" false negative.
+
+Output: `SESSION_FEEDBACK = [{rule, why, how_to_apply, source_quote, source_channel}, ...]` where `source_channel ∈ {visible, invoker}`. Include the source quote verbatim.
 
 ## Step 3 — Read the memory index
 
@@ -120,7 +130,7 @@ Also drop anything already on the "Don't re-promote" list in `MEMORY.md` (the in
 
 For each rule in `ALL_FEEDBACK`, decide which extension(s) in `CANDIDATE_DESTINATIONS` are the natural home. A single rule can land in multiple targets. Heuristics:
 
-- Test conventions → skill: `testing`, `implement-jira-ticket`, `tdd-guide`
+- Test conventions → skill: `testing`, `implement-jira-ticket`
 - Code-review judgement → skill: `pr-review`, `code-review`
 - Self-review before presenting → skill: `pr-review`, `implement-jira-ticket`
 - Git commit / PR description conventions → skill: `git`, `pr-review`, `commit`, `pr`

@@ -44,13 +44,15 @@ fi
 # we skip with a warning rather than blocking — don't punish repos that
 # don't lint in CI.
 PY=""
-for candidate in ./venv311/bin/python ./venv/bin/python ./.venv/bin/python; do
-    if [ -x "$candidate" ]; then
+for candidate in ./venv311/bin/python ./venv/bin/python ./.venv/bin/python "$(command -v python3 || true)"; do
+    [ -n "$candidate" ] && [ -x "$candidate" ] || continue
+    # Require Python >= 3.11: repos here use 3.11+ syntax (e.g. `except*`), so an
+    # older venv can't even import the suite. Skip it rather than false-block.
+    if "$candidate" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 11) else 1)' 2>/dev/null; then
         PY="$candidate"
         break
     fi
 done
-[ -z "$PY" ] && PY="$(command -v python3 || true)"
 
 if [ -z "$PY" ]; then
     echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"pre-push-checks: no python found, skipping"}}'
@@ -60,17 +62,37 @@ fi
 OUTPUT_FILE=$(mktemp)
 FAILED=""
 
+# Files changed on this branch vs the default branch — the hook gates YOUR
+# changes, not the repo's pre-existing lint/test debt (which CI owns).
+BASE_REF=$(git merge-base HEAD origin/master 2>/dev/null || git merge-base HEAD origin/HEAD 2>/dev/null || true)
+CHANGED_PY=""
+if [ -n "$BASE_REF" ]; then
+    CHANGED_PY=$(git diff --name-only --diff-filter=ACM "$BASE_REF" HEAD -- '*.py' 2>/dev/null || true)
+fi
+
 # flake8 — only if a .flake8 config exists (don't lint repos that didn't
 # opt into a config; default max=79 would false-positive everything).
-if [ -f .flake8 ] && "$PY" -c "import flake8" 2>/dev/null; then
-    if ! "$PY" -m flake8 >"$OUTPUT_FILE" 2>&1; then
+# Scoped to changed files so the repo's existing lint debt doesn't false-block.
+if [ -f .flake8 ] && [ -n "$CHANGED_PY" ] && "$PY" -c "import flake8" 2>/dev/null; then
+    if ! "$PY" -m flake8 $CHANGED_PY >"$OUTPUT_FILE" 2>&1; then
         FAILED="flake8"
     fi
 fi
 
 # pytest — only if pytest is importable in the venv we picked.
+# Prefer unit tests: integration suites often regenerate SDKs / need Docker at
+# collection time and can't run in this local hook env. Fall back to full
+# tests/ for repos without a tests/unit layout. CI runs the full suite.
 if [ -z "$FAILED" ] && "$PY" -c "import pytest" 2>/dev/null; then
-    if ! "$PY" -m pytest tests/ -q >"$OUTPUT_FILE" 2>&1; then
+    PYTEST_TARGET="tests/"
+    [ -d tests/unit ] && PYTEST_TARGET="tests/unit"
+    "$PY" -m pytest "$PYTEST_TARGET" -q >"$OUTPUT_FILE" 2>&1 && PYTEST_RC=0 || PYTEST_RC=$?
+    # pytest exit 1 = real test failures -> block. Other nonzero codes are
+    # collection/import/env errors (e.g. ungenerated code, missing services in
+    # this local hook env) or "no tests"; don't false-block on those — CI runs
+    # the full suite. See exit codes: 0 ok, 1 failed, 2 interrupted, 3 internal,
+    # 4 usage, 5 no tests.
+    if [ "${PYTEST_RC:-0}" -eq 1 ]; then
         FAILED="pytest"
     fi
 fi

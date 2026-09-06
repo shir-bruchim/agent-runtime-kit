@@ -61,6 +61,8 @@ argument-hint: [optional-arg]
 ## Key Design Principles
 
 - **Minimum tokens**: Skills should be lean. Merge related content rather than adding new files. Consolidate instead of proliferate.
+- **Rules load IN FULL every session — keep them lean**: `rules/*/RULE.md` (symlinked to `~/.claude/rules/`) is always-on context, so each file is guardrails only — terse one-liners, no code blocks, no `references/` subdirs. Topic depth (checklists, examples, deep-dives) belongs in the matching lazy skill, which only loads when triggered. Target the whole `rules/` tree under ~130 lines total.
+- **Skills own process disambiguation**: when a kit skill overlaps a superpowers-plugin skill, its `description` must say which one owns the generic process and what specific angle the kit skill adds — this drives correct native auto-triggering with zero always-on cost. Don't compile `routing/skill-rules.json` into CLAUDE.md (adds always-on tokens).
 - **Rules vs CLAUDE.md**: For new project installations, prefer adding key conventions to the project's existing `CLAUDE.md` rather than creating separate `.claude/rules/` files. Only create rule files for content not already in `CLAUDE.md`.
 - **Hooks are global**: Security hooks (`block-dangerous-bash.sh`, `protect-files.sh`) belong in `~/.claude/hooks/` and `~/.claude/settings.json` (global), not project-level `.claude/hooks.json`. The source scripts live in `skills/security/hooks/` for distribution.
 - **No `.claude/` in this repo**: Project-level `.claude/` config for this repo is not committed. The kit distributes TO other projects' `.claude/` folders; it doesn't need its own.

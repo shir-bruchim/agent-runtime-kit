@@ -58,6 +58,8 @@ POST /deleteUser/{id}
 
 Always: same error shape across all endpoints. Never: different error formats in different routes.
 
+**Error translation layer — one level, not two.** When the API boundary is the only consumer, translate raw storage/driver exceptions (IntegrityError, NoResultFound, deadlocks) directly to HTTPException subclasses in one shared helper (`as_api_exception(work, *, context)`) called by every route. Skip the extra "domain error → HTTP error" mapping layer — it pays a class-tree tax for zero decoupling gain when there's no non-HTTP consumer. Logic-layer code raises HTTPException subclasses directly; FastAPI's native handler renders them. Introduce a domain-error indirection ONLY when a second entry-point shape (SQS consumer, cron, CLI) needs the same mapping — then the domain classes earn their weight.
+
 **4. Versioning**
 ```
 /api/v1/users    — URL versioning (most common, visible)

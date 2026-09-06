@@ -11,8 +11,8 @@
     },
     "full": {
       "_extends": "core",
-      "skills": ["planning", "api-design", "implement-jira-ticket", "design-doc-mermaid", "web-deep-search", "verification-loop", "pr-review"],
-      "subagents": ["architect", "planner", "db-expert", "doc-writer", "refactorer", "tdd-guide", "web-research"],
+      "skills": ["planning", "api-design", "implement-jira-ticket", "design-doc-diagrams", "web-deep-search", "verification-loop", "pr-review"],
+      "subagents": ["architect", "planner", "db-expert", "doc-writer", "refactorer", "web-research"],
       "commands": [],
       "rules": ["git-workflow", "performance", "infrastructure", "patterns"]
     }

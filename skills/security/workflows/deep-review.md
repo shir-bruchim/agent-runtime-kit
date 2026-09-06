@@ -5,8 +5,8 @@ Comprehensive security review across 10 dimensions. Goes deeper than `~/.claude/
 ## Relationship to Rules
 
 This workflow EXTENDS `~/.claude/rules/security/RULE.md` — it does not replace it.
-- `~/.claude/rules/security/RULE.md` = always-loaded conventions (input validation, secrets, auth basics)
-- `~/.claude/rules/security/references/owasp-checklist.md` = canonical vulnerability checklist
+- `~/.claude/rules/security/RULE.md` = always-loaded guardrails (input validation, secrets, auth basics)
+- The OWASP Top-10 checklist now lives in the security SKILL.md `<code_review_workflow>` section
 - This workflow = on-demand deep review with checklists and verification steps
 
 Load this workflow when actively reviewing security, not for general coding.

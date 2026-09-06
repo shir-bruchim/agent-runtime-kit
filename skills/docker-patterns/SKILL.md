@@ -87,8 +87,14 @@ volumes:
 ```
 </compose_dev>
 
+<concurrent_runs>
+Compose derives its **project name from the working directory**. Two concurrent runs that resolve to the *same* project name (parallel CI jobs, sibling git worktrees, the same repo checked out twice) share one namespace and clobber each other's containers, networks, and volumes.
+- Pass a unique `-p <name>` (or `COMPOSE_PROJECT_NAME=<name>`) per invocation, or serialize the runs.
+- The `--exit-code-from`/`--abort-on-container-exit` integration pattern is especially exposed: the second run tears down the first's `test` container mid-flight, so its result is bogus (SIGKILL, not a real pass/fail).
+</concurrent_runs>
+
 <security>
-Universal Docker security rules (pin base, non-root, no secrets in image, .dockerignore, minimal base, drop capabilities) live in `~/.claude/rules/infrastructure/RULE.md` §"Docker — Core Rules" (with examples in `~/.claude/rules/infrastructure/references/docker.md`). Compose-specific operational guidance is in `<compose_dev>` / `<volume_strategies>` below.
+Universal Docker security guardrails (pin base, non-root, no secrets in image, .dockerignore, minimal base, drop capabilities) live in `~/.claude/rules/infrastructure/RULE.md`. Multi-stage build examples and Compose-specific operational guidance are in `<compose_dev>` / `<volume_strategies>` below.
 </security>
 
 <volume_strategies>
@@ -102,7 +108,7 @@ Universal Docker security rules (pin base, non-root, no secrets in image, .docke
 </volume_strategies>
 
 <anti_patterns>
-See `~/.claude/rules/infrastructure/references/docker.md` for the canonical anti-patterns list (and `~/.claude/rules/infrastructure/RULE.md` §"Docker — Core Rules" for the summary).
+Core Docker guardrails live in `~/.claude/rules/infrastructure/RULE.md`; the Compose/dev anti-patterns specific to this skill are covered in the sections above.
 </anti_patterns>
 
 <success_criteria>

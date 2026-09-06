@@ -127,6 +127,31 @@ docker compose up -v --force-recreate --build --remove-orphans
 docker compose exec test pytest local_stack/test_file.py::test_name -v -s
 ```
 
+### Named Volumes and Session-Scoped Seeds (fresh-DB trap)
+
+A **named** volume (`volumes: [db-data:/var/lib/postgresql/data]`) is NOT wiped by
+`--renew-anon-volumes` or `--force-recreate` — those only touch anonymous volumes.
+Only `docker compose down -v` (or `down --volumes`) removes named volumes and gives a
+genuinely fresh DB. This bites hard when the test harness seeds once per session
+(session-scoped conftest fixture):
+
+- Re-running the compose `test` target a second time WITHOUT `down -v` re-executes the
+  session seed against an already-populated DB → duplicate-key / FK-violation errors at
+  **fixture setup** (looks like a code bug, isn't). Rule: **one test invocation per DB
+  reset.** To re-run, `down -v` first.
+- A seed that `DELETE`s parent tables (routers, devices, units) but not their
+  `*_status_history` children fails the parent DELETE on the child FK on any re-run.
+  Fresh CI volumes mask this; local iteration exposes it. Delete children first (or
+  TRUNCATE ... CASCADE).
+- After editing source, **rebuild BOTH the app image AND the test image** before the
+  next run (`docker compose build <app> <test>`) — otherwise the containers execute the
+  previously-baked code and you debug a stale binary. If the Dockerfile runs the unit
+  suite at build time, a green build also re-confirms unit tests.
+- Memory-constrained hosts may OOM-kill a one-shot `docker compose up` of a large stack
+  (multiple Postgres + Redis cluster + Kafka + LocalStack). Bring dependencies up in
+  stages (heavy services first, let them settle, then the one-shot cluster-creator),
+  then run the `test` container once with `--no-deps`.
+
 ## Cleanup Patterns
 
 ### Selective Service Restart

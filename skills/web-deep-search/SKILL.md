@@ -47,7 +47,7 @@ When the user references a prior session, transcript, or "previous research," RE
 1. Decompose question into 4–6 sub-questions.
 2. `WebSearch` each sub-question in parallel.
 3. `WebFetch` primary sources (official docs, vendor announcements, peer-reviewed where applicable).
-4. Adversarially verify key claims (search for counter-evidence).
+4. Adversarially verify key claims (search for counter-evidence). Prioritize verify budget on **load-bearing claims** — anything that would inform code, config, or an architectural decision. In practice, 15–20% of initial claims are wrong-but-plausible (the model's prior is strong; adversarial search is what surfaces the counter-evidence). Do NOT ship any claim that would drive code changes without a passing verify. Deprioritize verify on framing/context claims (definitions, dates, background) — they're cheaper to sanity-check inline.
 5. Produce structured report: findings, evidence, contradictions, citations.
 6. For very deep research, prefer the `deep-research` slash command which orchestrates a multi-agent harness.
 

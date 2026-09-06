@@ -142,6 +142,57 @@ BATCH [N]: Running [X] stories in parallel
   - US-005: Add export feature (coder: ralph-coder, tester: ralph-tester)
 ```
 
+**d.1. Detect shared-file collisions in the batch.**
+
+Before spawning coders, identify files that MULTIPLE stories in the batch will touch. Ask: "Does any file appear in the acceptance criteria or diff-preview of >1 story in this batch?" Typical culprits:
+
+- Allowlist / registry files (`_FILE_ALLOWLIST`, feature-flag registry, plugin index)
+- Re-export files (`__init__.py`, `index.ts` barrels)
+- Ordered migration chains (`down_revision` pointers)
+- Shared enums / constants files
+
+If found, do ONE of:
+
+1. **Orchestrator-owned cleanup commit (preferred).** Tell each coder in its prompt: "Do NOT modify {shared_file} — the orchestrator handles it after your merge." After all batch stories merge, the orchestrator makes ONE commit that removes the entries corresponding to the completed stories. Idempotent: rerunning the batch never re-conflicts.
+2. **Serialize the batch.** If a shared file is unavoidable, treat those stories as sequential-dependent — put them in different batches.
+
+Never let two coders edit the same set literal / index in parallel. The merge cost dominates the parallelism win.
+
+**d.2. Pin the interface contract for parallel batches.**
+
+If this batch has N stories that all touch the same public-interface pattern (e.g., all logic modules in the same family, all routes in the same version), pin the signature contract to `tasks/common_knowledge.md` under `## Batch {N} interface contract` BEFORE spawning. Example:
+
+```
+## Batch 2 interface contract
+- Public logic functions: `async def <name>(db: AsyncSession, *, <kwargs>) -> <ret>`
+- `db` is ALWAYS the first positional; kwargs after `*`.
+- No sync wrappers — all logic-layer functions are async.
+```
+
+Without a pinned contract, parallel coders make defensible but divergent choices (some drop `db`, some keep it) and the resulting drift is hard to catch story-by-story. If no shared pattern exists in the batch, skip this step.
+
+**d.3. Capture the feature-branch head BEFORE spawning any coder.**
+
+```bash
+FEATURE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+FEATURE_HEAD=$(git rev-parse HEAD)
+```
+
+Include both values in every coder prompt. Worktrees created by `isolation: "worktree"` branch from `origin/<default-branch>` — NOT from your current HEAD. If your feature branch has commits (foundation files, shared helpers) that aren't yet on the default branch, EACH worktree will start below them and coders will "not find" files that exist on your branch. Two safe patterns:
+
+1. **Push-first (preferred for multi-batch runs):** push `FEATURE_BRANCH` to `origin/FEATURE_BRANCH`, and pass `base_branch: FEATURE_BRANCH` in the prompt. Coders `git merge origin/FEATURE_BRANCH` at start.
+2. **Local-fetch (single-machine):** pass `base_ref: FEATURE_HEAD` in the prompt. Coders `git merge FEATURE_HEAD` at start (works because worktrees share the local object store).
+
+Add to every coder prompt:
+
+```
+## Base Branch Context
+- feature_branch: {FEATURE_BRANCH}
+- base_ref (has foundation commits): {FEATURE_HEAD}
+
+Your worktree starts from origin/{default-branch}. FIRST run: `git merge {FEATURE_HEAD} --no-edit` to pull in foundation commits before doing any work. If merge fails, STOP and report — do not proceed.
+```
+
 **e. Update prd.json for all batch stories**
 For each story in batch: set `status = "in_progress"`, increment `attempts`
 

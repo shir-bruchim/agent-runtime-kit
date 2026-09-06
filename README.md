@@ -50,10 +50,10 @@ See `PROFILES.md` for profile details and per-file decision (SKIP/MERGE) instruc
 
 | | CORE (default) | FULL |
 |-|----------------|------|
-| Skills | extend-agent, git, testing, debugging, security, strategic-compact | + planning, api-design, implement-jira-ticket, design-doc-mermaid, web-deep-search, verification-loop, pr-review |
+| Skills | extend-agent, git, testing, debugging, security, strategic-compact | + planning, api-design, implement-jira-ticket, design-doc-diagrams, web-deep-search, verification-loop, pr-review |
 | Rules | base-conventions, security, testing | + git-workflow, performance(path-scoped), infrastructure(path-scoped), patterns(path-scoped) |
 | Commands | commit, push, pr, ship, test, build-fix | (none — commands now in CORE) |
-| Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer, tdd-guide, web-research, aws-specialist, k8s-specialist |
+| Subagents | reviewer, tester, git-ops, security | + architect, planner, db-expert, doc-writer, refactorer, web-research, aws-specialist, k8s-specialist |
 
 **Tagged opt-ins** (add with `--tags`):
 
@@ -86,7 +86,7 @@ agent-runtime-kit/
 │   ├── planning/           # Project planning + spec-interview workflow        [FULL]
 │   ├── api-design/         # API design patterns                               [FULL]
 │   ├── implement-jira-ticket/ # Jira ticket implementation                    [FULL]
-│   ├── design-doc-mermaid/ # Mermaid diagrams + design documents              [FULL]
+│   ├── design-doc-diagrams/ # Design docs, RFCs, tickets + draw.io diagrams   [FULL]
 │   ├── web-deep-search/    # Web research via WebSearch + WebFetch (3 modes)  [FULL]
 │   ├── verification-loop/  # Multi-phase verification system                  [FULL]
 │   └── pr-review/          # Structured PR review (5 dimensions)              [FULL]
@@ -116,7 +116,6 @@ agent-runtime-kit/
 │   ├── db-expert.md        # Database design                                   [FULL]
 │   ├── doc-writer.md       # Documentation                                     [FULL]
 │   ├── refactorer.md       # Code refactoring                                  [FULL]
-│   ├── tdd-guide.md        # Test-driven development                           [FULL]
 │   ├── web-research.md       # Web research via WebSearch + WebFetch          [FULL]
 │   ├── aws-specialist.md  # AWS Lambda, SQS, S3, IAM                         [STACK]
 │   ├── k8s-specialist.md  # Kubernetes, Helm, HPA, RBAC                      [STACK]
@@ -131,7 +130,7 @@ agent-runtime-kit/
 │   ├── ship.md             # /ship (commit + push + PR + auto-review)          [CORE]
 │   └── test.md             # /test                                             [CORE]
 │
-├── rules/                  # Project-level conventions (each a folder with RULE.md + optional references/)
+├── rules/                  # Always-on guardrails — RULE.md loads IN FULL every session, so keep each lean (no references/ subdirs; topic depth belongs in a lazy skill)
 │   ├── base-conventions/RULE.md                                                [CORE]
 │   ├── security/RULE.md                                                        [CORE]
 │   ├── testing/RULE.md     # Path-scoped to test/ directories                  [CORE]
@@ -240,7 +239,7 @@ Read `AGENT-SETUP.md`. It contains step-by-step instructions for:
 | `planning/` | FULL | Hierarchical project planning + spec-interview workflow |
 | `api-design/` | FULL | REST API design patterns |
 | `implement-jira-ticket/` | FULL | End-to-end Jira ticket implementation |
-| `design-doc-mermaid/` | FULL | Mermaid diagrams and design documents |
+| `design-doc-diagrams/` | FULL | Design docs, RFCs, tickets + draw.io diagrams |
 | `web-deep-search/` | FULL | Web research via built-in WebSearch + WebFetch (3 depth modes) |
 | `verification-loop/` | FULL | Multi-phase verification system |
 | `pr-review/` | FULL | Structured PR review across 5 dimensions |
@@ -264,7 +263,6 @@ Read `AGENT-SETUP.md`. It contains step-by-step instructions for:
 | `db-expert` | FULL | sonnet | user | postgres-patterns | Database design |
 | `doc-writer` | FULL | sonnet | - | - | Documentation |
 | `refactorer` | FULL | sonnet | - | - | Refactoring |
-| `tdd-guide` | FULL | sonnet | - | testing | Test-driven development |
 | `web-research` | FULL | sonnet | - | web-deep-search | Web research via WebSearch + WebFetch |
 | `aws-specialist` | STACK | sonnet | - | - | AWS infrastructure (Lambda, SQS, S3) |
 | `k8s-specialist` | STACK | sonnet | - | - | Kubernetes (Deployments, Helm, HPA) |
